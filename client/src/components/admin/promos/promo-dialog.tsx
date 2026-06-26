@@ -25,8 +25,6 @@ const fieldWrapClass = "space-y-2";
 
 const inputClass = "rounded-none";
 
-const errorTextClass = "text-sm text-destructive";
-
 const footerClass = "flex justify-end gap-3";
 
 const outlineButtonClass = "rounded-none";

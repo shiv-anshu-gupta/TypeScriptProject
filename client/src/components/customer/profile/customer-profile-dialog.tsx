@@ -18,7 +18,6 @@ const singleGridClass = "grid gap-6";
 const sectionClass = "space-y-4";
 const sectionHeaderClass = "flex items-center justify-between gap-3";
 const sectionTitleClass = "text-lg font-semibold text-foreground";
-const sectionTextClass = "text-sm text-muted-foreground";
 
 const listClass = "space-y-3";
 const itemClass = "space-y-3 border border-border/60 bg-card/80 p-4";
@@ -26,7 +25,6 @@ const itemTopClass = "flex flex-wrap items-start justify-between gap-3";
 const itemTextClass = "space-y-1";
 const defaultClass =
   "inline-flex rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary";
-const nameClass = "font-medium text-foreground";
 const addressClass = "text-sm text-muted-foreground";
 const actionRowClass = "flex gap-2";
 const buttonClass = "rounded-none";
@@ -34,7 +32,6 @@ const emptyClass = "text-sm text-muted-foreground";
 
 const formWrapClass = "space-y-4 border border-border/60 bg-card/80 p-5";
 const twoColumnClass = "grid gap-4 sm:grid-cols-2";
-const threeColumnClass = "grid gap-4 sm:grid-cols-3";
 const fieldClass = "space-y-2";
 const inputClass = "rounded-none";
 const checkboxRowClass =

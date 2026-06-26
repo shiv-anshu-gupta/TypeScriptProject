@@ -20,14 +20,11 @@ const uploadIconWrapClass =
 const uploadIconClass = "h-6 w-6 text-primary";
 const uploadTextWrapClass = "space-y-2";
 const uploadHeadingClass = "text-base font-medium text-foreground";
-const uploadSubtextClass = "text-sm text-muted-foreground";
 const fileInputClass = "rounded-none";
 const fileCountClass = "text-xs text-muted-foreground";
 const fullButtonClass = "w-full rounded-none";
 const buttonClass = "rounded-none";
 
-const errorBoxClass =
-  "border border-destructive/30 bg-destructive/10 p-4 text-sm text-foreground";
 const emptyStateClass =
   "border border-border bg-background/40 p-6 text-sm text-muted-foreground";
 const tableHeaderClass = "flex flex-row items-center justify-between gap-3";
@@ -35,11 +32,9 @@ const tableHeaderClass = "flex flex-row items-center justify-between gap-3";
 function AdminSettings() {
   const {
     items,
-    files,
     setFiles,
     fileCountLabel,
     loading,
-    setLoading,
     refreshBanners,
     handleUpload,
     uploading,

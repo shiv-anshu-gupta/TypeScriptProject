@@ -36,9 +36,6 @@ const salePriceClass = "text-3xl font-semibold text-foreground";
 
 const originalPriceClass = "text-lg text-muted-foreground line-through";
 
-const descriptionClass =
-  "whitespace-pre-line text-sm leading-7 text-muted-foreground";
-
 const actionButtonsClass = "flex flex-col gap-3 sm:flex-row";
 
 const primaryButtonClass = "rounded-none sm:flex-1";

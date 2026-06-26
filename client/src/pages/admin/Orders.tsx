@@ -29,16 +29,10 @@ const pageWrapClass = "min-h-screen bg-background";
 const contentWrapClass = "mx-auto max-w-7xl px-4 py-8";
 const cardClass = "border-border bg-card";
 const wrapClass = "space-y-4";
-const topRowClass =
-  "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between";
 const titleClass = "flex items-center gap-2 text-2xl font-semibold";
-const metaClass = "text-sm text-muted-foreground";
-const buttonClass = "rounded-none";
 const emptyClass =
   "rounded-lg border border-border bg-background p-6 text-sm text-muted-foreground";
 const tableWrapClass = "overflow-x-auto";
-const cellStackClass = "space-y-1";
-const primaryTextClass = "font-medium text-foreground";
 const subTextClass = "text-xs text-muted-foreground";
 const selectTriggerClass = "h-9 w-[160px] rounded-none";
 const successBadgeClass =

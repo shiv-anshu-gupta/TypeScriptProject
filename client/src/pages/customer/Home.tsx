@@ -49,7 +49,6 @@ const couponGridClass = "grid gap-6 md:grid-cols-2 xl:grid-cols-4";
 const couponCardClass =
   "group relative overflow-hidden rounded-[2rem] border border-dashed border-primary/20 bg-primary/[0.02] transition-all duration-300 hover:border-primary/40 hover:bg-primary/[0.04]";
 const couponContentClass = "space-y-6 p-8";
-const couponHeadClass = "flex items-start justify-between gap-4";
 const couponIconWrapClass =
   "flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary transition-transform duration-500 group-hover:rotate-12";
 const couponIconClass = "h-6 w-6";

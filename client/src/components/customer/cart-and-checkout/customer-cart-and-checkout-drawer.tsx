@@ -45,7 +45,6 @@ const promoRowClass = "flex gap-2";
 const promoInputClass = "rounded-none";
 const actionClass = "shrink-0 space-y-3 border-t border-border px-5 py-4";
 const primaryButtonClass = "h-11 w-full";
-const secondaryButtonClass = "h-11 w-full rounded-none";
 
 const promoTitle =
   "flex items-center gap-2 text-sm font-medium text-foreground";

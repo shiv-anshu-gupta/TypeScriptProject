@@ -12,11 +12,6 @@ const cardHeaderClass = "space-y-4";
 
 const cardTitleClass = "text-xl";
 
-const cardContentClass = "space-y-4";
-
-const errorClass =
-  "rounded-none border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive";
-
 function AdminPromos() {
   const {
     search,
@@ -28,7 +23,6 @@ function AdminPromos() {
     editingPromo,
     openCreateDialog,
     closePromoDialog,
-    refreshAll,
     savePromo,
     removePromo,
     saving,

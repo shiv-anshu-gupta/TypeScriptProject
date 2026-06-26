@@ -9,16 +9,12 @@ const headerClass = "space-y-1";
 
 const titleClass = "text-sm font-semibold text-foreground";
 
-const descriptionClass = "text-sm text-muted-foreground";
-
 const uploadLabelClass =
   "flex min-h-28 cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/40 px-4 py-6 text-center transition hover:bg-muted";
 
 const uploadIconClass = "mb-2 h-5 w-5 text-muted-foreground";
 
 const uploadTitleClass = "text-sm font-medium text-foreground";
-
-const uploadSubtitleClass = "mt-1 text-xs text-muted-foreground";
 
 const hiddenInputClass = "hidden";
 

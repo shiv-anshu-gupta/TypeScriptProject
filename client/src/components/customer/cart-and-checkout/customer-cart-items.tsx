@@ -31,12 +31,10 @@ const footerRowClass = "flex flex-wrap items-center justify-between gap-3 pt-2";
 const qtyWrapClass =
   "flex items-center overflow-hidden border border-border bg-background";
 const qtyButtonClass = "h-9 w-9 rounded-none px-0";
-const qtyIconClass = "h-3.5 w-3.5";
 const qtyValueClass =
   "flex h-9 min-w-10 items-center justify-center border-x border-border px-2 text-sm font-medium";
 
 const removeButtonClass = "h-9 border-border px-3 text-xs text-white ";
-const removeIconClass = "mr-2 h-3.5 w-3.5";
 
 const emptyWrapClass =
   "flex min-h-[320px] flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-muted/30 px-6 text-center";

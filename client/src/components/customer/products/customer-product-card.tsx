@@ -38,8 +38,6 @@ const categoryClass = "text-sm text-muted-foreground";
 
 const priceRowClass = "flex items-center gap-2";
 
-const salePriceClass = "text-base font-semibold text-foreground";
-
 const originalPriceClass = "text-sm text-muted-foreground line-through";
 
 const colorsWrapClass = "flex items-center gap-2";

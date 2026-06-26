@@ -27,12 +27,6 @@ const imageBoxClass =
 
 const imageClass = "h-full w-full object-cover";
 
-const titleWrapClass = "space-y-1";
-
-const titleClass = "font-medium text-foreground";
-
-const descriptionClass = "line-clamp-1 text-xs text-muted-foreground";
-
 const editCellWrapClass = "flex justify-end";
 
 const editIconClass = "h-4 w-4";

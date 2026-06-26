@@ -7,8 +7,6 @@ const headerClass = "space-y-1";
 
 const titleClass = "text-sm font-semibold text-foreground";
 
-const descriptionClass = "text-sm text-muted-foreground";
-
 const gridClass = "grid grid-cols-4 gap-2";
 
 const sizeButtonClass = "h-11";

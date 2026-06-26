@@ -38,11 +38,7 @@ const colorSwatchActiveClass = "border-primary ring-2 ring-primary/30";
 
 const colorSwatchInactiveClass = "border-border";
 
-const helperTextClass = "text-sm text-muted-foreground";
-
 const sizesWrapClass = "flex flex-wrap gap-2";
-
-const sizeButtonClass = "min-w-12 rounded-none";
 
 type CustomerFiltersPanelProps = {
   categories: ProductCategory[];

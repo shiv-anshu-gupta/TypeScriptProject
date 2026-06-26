@@ -27,8 +27,6 @@ const thumbnailButtonActiveClass = "border-primary ring-2 ring-primary/30";
 
 const thumbnailButtonInactiveClass = "border-border/60";
 
-const thumbnailImageWrapClass = "aspect-square bg-muted";
-
 function CustomerProductDetailsGallery({
   product,
   selectedImage,

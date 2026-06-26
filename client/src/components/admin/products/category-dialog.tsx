@@ -32,9 +32,6 @@ const categoryIcon = "h-4 w-4 text-muted-foreground";
 
 const categoryName = "text-sm font-medium text-foreground";
 
-const emptyStateClass =
-  "rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground";
-
 const editButtonClass = "h-4 w-4";
 
 type CategoryDialogProps = {
