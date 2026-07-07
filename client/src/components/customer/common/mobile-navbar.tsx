@@ -123,7 +123,7 @@ export function CustomerMobileNavbar({
           <div className={brandBlock}>
             <Link to={"/"} className={brandWrap}>
               <Store className="h-10 w-10" />
-              <span className={brandTitle}>E-Shopify</span>
+              <span className={brandTitle}>Cloth-Shopi</span>
             </Link>
           </div>
           <Separator />
