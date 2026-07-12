@@ -1,6 +1,7 @@
 import {
   BadgePercent,
   BarChart3,
+  ClipboardList,
   LayoutDashboard,
   Package,
   Settings2,
@@ -20,6 +21,7 @@ const items: AdminNavItem[] = [
   { label: "Products", href: "/admin/products", icon: Package },
   { label: "Coupons", href: "/admin/coupons", icon: BadgePercent },
   { label: "Orders", href: "/admin/orders", icon: BarChart3 },
+  { label: "Grocery lists", href: "/admin/grocery-lists", icon: ClipboardList },
   { label: "Settings", href: "/admin/settings", icon: Settings2 },
 ];
 

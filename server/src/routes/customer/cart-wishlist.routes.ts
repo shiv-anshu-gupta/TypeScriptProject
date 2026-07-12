@@ -15,8 +15,6 @@ type ProductPreview = {
   _id: string;
   title: string;
   brand: string;
-  price: number;
-  salePercentage: number;
   images: Array<{
     url: string;
     isCover?: boolean;
@@ -43,23 +41,18 @@ function formatProduct(product: ProductPreview) {
     product.images[0]?.url ||
     "";
 
-  const finalPrice = product.salePercentage
-    ? Math.round(product.price - (product.price * product.salePercentage) / 100)
-    : product.price;
-
   return {
     productId: String(product._id),
     title: product.title,
     brand: product.brand,
     image,
-    finalPrice,
   };
 }
 
 async function getCartResponse(userId: string) {
   const cart = await Cart.findOne({ user: userId }).populate(
     "items.product",
-    "title brand price salePercentage images",
+    "title brand images",
   );
 
   const cartItems = (cart?.items || []) as CartPreviewItem[];
@@ -88,7 +81,7 @@ async function getCartResponse(userId: string) {
 async function getWishlistResponse(userId: string) {
   const wishlist = await Wishlist.findOne({ user: userId }).populate(
     "products",
-    "title brand price salepercentage images",
+    "title brand images",
   );
 
   const products = (wishlist?.products || []) as Array<ProductPreview | null>;

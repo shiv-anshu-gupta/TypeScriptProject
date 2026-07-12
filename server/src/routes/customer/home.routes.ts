@@ -22,8 +22,7 @@ type ProductRow = {
   _id: Types.ObjectId;
   title: string;
   brand: string;
-  price: number;
-  salePercentage: number;
+  unit: string;
   images: Array<{
     url: string;
     isCover?: boolean;
@@ -51,7 +50,7 @@ customerHomeRouter.get(
       Banner.find().sort({ createdAt: -1 }).limit(6).lean<BannerRow[]>(),
       Category.find().sort({ name: 1 }).lean<CategoryRow[]>(),
       Product.find({ status: "active" })
-        .select("title brand price salePercentage images createdAt")
+        .select("title brand unit images createdAt")
         .sort({ createdAt: -1 })
         .limit(4)
         .lean<ProductRow[]>(),
@@ -82,22 +81,12 @@ customerHomeRouter.get(
             recentProductItem.images[0]?.url ||
             "";
 
-          const finalPrice = recentProductItem.salePercentage
-            ? Math.round(
-                recentProductItem.price -
-                  (recentProductItem.price * recentProductItem.salePercentage) /
-                    100,
-              )
-            : recentProductItem.price;
-
           return {
             _id: String(recentProductItem._id),
             title: recentProductItem.title,
             brand: recentProductItem.brand,
             image,
-            price: recentProductItem.price,
-            finalPrice,
-            salePercentage: recentProductItem.salePercentage,
+            unit: recentProductItem.unit,
             createAt: recentProductItem.createdAt.toISOString(),
           };
         }),

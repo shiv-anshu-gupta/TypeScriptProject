@@ -8,6 +8,14 @@ export type ProductImage = {
 
 export type ProductSize = "S" | "M" | "L" | "XL";
 export type ProductStatus = "active" | "inactive";
+export type ProductUnit =
+  | "kg"
+  | "g"
+  | "litre"
+  | "ml"
+  | "piece"
+  | "dozen"
+  | "pack";
 
 export type Product = {
   title: string;
@@ -18,8 +26,7 @@ export type Product = {
   images: ProductImage[];
   colors: string[];
   sizes: ProductSize[];
-  price: number;
-  salePercentage: number;
+  unit: ProductUnit;
   status: ProductStatus;
   createdBy: Types.ObjectId;
   createdAt: Date;
@@ -90,13 +97,10 @@ const ProductSchema = new mongoose.Schema(
       default: [],
       enum: ["S", "M", "L", "XL"],
     },
-    price: {
-      type: Number,
-      required: true,
-    },
-    salePercentage: {
-      type: Number,
-      default: 0,
+    unit: {
+      type: String,
+      enum: ["kg", "g", "litre", "ml", "piece", "dozen", "pack"],
+      default: "piece",
     },
     status: {
       type: String,

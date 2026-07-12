@@ -11,6 +11,7 @@ import AdminDashboard from "./pages/admin/Dashboard";
 import AdminProducts from "./pages/admin/Products";
 import AdminCoupons from "./pages/admin/Promos";
 import AdminOrders from "./pages/admin/Orders";
+import AdminGroceryLists from "./pages/admin/GroceryLists";
 import AdminSettings from "./pages/admin/Settings";
 import Collections from "./pages/customer/Collections";
 import CollectionDetails from "./pages/customer/Collection-Details";
@@ -83,6 +84,10 @@ export const router = createBrowserRouter([
               {
                 path: "orders",
                 element: <AdminOrders />,
+              },
+              {
+                path: "grocery-lists",
+                element: <AdminGroceryLists />,
               },
               {
                 path: "settings",

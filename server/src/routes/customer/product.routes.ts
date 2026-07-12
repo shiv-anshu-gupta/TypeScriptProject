@@ -39,7 +39,6 @@ customerProductRouter.get(
       const brand = (req.query.brand || "").trim();
       const color = (req.query.color || "").trim();
       const size = (req.query.size || "").trim();
-      const sort: ProductSort = req.query.sort || "recent";
 
       const query: Record<string, unknown> = {
         status: "active",
@@ -58,15 +57,7 @@ customerProductRouter.get(
         query.sizes = size;
       }
 
-      let sortOption: Record<string, 1 | -1> = { createdAt: -1 };
-
-      if (sort === "price-low") {
-        sortOption = { price: 1 };
-      }
-
-      if (sort === "price-high") {
-        sortOption = { price: -1 };
-      }
+      const sortOption: Record<string, 1 | -1> = { createdAt: -1 };
 
       const products = await Product.find(query)
         .populate("category", "name")

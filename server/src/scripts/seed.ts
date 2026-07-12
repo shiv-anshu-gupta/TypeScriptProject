@@ -51,25 +51,27 @@ async function uploadWithFallback(
 }
 
 // Build resilient candidate list from comma-separated loremflickr tags:
-// full tag combo -> first tag only -> generic "clothing".
+// full tag combo -> first tag only -> generic "grocery".
 function flickrCandidates(tags: string, w: number, h: number): string[] {
   const firstTag = tags.split(",")[0];
   return Array.from(
     new Set([
       `https://loremflickr.com/${w}/${h}/${tags}`,
       `https://loremflickr.com/${w}/${h}/${firstTag}`,
-      `https://loremflickr.com/${w}/${h}/clothing`,
+      `https://loremflickr.com/${w}/${h}/grocery`,
     ]),
   );
 }
 
-// Clothing/fashion-store images (loremflickr, keyword-based) — used only as
-// the upload SOURCE; Cloudinary stores its own copy.
+// Grocery-store images (loremflickr, keyword-based) — used only as the upload
+// SOURCE; Cloudinary stores its own copy.
 const bannerSources = [
-  { tags: "fashion,clothing,store", w: 1200, h: 600 },
-  { tags: "clothing,boutique", w: 600, h: 600 },
-  { tags: "apparel,fashion", w: 600, h: 600 },
+  { tags: "grocery,store", w: 1200, h: 600 },
+  { tags: "vegetables,market", w: 600, h: 600 },
+  { tags: "supermarket,shelf", w: 600, h: 600 },
 ];
+
+type ProductUnit = "kg" | "g" | "litre" | "ml" | "piece" | "dozen" | "pack";
 
 type SeedProduct = {
   title: string;
@@ -77,119 +79,127 @@ type SeedProduct = {
   categoryName: string;
   brand: string;
   stock: number;
-  colors: string[];
-  sizes: ("S" | "M" | "L" | "XL")[];
-  price: number;
-  salePercentage: number;
+  unit: ProductUnit;
   imageTags: string[];
 };
 
-const categoryNames = ["Shirts", "Pants", "Shoes", "Accessories"];
+const categoryNames = [
+  "Vegetables",
+  "Fruits",
+  "Dairy & Eggs",
+  "Bakery",
+  "Beverages",
+  "Snacks",
+];
 
 const seedProducts: SeedProduct[] = [
   {
-    title: "Classic Oxford Shirt",
-    description:
-      "A timeless button-down crafted from breathable cotton. Perfect for work or weekend wear.",
-    categoryName: "Shirts",
-    brand: "Northfield",
-    stock: 40,
-    colors: ["#ffffff", "#1e3a8a", "#111827"],
-    sizes: ["S", "M", "L", "XL"],
-    price: 2499,
-    salePercentage: 15,
-    imageTags: ["oxford,shirt", "mens,dress,shirt"],
+    title: "Fresh Tomatoes",
+    description: "Ripe, juicy tomatoes — perfect for curries, salads and sauces.",
+    categoryName: "Vegetables",
+    brand: "Fresh Farm",
+    stock: 80,
+    unit: "kg",
+    imageTags: ["tomato,vegetable"],
   },
   {
-    title: "Linen Casual Shirt",
-    description:
-      "Lightweight linen shirt with a relaxed fit, ideal for warm days and easy styling.",
-    categoryName: "Shirts",
-    brand: "Coastline",
-    stock: 25,
-    colors: ["#f5f5dc", "#bae6fd"],
-    sizes: ["M", "L", "XL"],
-    price: 2899,
-    salePercentage: 0,
-    imageTags: ["linen,shirt", "casual,mens,shirt"],
+    title: "Potatoes",
+    description: "Everyday farm potatoes, great for frying, boiling and roasting.",
+    categoryName: "Vegetables",
+    brand: "Fresh Farm",
+    stock: 100,
+    unit: "kg",
+    imageTags: ["potato,vegetable"],
   },
   {
-    title: "Slim Fit Chinos",
-    description:
-      "Versatile stretch chinos with a tailored slim fit and all-day comfort.",
-    categoryName: "Pants",
-    brand: "Northfield",
-    stock: 35,
-    colors: ["#78716c", "#1f2937", "#0f766e"],
-    sizes: ["S", "M", "L", "XL"],
-    price: 3199,
-    salePercentage: 20,
-    imageTags: ["chinos,trousers", "mens,pants"],
-  },
-  {
-    title: "Tapered Denim Jeans",
-    description:
-      "Mid-wash tapered jeans made with durable denim and a hint of stretch.",
-    categoryName: "Pants",
-    brand: "Ironside",
-    stock: 50,
-    colors: ["#1e3a8a", "#111827"],
-    sizes: ["S", "M", "L", "XL"],
-    price: 3799,
-    salePercentage: 10,
-    imageTags: ["denim,jeans", "blue,jeans"],
-  },
-  {
-    title: "Everyday Running Sneakers",
-    description:
-      "Cushioned, breathable sneakers built for daily runs and long walks alike.",
-    categoryName: "Shoes",
-    brand: "Stride",
-    stock: 30,
-    colors: ["#111827", "#dc2626", "#ffffff"],
-    sizes: ["M", "L", "XL"],
-    price: 4599,
-    salePercentage: 25,
-    imageTags: ["sneakers,shoes", "running,shoes"],
-  },
-  {
-    title: "Leather Derby Shoes",
-    description:
-      "Hand-finished leather derby shoes with a classic silhouette for formal occasions.",
-    categoryName: "Shoes",
-    brand: "Marlow",
-    stock: 18,
-    colors: ["#451a03", "#111827"],
-    sizes: ["M", "L", "XL"],
-    price: 5999,
-    salePercentage: 0,
-    imageTags: ["leather,shoes", "formal,shoes"],
-  },
-  {
-    title: "Minimalist Leather Belt",
-    description:
-      "A premium full-grain leather belt with a brushed metal buckle.",
-    categoryName: "Accessories",
-    brand: "Marlow",
+    title: "Bananas",
+    description: "Sweet ripe bananas, sold by the dozen.",
+    categoryName: "Fruits",
+    brand: "Fresh Farm",
     stock: 60,
-    colors: ["#451a03", "#111827"],
-    sizes: ["S", "M", "L"],
-    price: 1499,
-    salePercentage: 5,
-    imageTags: ["leather,belt", "belt,accessory"],
+    unit: "dozen",
+    imageTags: ["banana,fruit"],
   },
   {
-    title: "Canvas Weekender Bag",
-    description:
-      "Spacious water-resistant canvas duffel with leather trims for short getaways.",
-    categoryName: "Accessories",
-    brand: "Coastline",
-    stock: 22,
-    colors: ["#78716c", "#1f2937"],
-    sizes: ["L", "XL"],
-    price: 3499,
-    salePercentage: 30,
-    imageTags: ["canvas,bag", "duffel,bag"],
+    title: "Shimla Apples",
+    description: "Crisp and juicy hill-grown apples.",
+    categoryName: "Fruits",
+    brand: "Himalaya Orchards",
+    stock: 45,
+    unit: "kg",
+    imageTags: ["apple,fruit"],
+  },
+  {
+    title: "Full Cream Milk",
+    description: "Fresh full-cream dairy milk, 1 litre pack.",
+    categoryName: "Dairy & Eggs",
+    brand: "Amul",
+    stock: 50,
+    unit: "litre",
+    imageTags: ["milk,bottle"],
+  },
+  {
+    title: "Farm Eggs",
+    description: "Farm-fresh eggs, sold by the dozen.",
+    categoryName: "Dairy & Eggs",
+    brand: "Happy Hen",
+    stock: 40,
+    unit: "dozen",
+    imageTags: ["eggs"],
+  },
+  {
+    title: "Whole Wheat Bread",
+    description: "Soft whole-wheat sandwich loaf, freshly baked.",
+    categoryName: "Bakery",
+    brand: "Britannia",
+    stock: 35,
+    unit: "piece",
+    imageTags: ["bread,bakery"],
+  },
+  {
+    title: "Butter Croissants",
+    description: "Flaky, buttery croissants — pack of 4.",
+    categoryName: "Bakery",
+    brand: "Baker's Corner",
+    stock: 25,
+    unit: "pack",
+    imageTags: ["croissant,bakery"],
+  },
+  {
+    title: "Orange Juice",
+    description: "100% pressed orange juice, 1 litre.",
+    categoryName: "Beverages",
+    brand: "Tropicana",
+    stock: 30,
+    unit: "litre",
+    imageTags: ["orange,juice"],
+  },
+  {
+    title: "Green Tea",
+    description: "Refreshing green tea bags, box of 25.",
+    categoryName: "Beverages",
+    brand: "Tetley",
+    stock: 40,
+    unit: "pack",
+    imageTags: ["tea,drink"],
+  },
+  {
+    title: "Classic Potato Chips",
+    description: "Crunchy salted potato chips, family pack.",
+    categoryName: "Snacks",
+    brand: "Lay's",
+    stock: 70,
+    unit: "pack",
+    imageTags: ["chips,snack"],
+  },
+  {
+    title: "Salted Peanuts",
+    description: "Roasted and salted peanuts, resealable pack.",
+    categoryName: "Snacks",
+    brand: "Nutty",
+    stock: 55,
+    unit: "pack",
+    imageTags: ["peanuts,snack"],
   },
 ];
 
@@ -274,10 +284,9 @@ async function run() {
       brand: p.brand,
       stock: p.stock,
       images,
-      colors: p.colors,
-      sizes: p.sizes,
-      price: p.price,
-      salePercentage: p.salePercentage,
+      colors: [],
+      sizes: [],
+      unit: p.unit,
       status: "active",
       createdBy: adminUser._id,
     });
@@ -294,15 +303,15 @@ async function run() {
       code: "WELCOME10",
       percentage: 10,
       count: 100,
-      minimumOrderValue: 1000,
+      minimumOrderValue: 200,
       startsAt: new Date(now - day),
       endsAt: new Date(now + 30 * day),
     },
     {
-      code: "BIGSALE25",
+      code: "FRESH25",
       percentage: 25,
       count: 50,
-      minimumOrderValue: 3000,
+      minimumOrderValue: 500,
       startsAt: new Date(now - day),
       endsAt: new Date(now + 14 * day),
     },

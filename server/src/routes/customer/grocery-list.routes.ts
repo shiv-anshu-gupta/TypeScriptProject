@@ -1,0 +1,242 @@
+import { Router, type Request, type Response } from "express";
+import crypto from "crypto";
+import { getDbUserFromReq, requireAuth } from "../../middleware/auth";
+import { asyncHandler } from "../../utils/asyncHandler";
+import { ok } from "../../utils/envelope";
+import { requireFound, requireText } from "../../utils/helpers";
+import { AppError } from "../../utils/AppError";
+import { GroceryList, GroceryListDocument } from "../../models/GroceryList";
+import { razorpay, toSubUnits } from "../../utils/razorpay";
+
+type IncomingItem = {
+  name?: string;
+  quantity?: string;
+};
+
+function mapGroceryList(item: GroceryListDocument) {
+  return {
+    _id: String(item._id),
+    code: String(item._id).slice(-8).toUpperCase(),
+    items: item.items.map((listItem) => ({
+      name: listItem.name,
+      quantity: listItem.quantity,
+      price: listItem.price,
+    })),
+    totalItems: item.totalItems,
+    totalAmount: item.totalAmount,
+    status: item.status,
+    paymentMethod: item.paymentMethod,
+    paymentStatus: item.paymentStatus,
+    seenByCustomer: item.seenByCustomer,
+    note: item.note,
+    pricedAt: item.pricedAt,
+    packedAt: item.packedAt,
+    readyAt: item.readyAt,
+    completedAt: item.completedAt,
+    paidAt: item.paidAt,
+    createdAt: item.createdAt,
+  };
+}
+
+export const customerGroceryListRouter = Router();
+
+customerGroceryListRouter.use(requireAuth);
+
+// Submit a new grocery list (item + quantity only, no prices)
+customerGroceryListRouter.post(
+  "/grocery-lists",
+  asyncHandler(async (req: Request, res: Response) => {
+    const dbUser = await getDbUserFromReq(req);
+
+    const incomingItems = Array.isArray(req.body.items)
+      ? (req.body.items as IncomingItem[])
+      : [];
+
+    const note = String(req.body.note || "").trim();
+
+    // Keep only rows the customer actually filled in.
+    const items = incomingItems
+      .map((item) => ({
+        name: String(item.name || "").trim(),
+        quantity: String(item.quantity || "").trim(),
+        price: 0,
+      }))
+      .filter((item) => item.name.length > 0);
+
+    if (!items.length) {
+      throw new AppError(400, "Add at least one item to your list");
+    }
+
+    const groceryList = await GroceryList.create({
+      user: dbUser._id,
+      customerName: dbUser.name || "",
+      customerEmail: dbUser.email || "",
+      items,
+      totalItems: items.length,
+      totalAmount: 0,
+      status: "received",
+      paymentMethod: "at_shop",
+      paymentStatus: "pending",
+      seenByCustomer: true,
+      note,
+    });
+
+    res.status(201).json(ok(mapGroceryList(groceryList)));
+  }),
+);
+
+// All of my lists (newest first)
+customerGroceryListRouter.get(
+  "/grocery-lists",
+  asyncHandler(async (req: Request, res: Response) => {
+    const dbUser = await getDbUserFromReq(req);
+
+    const lists = await GroceryList.find({ user: dbUser._id }).sort({
+      createdAt: -1,
+    });
+
+    const items = lists.map(mapGroceryList);
+
+    // Drives the tab-bar badge: how many lists the shop has updated
+    // and the customer hasn't opened yet.
+    const unseenCount = items.filter((item) => !item.seenByCustomer).length;
+
+    res.json(ok({ items, unseenCount }));
+  }),
+);
+
+// Clear the notification badge for one list
+customerGroceryListRouter.patch(
+  "/grocery-lists/:listId/seen",
+  asyncHandler(async (req: Request, res: Response) => {
+    const dbUser = await getDbUserFromReq(req);
+    const listId = String(req.params.listId || "").trim();
+
+    requireText(listId, "List id is required");
+
+    const list = await GroceryList.findOne({
+      _id: listId,
+      user: dbUser._id,
+    });
+
+    const foundList = requireFound(list, "List not found", 404);
+
+    foundList.seenByCustomer = true;
+    await foundList.save();
+
+    res.json(ok(mapGroceryList(foundList)));
+  }),
+);
+
+// Customer chooses to pay at the shop on pickup
+customerGroceryListRouter.patch(
+  "/grocery-lists/:listId/pay-at-shop",
+  asyncHandler(async (req: Request, res: Response) => {
+    const dbUser = await getDbUserFromReq(req);
+    const listId = String(req.params.listId || "").trim();
+
+    requireText(listId, "List id is required");
+
+    const list = await GroceryList.findOne({ _id: listId, user: dbUser._id });
+    const foundList = requireFound(list, "List not found", 404);
+
+    if (foundList.paymentStatus === "paid") {
+      throw new AppError(400, "This list is already paid");
+    }
+
+    foundList.paymentMethod = "at_shop";
+    await foundList.save();
+
+    res.json(ok(mapGroceryList(foundList)));
+  }),
+);
+
+// Customer chooses to pay online -> create a Razorpay order
+customerGroceryListRouter.post(
+  "/grocery-lists/:listId/pay-online",
+  asyncHandler(async (req: Request, res: Response) => {
+    const dbUser = await getDbUserFromReq(req);
+    const listId = String(req.params.listId || "").trim();
+
+    requireText(listId, "List id is required");
+
+    const list = await GroceryList.findOne({ _id: listId, user: dbUser._id });
+    const foundList = requireFound(list, "List not found", 404);
+
+    if (foundList.paymentStatus === "paid") {
+      throw new AppError(400, "This list is already paid");
+    }
+
+    if (foundList.totalAmount < 1) {
+      throw new AppError(400, "The shop has not priced this list yet");
+    }
+
+    const razorpayOrder = await razorpay.orders.create({
+      amount: toSubUnits(foundList.totalAmount),
+      currency: "INR",
+      receipt: `GroceryList_${String(foundList._id)}`,
+    });
+
+    foundList.paymentMethod = "online";
+    foundList.razorpayOrderId = razorpayOrder.id;
+    await foundList.save();
+
+    res.json(
+      ok({
+        razorpay: {
+          keyId: process.env.RAZORPAY_KEY_ID,
+          orderId: razorpayOrder.id,
+          amount: razorpayOrder.amount,
+          currency: razorpayOrder.currency,
+        },
+        list: mapGroceryList(foundList),
+      }),
+    );
+  }),
+);
+
+// Verify the Razorpay signature and mark the list paid
+customerGroceryListRouter.post(
+  "/grocery-lists/:listId/confirm-payment",
+  asyncHandler(async (req: Request, res: Response) => {
+    const dbUser = await getDbUserFromReq(req);
+    const listId = String(req.params.listId || "").trim();
+    const razorpayPaymentId = String(req.body.razorpay_payment_id || "").trim();
+    const razorpayOrderId = String(req.body.razorpay_order_id || "").trim();
+    const razorpaySignature = String(req.body.razorpay_signature || "").trim();
+
+    requireText(listId, "List id is required");
+    requireText(razorpayPaymentId, "razorpayPaymentId is needed");
+    requireText(razorpayOrderId, "razorpayOrderId is needed");
+    requireText(razorpaySignature, "razorpaySignature is needed");
+
+    const list = await GroceryList.findOne({ _id: listId, user: dbUser._id });
+    const foundList = requireFound(list, "List not found", 404);
+
+    if (foundList.paymentStatus === "paid") {
+      res.json(ok(mapGroceryList(foundList)));
+      return;
+    }
+
+    if (foundList.razorpayOrderId !== razorpayOrderId) {
+      throw new AppError(400, "Order id mismatch");
+    }
+
+    const signature = crypto
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET || "")
+      .update(`${razorpayOrderId}|${razorpayPaymentId}`)
+      .digest("hex");
+
+    if (signature !== razorpaySignature) {
+      throw new AppError(400, "Invalid payment signature");
+    }
+
+    foundList.paymentStatus = "paid";
+    foundList.paymentMethod = "online";
+    foundList.paymentId = razorpayPaymentId;
+    foundList.paidAt = new Date();
+    await foundList.save();
+
+    res.json(ok(mapGroceryList(foundList)));
+  }),
+);

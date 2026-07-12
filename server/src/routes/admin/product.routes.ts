@@ -115,10 +115,9 @@ adminProductRouter.post(
     const description = String(req.body.description || "").trim();
     const category = String(req.body.category || "").trim();
     const brand = String(req.body.brand || "").trim();
-    const price = Number(req.body.price);
-    const salePercentage = Number(req.body.salePercentage || 0);
     const stock = Number(req.body.stock);
     const status = String(req.body.status || "active").trim();
+    const unit = String(req.body.unit || "piece").trim();
     const colors = req.body.colors || [];
     const sizes = req.body.sizes || [];
 
@@ -127,8 +126,6 @@ adminProductRouter.post(
     requireText(category, "Category is required");
     requireText(brand, "Brand is required");
 
-    requireNumber(price, "Price is required");
-    requireNumber(salePercentage, "Sale Percentage is required");
     requireNumber(stock, "Stock is required");
 
     const existingCategory = await Category.findById(category);
@@ -161,8 +158,7 @@ adminProductRouter.post(
       images,
       colors,
       sizes,
-      price,
-      salePercentage,
+      unit,
       stock,
       status,
       createdBy: user._id,
@@ -186,12 +182,11 @@ adminProductRouter.put(
     const description = String(req.body.description || "").trim();
     const category = String(req.body.category || "").trim();
     const brand = String(req.body.brand || "").trim();
-    const price = Number(req.body.price);
-    const salePercentage = Number(req.body.salePercentage || 0);
     const stock = Number(req.body.stock);
     const status = String(req.body.status || "active").trim() as
       | "active"
       | "inactive";
+    const unit = String(req.body.unit || "piece").trim();
     const colors = req.body.colors || [];
     const sizes = req.body.sizes || [];
     const coverImagePublicId = String(req.body.coverImagePublicId || "").trim();
@@ -201,8 +196,6 @@ adminProductRouter.put(
     requireText(category, "Category is required");
     requireText(brand, "Brand is required");
 
-    requireNumber(price, "Price is required");
-    requireNumber(salePercentage, "Sale Percentage is required");
     requireNumber(stock, "Stock is required");
 
     const existingCategoryDoc = await Category.findById(category);
@@ -259,8 +252,7 @@ adminProductRouter.put(
     product.brand = brand;
     product.colors = colors;
     product.sizes = sizes;
-    product.price = price;
-    product.salePercentage = salePercentage;
+    product.unit = unit;
     product.stock = stock;
     product.status = status;
     product.set("images", finalImages);
