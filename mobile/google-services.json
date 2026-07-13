@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "207436596846",
+    "project_id": "monstergrocery",
+    "storage_bucket": "monstergrocery.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:207436596846:android:937f227474935df519887f",
+        "android_client_info": {
+          "package_name": "com.shiv_anshu_gupta.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBMN_Y09HxRYYKKlZqFT1AGS-Xaf4Jar-g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -39,3 +39,9 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Firebase service-account private key (a real secret — upload it via
+# `eas credentials`, never commit it). google-services.json is NOT secret
+# and MUST stay tracked, or EAS builds won't find it.
+*service-account*.json
+*-firebase-adminsdk-*.json

@@ -5,6 +5,7 @@ import { useAuth } from "@clerk/clerk-expo";
 import { registerForPushNotificationsAsync } from "@/lib/push";
 import { savePushToken } from "./api";
 import { useCustomerGroceryListStore } from "../grocery-list/store";
+import { toast } from "@/lib/toast";
 
 export function usePushNotifications() {
   const { isSignedIn } = useAuth();
@@ -16,15 +17,25 @@ export function usePushNotifications() {
     if (!isSignedIn || registeredToken.current) return;
 
     async function run() {
-      const token = await registerForPushNotificationsAsync();
+      const { token, reason } = await registerForPushNotificationsAsync();
 
-      if (!token) return;
+      if (!token) {
+        // Surface it — a silent failure here means notifications never work.
+        console.warn("Push registration failed:", reason);
+        toast.error(`Notifications off: ${reason}`);
+        return;
+      }
 
       try {
         await savePushToken(token);
         registeredToken.current = token;
-      } catch {
-        // A failed registration shouldn't break the app; we retry next launch.
+        console.log("Push token registered:", token);
+        toast.success("Notifications enabled");
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Failed to save push token";
+        console.warn("Saving push token failed:", message);
+        toast.error(`Notifications off: ${message}`);
       }
     }
 

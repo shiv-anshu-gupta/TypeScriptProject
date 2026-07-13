@@ -25,16 +25,19 @@ function getProjectId(): string | undefined {
   return fromConfig ?? fromEas;
 }
 
+export type PushRegistration = {
+  token: string | null;
+  // Why registration failed — surfaced to the UI so it isn't a silent no-op.
+  reason: string;
+};
+
 /**
  * Asks for permission and returns this device's Expo push token.
  *
- * Returns null (never throws) when push isn't possible — e.g. running in
- * Expo Go, on an emulator, permission denied, or no EAS project id — so the
- * app keeps working without notifications.
+ * Never throws: when push isn't possible (emulator, permission denied, no
+ * EAS project id, Expo Go) it reports why instead, so the app keeps working.
  */
-export async function registerForPushNotificationsAsync(): Promise<
-  string | null
-> {
+export async function registerForPushNotificationsAsync(): Promise<PushRegistration> {
   // Android needs a channel or the notification arrives silently.
   if (Platform.OS === "android") {
     await Notifications.setNotificationChannelAsync("default", {
@@ -47,7 +50,9 @@ export async function registerForPushNotificationsAsync(): Promise<
   }
 
   // Remote push only works on a physical device.
-  if (!Device.isDevice) return null;
+  if (!Device.isDevice) {
+    return { token: null, reason: "Not a physical device (emulator)" };
+  }
 
   const existing = await Notifications.getPermissionsAsync();
   let status = existing.status;
@@ -57,23 +62,29 @@ export async function registerForPushNotificationsAsync(): Promise<
     status = requested.status;
   }
 
-  if (status !== "granted") return null;
+  if (status !== "granted") {
+    return {
+      token: null,
+      reason: `Notification permission ${status}. Enable it in Android settings.`,
+    };
+  }
 
   const projectId = getProjectId();
 
   if (!projectId) {
-    console.warn(
-      "Push notifications disabled: no EAS projectId. Run `eas init` in mobile/.",
-    );
-    return null;
+    return {
+      token: null,
+      reason: "No EAS projectId in app.json. Run `eas init`.",
+    };
   }
 
   try {
     const token = await Notifications.getExpoPushTokenAsync({ projectId });
-    return token.data;
+    return { token: token.data, reason: "" };
   } catch (error) {
     // Expo Go can no longer obtain a push token — a dev build is required.
-    console.warn("Could not get an Expo push token", error);
-    return null;
+    const message =
+      error instanceof Error ? error.message : "Unknown push token error";
+    return { token: null, reason: `Token fetch failed: ${message}` };
   }
 }
