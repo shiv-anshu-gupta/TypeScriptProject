@@ -71,6 +71,35 @@ adminProductRouter.put(
   }),
 );
 
+adminProductRouter.delete(
+  "/categories/:id",
+  asyncHandler(async (req: Request, res: Response) => {
+    const extractCategoryId = req.params.id as string;
+
+    const existingCategory = await Category.findById(extractCategoryId);
+    const category = requireFound(existingCategory, "Category not found");
+
+    // Every product holds a required reference to its category, so deleting a
+    // category that still has products would leave them orphaned.
+    const productCount = await Product.countDocuments({
+      category: category._id,
+    });
+
+    if (productCount > 0) {
+      throw new AppError(
+        400,
+        `This category still has ${productCount} product${
+          productCount > 1 ? "s" : ""
+        }. Move or delete them first.`,
+      );
+    }
+
+    await Category.findByIdAndDelete(extractCategoryId);
+
+    res.json(ok({ _id: String(category._id) }));
+  }),
+);
+
 // products
 adminProductRouter.get(
   "/products",

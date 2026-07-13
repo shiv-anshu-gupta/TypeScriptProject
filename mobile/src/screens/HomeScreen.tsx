@@ -15,7 +15,6 @@ import type { RootStackParamList } from "@/navigation/types";
 import { useCustomerHomeStore } from "@/features/customer/home/store";
 import { ProductCard } from "@/components/ProductCard";
 import { GroceryList } from "@/components/GroceryList";
-import { formatPrice } from "@/lib/utils";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -69,38 +68,6 @@ export function HomeScreen() {
               </Pressable>
             ))}
           </View>
-        </View>
-      ) : null}
-
-      {/* Coupons */}
-      {data.coupons.length ? (
-        <View className="mt-8 px-4">
-          <Text className="mb-3 text-lg font-semibold text-foreground">
-            Offers for you
-          </Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ gap: 12 }}
-          >
-            {data.coupons.map((coupon) => (
-              <View
-                key={coupon._id}
-                className="w-56 gap-2 rounded-2xl border border-dashed border-primary/30 bg-secondary p-4"
-              >
-                <View className="flex-row items-center gap-2">
-                  <Feather name="percent" size={16} color="#18181b" />
-                  <Text className="text-xl font-bold tracking-widest text-foreground">
-                    {coupon.code}
-                  </Text>
-                </View>
-                <Text className="text-sm text-muted-foreground">
-                  {coupon.percentage}% off over{" "}
-                  {formatPrice(coupon.minimumOrderValue)}
-                </Text>
-              </View>
-            ))}
-          </ScrollView>
         </View>
       ) : null}
 

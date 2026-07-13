@@ -1,4 +1,4 @@
-import { apiGet, apiPost, apiPut } from "@/lib/api";
+import { apiDelete, apiGet, apiPost, apiPut } from "@/lib/api";
 import type {
   Category,
   CreateCategoryBody,
@@ -25,6 +25,10 @@ export async function updateAdminCategory(
     `/admin/categories/${categoryId}`,
     body,
   );
+}
+
+export async function deleteAdminCategory(categoryId: string) {
+  return apiDelete<{ _id: string }>(`/admin/categories/${categoryId}`);
 }
 
 // products

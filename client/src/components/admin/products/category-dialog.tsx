@@ -9,10 +9,11 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import {
   createAdminCategory,
+  deleteAdminCategory,
   updateAdminCategory,
 } from "@/features/admin/products/api";
 import type { Category } from "@/features/admin/products/types";
-import { Pencil, Tag } from "lucide-react";
+import { Pencil, Tag, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 const dialogContentClass = "sm:max-w-xl";
@@ -34,6 +35,12 @@ const categoryName = "text-sm font-medium text-foreground";
 
 const editButtonClass = "h-4 w-4";
 
+const deleteButtonClass = "h-4 w-4 text-destructive";
+
+const rowActions = "flex items-center gap-1";
+
+const errorTextClass = "text-sm text-destructive";
+
 type CategoryDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -50,12 +57,15 @@ export function CategoryDialog({
   const [name, setName] = useState("");
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [saving, setSaving] = useState(false);
+  const [deletingCategoryId, setDeletingCategoryId] = useState("");
+  const [error, setError] = useState("");
 
   async function handleSave() {
     if (!name.trim()) return;
 
     try {
       setSaving(true);
+      setError("");
 
       if (editingCategory) {
         await updateAdminCategory(editingCategory._id, { name: name.trim() });
@@ -66,8 +76,40 @@ export function CategoryDialog({
       setName("");
       setEditingCategory(null);
       await onSaved();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save category");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleDelete(categoryToDelete: Category) {
+    const confirmed = window.confirm(
+      `Delete the category "${categoryToDelete.name}"?`,
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setDeletingCategoryId(categoryToDelete._id);
+      setError("");
+
+      await deleteAdminCategory(categoryToDelete._id);
+
+      // If the row being edited was the one deleted, reset the form.
+      if (editingCategory?._id === categoryToDelete._id) {
+        setEditingCategory(null);
+        setName("");
+      }
+
+      await onSaved();
+    } catch (err) {
+      // The server refuses to delete a category that still has products.
+      setError(
+        err instanceof Error ? err.message : "Failed to delete category",
+      );
+    } finally {
+      setDeletingCategoryId("");
     }
   }
 
@@ -80,6 +122,7 @@ export function CategoryDialog({
     if (!nextOpen) {
       setName("");
       setEditingCategory(null);
+      setError("");
     }
 
     onOpenChange(nextOpen);
@@ -104,6 +147,8 @@ export function CategoryDialog({
             </Button>
           </div>
 
+          {error ? <p className={errorTextClass}>{error}</p> : null}
+
           <Separator />
 
           <div className={categoriesList}>
@@ -114,14 +159,26 @@ export function CategoryDialog({
                   <span className={categoryName}>{cat.name}</span>
                 </div>
 
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="ghost"
-                  onClick={() => handleEdit(cat)}
-                >
-                  <Pencil className={editButtonClass} />
-                </Button>
+                <div className={rowActions}>
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => handleEdit(cat)}
+                  >
+                    <Pencil className={editButtonClass} />
+                  </Button>
+
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    disabled={deletingCategoryId === cat._id}
+                    onClick={() => void handleDelete(cat)}
+                  >
+                    <Trash2 className={deleteButtonClass} />
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
