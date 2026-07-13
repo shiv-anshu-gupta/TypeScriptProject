@@ -10,6 +10,16 @@ import {
   GroceryListItem,
   GroceryListStatus,
 } from "../../models/GroceryList";
+import { notifyUser } from "../../utils/push";
+
+// What the customer's phone shows when the shop moves the list along.
+const statusNotification: Record<AdminGroceryListStatus, string> = {
+  packing: "The shop has started packing your order.",
+  packed: "Your order is packed.",
+  ready: "Your order is ready — come and collect it!",
+  completed: "Your order is complete. Thank you!",
+  cancelled: "Your order was cancelled by the shop.",
+};
 
 // Statuses the shopkeeper can move a list to (pricing is its own endpoint).
 const ALLOWED_STATUSES = [
@@ -134,6 +144,16 @@ adminGroceryListRouter.patch(
 
     await foundList.save();
 
+    // Fire-and-forget: never let a push failure fail the shopkeeper's request.
+    void notifyUser(
+      foundList.user,
+      "Your list is priced",
+      `List #${String(foundList._id)
+        .slice(-8)
+        .toUpperCase()} — total ₹${totalAmount}. Tap to view.`,
+      { listId: String(foundList._id) },
+    );
+
     res.json(
       ok({
         items: await getAllGroceryLists(),
@@ -182,6 +202,13 @@ adminGroceryListRouter.patch(
     foundList.seenByCustomer = false;
 
     await foundList.save();
+
+    void notifyUser(
+      foundList.user,
+      `Order #${String(foundList._id).slice(-8).toUpperCase()}`,
+      statusNotification[status],
+      { listId: String(foundList._id) },
+    );
 
     res.json(
       ok({

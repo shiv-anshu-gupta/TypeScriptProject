@@ -11,11 +11,13 @@ import { tokenCache } from "@/lib/token-cache";
 import { hydrateGuestCart } from "@/lib/guest-cart-storage";
 import { useBootstrapAuth } from "@/features/auth/useBootstrapAuth";
 import { useCustomerGroceryListStore } from "@/features/customer/grocery-list/store";
+import { usePushNotifications } from "@/features/customer/push/use-push-notifications";
 import { RootNavigator } from "@/navigation/RootNavigator";
 import { Toaster } from "@/components/Toaster";
 
 function Bootstrap() {
   useBootstrapAuth();
+  usePushNotifications();
 
   const { isSignedIn } = useAuth();
   const loadLists = useCustomerGroceryListStore((state) => state.loadLists);

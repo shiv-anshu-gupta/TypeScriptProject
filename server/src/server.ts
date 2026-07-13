@@ -22,6 +22,7 @@ import { adminSettingsRouter } from "./routes/admin/settings.routes";
 import { adminDashboardRouter } from "./routes/admin/dashboard.routes";
 import { customerHomeRouter } from "./routes/customer/home.routes";
 import { customerGroceryListRouter } from "./routes/customer/grocery-list.routes";
+import { customerPushTokenRouter } from "./routes/customer/push-token.routes";
 import { adminGroceryListRouter } from "./routes/admin/grocery-list.routes";
 
 async function mainEntryFunction() {
@@ -62,6 +63,7 @@ async function mainEntryFunction() {
   app.use("/customer", customerCheckoutWithPointsRouter);
   app.use("/customer", customerOrderRouter);
   app.use("/customer", customerGroceryListRouter);
+  app.use("/customer", customerPushTokenRouter);
 
   // admin routes
   app.use("/admin", adminProductRouter);

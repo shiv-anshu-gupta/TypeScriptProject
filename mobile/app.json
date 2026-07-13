@@ -9,10 +9,21 @@
     "userInterfaceStyle": "light",
     "plugins": [
       "expo-secure-store",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-notifications",
+        {
+          "color": "#18181b",
+          "defaultChannel": "default"
+        }
+      ]
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": ".",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -21,10 +32,17 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.shiv_anshu_gupta.mobile"
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "f5c42a74-f6ad-4024-9e80-b8eac51fc36e"
+      }
+    },
+    "owner": "shiv_anshu_gupta"
   }
 }

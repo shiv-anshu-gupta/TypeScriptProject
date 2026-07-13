@@ -64,6 +64,11 @@ const UserSchema = new mongoose.Schema(
       type: [addressSchema],
       default: [],
     },
+    // Expo push tokens — one per device the user has signed in on.
+    pushTokens: {
+      type: [String],
+      default: [],
+    },
   },
   { timestamps: true },
 );
