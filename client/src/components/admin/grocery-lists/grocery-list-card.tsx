@@ -37,14 +37,32 @@ const statusLabel: Record<GroceryListStatus, string> = {
   cancelled: "Cancelled",
 };
 
-// What the shopkeeper can move this list to next.
-const nextStatuses: UpdateGroceryListStatusBody["status"][] = [
+// The order a list moves through. Progress is one-way: a step can only be
+// clicked when it is the immediate next one, so the shopkeeper can never jump
+// backwards (which previously made the buttons look like they toggled).
+const STATUS_FLOW = [
+  "priced",
   "packing",
   "packed",
   "ready",
   "completed",
-  "cancelled",
-];
+] as const;
+
+type FlowStatus = (typeof STATUS_FLOW)[number];
+
+// The steps the shopkeeper actually clicks (everything after "priced",
+// which is reached by sending prices rather than by a status button).
+const FLOW_ACTIONS = STATUS_FLOW.filter(
+  (status): status is Exclude<FlowStatus, "priced"> => status !== "priced",
+);
+
+// Buttons for these steps read as an action, not a state.
+const actionLabel: Record<Exclude<FlowStatus, "priced">, string> = {
+  packing: "Start packing",
+  packed: "Mark packed",
+  ready: "Ready to collect",
+  completed: "Mark completed",
+};
 
 type GroceryListCardProps = {
   list: AdminGroceryList;
@@ -66,6 +84,12 @@ function GroceryListCard({
   onChangeStatus,
 }: GroceryListCardProps) {
   const isPriced = list.totalAmount > 0;
+
+  // How far along the flow this list is. -1 for "received" (not priced yet).
+  const currentIndex = STATUS_FLOW.indexOf(list.status as FlowStatus);
+
+  // Cancelled or completed lists are finished — nothing further to do.
+  const isClosed = list.status === "cancelled" || list.status === "completed";
 
   return (
     <Card className={cardClass}>
@@ -128,24 +152,40 @@ function GroceryListCard({
         </div>
 
         <div className={actionsRowClass}>
-          <Button onClick={onSavePrices} disabled={saving}>
+          <Button onClick={onSavePrices} disabled={saving || isClosed}>
             {isPriced ? "Update prices" : "Send prices to customer"}
           </Button>
 
-          {isPriced
-            ? nextStatuses
-                .filter((status) => status !== list.status)
-                .map((status) => (
+          {isPriced && !isClosed
+            ? FLOW_ACTIONS.map((status) => {
+                const stepIndex = STATUS_FLOW.indexOf(status);
+                const isDone = stepIndex <= currentIndex;
+                const isNext = stepIndex === currentIndex + 1;
+
+                return (
                   <Button
                     key={status}
-                    variant="outline"
-                    disabled={saving}
+                    variant={isNext ? "default" : "outline"}
+                    // Only the immediate next step is actionable. Past steps
+                    // are done, later steps aren't reachable yet.
+                    disabled={saving || !isNext}
                     onClick={() => onChangeStatus(status)}
                   >
-                    {statusLabel[status]}
+                    {isDone ? `✓ ${statusLabel[status]}` : actionLabel[status]}
                   </Button>
-                ))
+                );
+              })
             : null}
+
+          {isPriced && !isClosed ? (
+            <Button
+              variant="destructive"
+              disabled={saving}
+              onClick={() => onChangeStatus("cancelled")}
+            >
+              Cancel order
+            </Button>
+          ) : null}
         </div>
       </CardContent>
     </Card>
