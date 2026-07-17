@@ -101,7 +101,13 @@ customerGroceryListRouter.get(
     // and the customer hasn't opened yet.
     const unseenCount = items.filter((item) => !item.seenByCustomer).length;
 
-    res.json(ok({ items, unseenCount }));
+    // Shop's UPI details so the app can build a "pay via UPI" deep link.
+    const upi = {
+      id: process.env.SHOP_UPI_ID || "",
+      name: process.env.SHOP_NAME || "Monster Grocery",
+    };
+
+    res.json(ok({ items, unseenCount, upi }));
   }),
 );
 

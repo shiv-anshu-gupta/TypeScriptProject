@@ -12,7 +12,7 @@ export type GroceryListStatus =
   | "completed"
   | "cancelled";
 
-export type GroceryListPaymentMethod = "online" | "at_shop";
+export type GroceryListPaymentMethod = "online" | "upi" | "at_shop";
 export type GroceryListPaymentStatus = "pending" | "paid";
 
 export type GroceryListItem = {
@@ -113,7 +113,7 @@ const GroceryListSchema = new Schema<GroceryList>(
     },
     paymentMethod: {
       type: String,
-      enum: ["online", "at_shop"],
+      enum: ["online", "upi", "at_shop"],
       default: "at_shop",
     },
     paymentStatus: {

@@ -217,3 +217,50 @@ adminGroceryListRouter.patch(
     );
   }),
 );
+
+// Shopkeeper confirms they received the payment (UPI / cash at shop).
+// There's no automatic reconciliation for direct UPI, so the shop marks it.
+adminGroceryListRouter.patch(
+  "/grocery-lists/:listId/mark-paid",
+  asyncHandler(async (req: Request, res: Response) => {
+    const listId = String(req.params.listId || "").trim();
+    requireText(listId, "List id is required");
+
+    const list = await GroceryList.findById(listId);
+    const foundList = requireFound(list, "List not found", 404);
+
+    if (foundList.totalAmount < 1) {
+      throw new AppError(400, "Price the list before marking it paid");
+    }
+
+    if (foundList.paymentStatus === "paid") {
+      res.json(ok({ items: await getAllGroceryLists() }));
+      return;
+    }
+
+    foundList.paymentStatus = "paid";
+    foundList.paidAt = new Date();
+    // Keep whatever method was set; default to UPI if none chosen yet.
+    if (foundList.paymentMethod === "at_shop") {
+      foundList.paymentMethod = "upi";
+    }
+    foundList.seenByCustomer = false;
+
+    await foundList.save();
+
+    void notifyUser(
+      foundList.user,
+      "Payment received",
+      `The shop confirmed payment for order #${String(foundList._id)
+        .slice(-8)
+        .toUpperCase()}.`,
+      { listId: String(foundList._id) },
+    );
+
+    res.json(
+      ok({
+        items: await getAllGroceryLists(),
+      }),
+    );
+  }),
+);
