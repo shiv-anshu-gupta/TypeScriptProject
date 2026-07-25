@@ -93,7 +93,7 @@ function StatusTimeline({ status }: { status: GroceryListStatus }) {
 }
 
 function ListCard({ list }: { list: CustomerGroceryList }) {
-  const { markSeen, payAtShop, payOnline, payingListId } =
+  const { markSeen, payAtShop, payViaUpi, payingListId } =
     useCustomerGroceryListStore((state) => state);
 
   const isPriced = list.totalAmount > 0;
@@ -170,27 +170,15 @@ function ListCard({ list }: { list: CustomerGroceryList }) {
         isPaid ? (
           <Badge className="border-0 bg-success">
             <Text className="text-xs font-medium text-primary-foreground">
-              Paid online
+              Payment received
             </Text>
           </Badge>
-        ) : list.paymentMethod === "at_shop" ? (
-          <View className="gap-2">
-            <Text className="text-xs text-muted-foreground">
-              You'll pay at the shop on pickup.
-            </Text>
-            <Button
-              label="Pay online instead"
-              variant="outline"
-              loading={busy}
-              onPress={() => void payOnline(list._id)}
-            />
-          </View>
         ) : (
           <View className="gap-2">
             <Button
-              label={`Pay ${formatPrice(list.totalAmount)} online`}
+              label={`Pay ${formatPrice(list.totalAmount)} via UPI`}
               loading={busy}
-              onPress={() => void payOnline(list._id)}
+              onPress={() => void payViaUpi(list)}
             />
             <Button
               label="Pay at the shop"
@@ -198,6 +186,9 @@ function ListCard({ list }: { list: CustomerGroceryList }) {
               loading={busy}
               onPress={() => void payAtShop(list._id)}
             />
+            <Text className="text-center text-[11px] text-muted-foreground">
+              After paying, the shop confirms once the money arrives.
+            </Text>
           </View>
         )
       ) : null}

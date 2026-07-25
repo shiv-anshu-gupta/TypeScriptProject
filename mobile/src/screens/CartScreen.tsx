@@ -37,7 +37,6 @@ export function CartScreen() {
     promoInput,
     appliedPromo,
     promoLoading,
-    checkoutLoading,
     pointsCheckoutLoading,
     loadCart,
     increase,
@@ -46,7 +45,6 @@ export function CartScreen() {
     setPromoInput,
     applyPromo,
     setSelectedAddressId,
-    startRazorpayCheckout,
     startPointsCheckout,
   } = useCustomerCartAndCheckoutStore((state) => state);
 
@@ -234,21 +232,7 @@ export function CartScreen() {
             {signedIn ? (
               <View className="mt-1 gap-2">
                 <Button
-                  label="Place order"
-                  loading={checkoutLoading}
-                  onPress={() =>
-                    startRazorpayCheckout({
-                      isSignedIn: signedIn,
-                      name: user?.fullName ?? "Customer",
-                      email:
-                        user?.primaryEmailAddress?.emailAddress ?? "",
-                      onSuccess,
-                    })
-                  }
-                />
-                <Button
                   label={`Pay with points (${points} pts)`}
-                  variant="outline"
                   loading={pointsCheckoutLoading}
                   onPress={() =>
                     startPointsCheckout({ isSignedIn: signedIn, onSuccess })

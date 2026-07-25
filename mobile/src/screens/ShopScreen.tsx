@@ -14,11 +14,7 @@ import { Feather } from "@expo/vector-icons";
 
 import type { RootStackParamList, TabParamList } from "@/navigation/types";
 import { useCustomerProductList } from "@/features/customer/products/use-customer-collections";
-import {
-  SIZE_OPTIONS,
-  getCoverImage,
-  getSwatchColor,
-} from "@/features/customer/products/product-list.shared";
+import { getCoverImage } from "@/features/customer/products/product-list.shared";
 import type { ProductSort } from "@/features/customer/products/types";
 import { ProductCard } from "@/components/ProductCard";
 
@@ -79,7 +75,6 @@ export function ShopScreen() {
     loading,
     filters,
     sort,
-    availableColors,
     hasActiveFilters,
     changeSort,
     toggleFacet,
@@ -130,31 +125,6 @@ export function ShopScreen() {
             ))}
           </ScrollView>
         ) : null}
-
-        {/* Sizes + colors */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ gap: 8, paddingBottom: 4 }}
-        >
-          {SIZE_OPTIONS.map((size) => (
-            <Chip
-              key={size}
-              label={size}
-              active={filters.size === size}
-              onPress={() => toggleFacet("size", size)}
-            />
-          ))}
-          {availableColors.slice(0, 8).map((color) => (
-            <Chip
-              key={color}
-              label={color}
-              swatch={getSwatchColor(color)}
-              active={filters.color === color}
-              onPress={() => toggleFacet("color", color)}
-            />
-          ))}
-        </ScrollView>
 
         <View className="flex-row items-center justify-between pt-1">
           <Text className="text-sm text-muted-foreground">{resultLabel}</Text>

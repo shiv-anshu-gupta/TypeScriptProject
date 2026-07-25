@@ -40,25 +40,6 @@ export type AppliedPromo = {
   minimumOrderValue: number;
 };
 
-export type CheckoutSessionResponse = {
-  razorpay: {
-    keyId: string;
-    orderId: string;
-    amount: number;
-    currency: string;
-  };
-  order: {
-    _id: string;
-    totalItems: number;
-    discountAmount: number;
-    totalAmount: number;
-  };
-};
-
-export type CheckoutConfirmResponse = {
-  _id: string;
-};
-
 export type CheckoutPointsResponse = {
   points: number;
 };

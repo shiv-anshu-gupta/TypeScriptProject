@@ -1,19 +1,24 @@
 import { create } from "zustand";
-import type { CustomerGroceryList, SubmitGroceryListBody } from "./types";
+import type {
+  CustomerGroceryList,
+  ShopUpi,
+  SubmitGroceryListBody,
+} from "./types";
 import {
-  confirmGroceryListPayment,
   getCustomerGroceryLists,
   markGroceryListSeen,
   payGroceryListAtShop,
-  startGroceryListOnlinePayment,
   submitGroceryList,
 } from "./api";
 import { toast } from "@/lib/toast";
-import { openRazorpayCheckout } from "@/lib/razorpay";
+import { buildUpiUrl, openUpiPayment } from "@/lib/upi";
+
+const emptyUpi: ShopUpi = { id: "", name: "JhatPat List" };
 
 type CustomerGroceryListStore = {
   items: CustomerGroceryList[];
   unseenCount: number;
+  upi: ShopUpi;
   loading: boolean;
   submitting: boolean;
   payingListId: string;
@@ -21,7 +26,7 @@ type CustomerGroceryListStore = {
   submitList: (body: SubmitGroceryListBody) => Promise<boolean>;
   markSeen: (listId: string) => Promise<void>;
   payAtShop: (listId: string) => Promise<void>;
-  payOnline: (listId: string) => Promise<void>;
+  payViaUpi: (list: CustomerGroceryList) => Promise<void>;
   clear: () => void;
 };
 
@@ -29,6 +34,7 @@ export const useCustomerGroceryListStore = create<CustomerGroceryListStore>(
   (set, get) => ({
     items: [],
     unseenCount: 0,
+    upi: emptyUpi,
     loading: false,
     submitting: false,
     payingListId: "",
@@ -40,6 +46,7 @@ export const useCustomerGroceryListStore = create<CustomerGroceryListStore>(
         set({
           items: response?.items ?? [],
           unseenCount: response?.unseenCount ?? 0,
+          upi: response?.upi ?? emptyUpi,
           loading: false,
         });
       } catch {
@@ -91,41 +98,33 @@ export const useCustomerGroceryListStore = create<CustomerGroceryListStore>(
       }
     },
 
-    payOnline: async (listId) => {
-      try {
-        set({ payingListId: listId });
+    // Opens the customer's UPI app (GPay/PhonePe/Paytm) with the amount filled.
+    // There's no automatic confirmation — the shopkeeper marks it paid once the
+    // money lands in their UPI app.
+    payViaUpi: async (list) => {
+      const { upi } = get();
 
-        const session = await startGroceryListOnlinePayment(listId);
+      if (!upi.id) {
+        toast.error("The shop hasn't set up UPI payments yet");
+        return;
+      }
 
-        if (!session.razorpay?.keyId || !session.razorpay.orderId) {
-          throw new Error("Invalid payment session");
-        }
+      if (list.totalAmount < 1) {
+        toast.error("This list isn't priced yet");
+        return;
+      }
 
-        // Native Razorpay sheet — unavailable in Expo Go (see lib/razorpay).
-        const payment = await openRazorpayCheckout({
-          key: session.razorpay.keyId,
-          amount: session.razorpay.amount,
-          currency: session.razorpay.currency,
-          order_id: session.razorpay.orderId,
-          name: "Monster Grocery",
-          description: `List ${session.list.code}`,
-          prefill: { name: "", email: "" },
-        });
+      const url = buildUpiUrl({
+        upiId: upi.id,
+        payeeName: upi.name,
+        amount: list.totalAmount,
+        note: `Order ${list.code}`,
+      });
 
-        await confirmGroceryListPayment(listId, {
-          razorpay_payment_id: payment.razorpay_payment_id,
-          razorpay_order_id: payment.razorpay_order_id,
-          razorpay_signature: payment.razorpay_signature,
-        });
+      const opened = await openUpiPayment(url);
 
-        set({ payingListId: "" });
-        toast.success("Payment successful");
-        await get().loadLists();
-      } catch (error) {
-        set({ payingListId: "" });
-        const message =
-          error instanceof Error ? error.message : "Payment failed";
-        toast.error(message);
+      if (!opened) {
+        toast.error("No UPI app found on this phone");
       }
     },
 
@@ -133,6 +132,7 @@ export const useCustomerGroceryListStore = create<CustomerGroceryListStore>(
       set({
         items: [],
         unseenCount: 0,
+        upi: emptyUpi,
         loading: false,
         submitting: false,
         payingListId: "",

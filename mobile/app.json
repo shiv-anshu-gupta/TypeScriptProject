@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "mobile",
+    "name": "JhatPat List",
     "slug": "mobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "scheme": "monstermobile",
+    "scheme": "jhatpatlist",
     "userInterfaceStyle": "light",
     "plugins": [
       "expo-secure-store",
@@ -20,7 +20,7 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": ".",
+      "bundleIdentifier": "com.jhatpat.list",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -33,7 +33,7 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.shiv_anshu_gupta.mobile",
+      "package": "com.jhatpat.list",
       "googleServicesFile": "./google-services.json"
     },
     "web": {

@@ -7,7 +7,7 @@ export type GroceryListStatus =
   | "completed"
   | "cancelled";
 
-export type GroceryListPaymentMethod = "online" | "at_shop";
+export type GroceryListPaymentMethod = "online" | "upi" | "at_shop";
 export type GroceryListPaymentStatus = "pending" | "paid";
 
 export type GroceryListItem = {
@@ -35,9 +35,15 @@ export type CustomerGroceryList = {
   createdAt: string;
 };
 
+export type ShopUpi = {
+  id: string;
+  name: string;
+};
+
 export type CustomerGroceryListsResponse = {
   items: CustomerGroceryList[];
   unseenCount: number;
+  upi: ShopUpi;
 };
 
 export type SubmitGroceryListBody = {
@@ -46,14 +52,4 @@ export type SubmitGroceryListBody = {
     quantity: string;
   }>;
   note?: string;
-};
-
-export type PayOnlineResponse = {
-  razorpay: {
-    keyId: string;
-    orderId: string;
-    amount: number;
-    currency: string;
-  };
-  list: CustomerGroceryList;
 };

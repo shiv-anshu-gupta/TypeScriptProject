@@ -11,8 +11,6 @@ import type {
 import {
   addCustomerCartItem,
   applyCustomerPromo,
-  confirmCheckout,
-  createCheckoutSession,
   decreaseCustomerCartItem,
   getCheckoutData,
   increaseCustomerCartItem,
@@ -26,19 +24,11 @@ import {
   readGuestItems,
   writeGuestItems,
 } from "@/lib/guest-cart-storage";
-import { openRazorpayCheckout } from "@/lib/razorpay";
 
 type AddCartItemInput = AddCustomerCartItemBody & {
   title: string;
   brand: string;
   image: string;
-};
-
-type RazorpayArgs = {
-  isSignedIn: boolean;
-  name: string;
-  email: string;
-  onSuccess: () => void;
 };
 
 type PointsArgs = {
@@ -78,7 +68,6 @@ type CustomerCartAndCheckoutStore = {
   setPromoInput: (value: string) => void;
   clearPromo: () => void;
   applyPromo: () => Promise<void>;
-  startRazorpayCheckout: (args: RazorpayArgs) => Promise<void>;
   startPointsCheckout: (args: PointsArgs) => Promise<void>;
   clear: () => void;
 };
@@ -348,79 +337,6 @@ export const useCustomerCartAndCheckoutStore =
         isOpen: false,
         ...defaultUiState,
       }),
-
-    startRazorpayCheckout: async ({ isSignedIn, name, email, onSuccess }) => {
-      const { selectedAddressId, appliedPromo, cart } = get();
-
-      if (!isSignedIn) {
-        toast.error("Sign in to checkout");
-        return;
-      }
-
-      if (!selectedAddressId) {
-        toast.error("Add a default address from the profile section");
-        return;
-      }
-
-      if (!cart.items.length) {
-        toast.error("Your cart is empty");
-        return;
-      }
-
-      try {
-        set({ checkoutLoading: true });
-
-        const session = await createCheckoutSession({
-          addressId: selectedAddressId,
-          promoCode: appliedPromo?.code || undefined,
-        });
-
-        if (
-          !session.razorpay?.keyId ||
-          !session.razorpay.orderId ||
-          !session.order._id
-        ) {
-          throw new Error("Invalid checkout session");
-        }
-
-        // Opens the native Razorpay sheet. In Expo Go the native module is
-        // unavailable, so this rejects with a clear message (see lib/razorpay).
-        const payment = await openRazorpayCheckout({
-          key: session.razorpay.keyId,
-          amount: session.razorpay.amount,
-          currency: session.razorpay.currency,
-          order_id: session.razorpay.orderId,
-          name: "Monster E-commerce",
-          description: "Order payment",
-          prefill: { name, email },
-        });
-
-        const confirmed = await confirmCheckout({
-          orderId: session.order._id,
-          razorpay_payment_id: payment.razorpay_payment_id,
-          razorpay_order_id: payment.razorpay_order_id,
-          razorpay_signature: payment.razorpay_signature,
-        });
-
-        if (!confirmed._id) {
-          throw new Error("Order confirmation failed");
-        }
-
-        set({
-          cart: emptyCart,
-          isOpen: false,
-          ...defaultUiState,
-        });
-
-        toast.success("Payment successful");
-        onSuccess();
-      } catch (error) {
-        set({ checkoutLoading: false });
-        const message =
-          error instanceof Error ? error.message : "Unable to start checkout";
-        toast.error(message);
-      }
-    },
 
     startPointsCheckout: async ({ isSignedIn, onSuccess }) => {
       const { selectedAddressId, appliedPromo, points, cart } = get();
