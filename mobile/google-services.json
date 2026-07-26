@@ -26,9 +26,9 @@
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:207436596846:android:937f227474935df519887f",
+        "mobilesdk_app_id": "1:207436596846:android:26a21513a06c366719887f",
         "android_client_info": {
-          "package_name": "com.shiv_anshu_gupta.mobile"
+          "package_name": "com.skirana.app"
         }
       },
       "oauth_client": [],

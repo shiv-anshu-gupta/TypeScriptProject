@@ -45,3 +45,8 @@ yarn-error.*
 # and MUST stay tracked, or EAS builds won't find it.
 *service-account*.json
 *-firebase-adminsdk-*.json
+
+# EAS credentials export — contains the keystore + its passwords. Secret.
+credentials.json
+credentials/
+upload_certificate.pem

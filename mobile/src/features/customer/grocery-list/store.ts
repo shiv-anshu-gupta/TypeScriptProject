@@ -13,7 +13,7 @@ import {
 import { toast } from "@/lib/toast";
 import { buildUpiUrl, openUpiPayment } from "@/lib/upi";
 
-const emptyUpi: ShopUpi = { id: "", name: "JhatPat List" };
+const emptyUpi: ShopUpi = { id: "", name: "sKirana" };
 
 type CustomerGroceryListStore = {
   items: CustomerGroceryList[];
