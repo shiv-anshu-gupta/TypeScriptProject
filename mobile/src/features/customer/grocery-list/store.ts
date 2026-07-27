@@ -8,6 +8,7 @@ import {
   getCustomerGroceryLists,
   markGroceryListSeen,
   payGroceryListAtShop,
+  removeGroceryListItem,
   submitGroceryList,
 } from "./api";
 import { toast } from "@/lib/toast";
@@ -25,6 +26,7 @@ type CustomerGroceryListStore = {
   loadLists: () => Promise<void>;
   submitList: (body: SubmitGroceryListBody) => Promise<boolean>;
   markSeen: (listId: string) => Promise<void>;
+  removeItem: (listId: string, index: number) => Promise<void>;
   payAtShop: (listId: string) => Promise<void>;
   payViaUpi: (list: CustomerGroceryList) => Promise<void>;
   clear: () => void;
@@ -82,6 +84,30 @@ export const useCustomerGroceryListStore = create<CustomerGroceryListStore>(
         }));
       } catch {
         // a failed badge clear shouldn't interrupt the user
+      }
+    },
+
+    // Remove one item from a sent list (server enforces: only before packing,
+    // never after payment). The server returns the updated list — including
+    // the recalculated total — which replaces the stale copy in place.
+    removeItem: async (listId, index) => {
+      try {
+        const updated = await removeGroceryListItem(listId, index);
+
+        if (!updated?._id) {
+          throw new Error("Failed to remove item");
+        }
+
+        set((state) => ({
+          items: state.items.map((item) =>
+            item._id === listId ? updated : item,
+          ),
+        }));
+        toast.success("Item removed");
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Failed to remove item";
+        toast.error(message);
       }
     },
 

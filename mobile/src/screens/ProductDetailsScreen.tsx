@@ -293,7 +293,7 @@ export function ProductDetailsScreen() {
             disabled={product.stock < 1}
             onPress={() => {
               addProduct(product.title, product.unit);
-              toast.success("Added to your list");
+              toast.success("Added — send it from the Lists tab");
             }}
             icon={<Feather name="plus" size={16} color="#fafafa" />}
           />

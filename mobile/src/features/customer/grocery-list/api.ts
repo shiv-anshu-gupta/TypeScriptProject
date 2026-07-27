@@ -27,3 +27,10 @@ export async function payGroceryListAtShop(listId: string) {
     `/customer/grocery-lists/${listId}/pay-at-shop`,
   );
 }
+
+export async function removeGroceryListItem(listId: string, index: number) {
+  return apiPatch<CustomerGroceryList, { index: number }>(
+    `/customer/grocery-lists/${listId}/remove-item`,
+    { index },
+  );
+}

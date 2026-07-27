@@ -26,6 +26,39 @@ const sortOptions: { key: ProductSort; label: string }[] = [
   { key: "recent", label: "Newest" },
 ];
 
+// One entry in the vertical category rail on the left of the product grid.
+function RailItem({
+  label,
+  active,
+  onPress,
+}: {
+  label: string;
+  active: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      className={
+        active
+          ? "items-center border-l-4 border-primary bg-secondary px-1 py-3.5"
+          : "items-center border-l-4 border-transparent px-1 py-3.5"
+      }
+    >
+      <Text
+        numberOfLines={2}
+        className={
+          active
+            ? "text-center text-xs font-bold text-foreground"
+            : "text-center text-xs font-medium text-muted-foreground"
+        }
+      >
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
 function Chip({
   label,
   active,
@@ -114,24 +147,6 @@ export function ShopScreen() {
           ))}
         </ScrollView>
 
-        {/* Categories */}
-        {categories.length ? (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ gap: 8, paddingBottom: 8 }}
-          >
-            {categories.map((category) => (
-              <Chip
-                key={category._id}
-                label={category.name}
-                active={filters.category === category._id}
-                onPress={() => toggleFacet("category", category._id)}
-              />
-            ))}
-          </ScrollView>
-        ) : null}
-
         <View className="flex-row items-center justify-between pt-1">
           <Text className="text-sm text-muted-foreground">{resultLabel}</Text>
           {hasActiveFilters ? (
@@ -148,44 +163,75 @@ export function ShopScreen() {
         </View>
       </View>
 
-      {loading ? (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator color="#18181b" />
-        </View>
-      ) : products.length === 0 ? (
-        <View className="flex-1 items-center justify-center px-8">
-          <Feather name="search" size={32} color="#a1a1aa" />
-          <Text className="mt-3 text-center text-base text-muted-foreground">
-            No products match your filters.
-          </Text>
-        </View>
-      ) : (
-        <ScrollView
-          contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
-          showsVerticalScrollIndicator={false}
-        >
-          <View className="flex-row flex-wrap justify-between gap-y-4">
-            {products.map((product) => (
-              <View key={product._id} style={{ width: "48%" }}>
-                <ProductCard
-                  product={{
-                    id: product._id,
-                    title: product.title,
-                    brand: product.brand,
-                    image: getCoverImage(product),
-                    unit: product.unit,
-                  }}
-                  onPress={() =>
-                    navigation.navigate("ProductDetails", {
-                      productId: product._id,
-                    })
-                  }
-                />
-              </View>
+      <View className="flex-1 flex-row">
+        {/* Vertical category rail (Blinkit/Zepto-style) */}
+        {categories.length ? (
+          <ScrollView
+            className="w-24 border-r border-border bg-card"
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingVertical: 4, paddingBottom: 90 }}
+          >
+            <RailItem
+              label="All"
+              active={!filters.category}
+              onPress={() => {
+                if (filters.category) {
+                  toggleFacet("category", filters.category);
+                }
+              }}
+            />
+            {categories.map((category) => (
+              <RailItem
+                key={category._id}
+                label={category.name}
+                active={filters.category === category._id}
+                onPress={() => toggleFacet("category", category._id)}
+              />
             ))}
-          </View>
-        </ScrollView>
-      )}
+          </ScrollView>
+        ) : null}
+
+        <View className="flex-1">
+          {loading ? (
+            <View className="flex-1 items-center justify-center">
+              <ActivityIndicator color="#18181b" />
+            </View>
+          ) : products.length === 0 ? (
+            <View className="flex-1 items-center justify-center px-8">
+              <Feather name="search" size={32} color="#a1a1aa" />
+              <Text className="mt-3 text-center text-base text-muted-foreground">
+                No products match your filters.
+              </Text>
+            </View>
+          ) : (
+            <ScrollView
+              contentContainerStyle={{ padding: 12, paddingBottom: 90 }}
+              showsVerticalScrollIndicator={false}
+            >
+              <View className="flex-row flex-wrap justify-between gap-y-3">
+                {products.map((product) => (
+                  <View key={product._id} style={{ width: "48.5%" }}>
+                    <ProductCard
+                      product={{
+                        id: product._id,
+                        title: product.title,
+                        brand: product.brand,
+                        image: getCoverImage(product),
+                        unit: product.unit,
+                      }}
+                      onPress={() =>
+                        navigation.navigate("ProductDetails", {
+                          productId: product._id,
+                        })
+                      }
+                    />
+                  </View>
+                ))}
+              </View>
+            </ScrollView>
+          )}
+        </View>
+      </View>
 
       {/* Sticky "view & send" bar — appears once the draft has items, so a
           customer who filled their list from the Shop knows where to send it. */}

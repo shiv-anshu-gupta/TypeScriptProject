@@ -1,6 +1,7 @@
 import { useCallback, useEffect } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -27,10 +28,11 @@ import { formatPrice } from "@/lib/utils";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
-// The customer-facing journey. "priced" is folded into the same step as
-// "received" on the timeline — it just unlocks the total + payment.
+// The customer-facing journey. "Priced" is its own visible step so the
+// customer sees the quote arrive — its label carries the total.
 const TIMELINE: { key: GroceryListStatus; label: string }[] = [
   { key: "received", label: "Received item list" },
+  { key: "priced", label: "Priced by shop" },
   { key: "packing", label: "Packing" },
   { key: "packed", label: "Packed" },
   { key: "ready", label: "Come to receive" },
@@ -38,15 +40,16 @@ const TIMELINE: { key: GroceryListStatus; label: string }[] = [
 
 const STEP_INDEX: Record<GroceryListStatus, number> = {
   received: 0,
-  priced: 0,
-  packing: 1,
-  packed: 2,
-  ready: 3,
-  completed: 3,
+  priced: 1,
+  packing: 2,
+  packed: 3,
+  ready: 4,
+  completed: 4,
   cancelled: -1,
 };
 
-function StatusTimeline({ status }: { status: GroceryListStatus }) {
+function StatusTimeline({ list }: { list: CustomerGroceryList }) {
+  const status = list.status;
   const current = STEP_INDEX[status] ?? 0;
 
   if (status === "cancelled") {
@@ -63,6 +66,12 @@ function StatusTimeline({ status }: { status: GroceryListStatus }) {
     <View className="gap-2">
       {TIMELINE.map((step, index) => {
         const done = index <= current;
+        // The "Priced" step shows the quoted total right on the timeline.
+        const label =
+          step.key === "priced" && list.totalAmount > 0
+            ? `Priced by shop — ${formatPrice(list.totalAmount)}`
+            : step.label;
+
         return (
           <View key={step.key} className="flex-row items-center gap-3">
             <View
@@ -85,7 +94,7 @@ function StatusTimeline({ status }: { status: GroceryListStatus }) {
                   : "text-sm text-muted-foreground"
               }
             >
-              {step.label}
+              {label}
             </Text>
           </View>
         );
@@ -95,12 +104,30 @@ function StatusTimeline({ status }: { status: GroceryListStatus }) {
 }
 
 function ListCard({ list }: { list: CustomerGroceryList }) {
-  const { markSeen, payAtShop, payViaUpi, payingListId } =
+  const { markSeen, payAtShop, payViaUpi, payingListId, removeItem } =
     useCustomerGroceryListStore((state) => state);
 
   const isPriced = list.totalAmount > 0;
   const isPaid = list.paymentStatus === "paid";
   const busy = payingListId === list._id;
+
+  // Over budget after the quote? Items can be removed — but only before the
+  // shop starts packing, never after payment, and never the last item.
+  const canRemoveItems =
+    (list.status === "received" || list.status === "priced") &&
+    !isPaid &&
+    list.items.length > 1;
+
+  const confirmRemove = (index: number, name: string) => {
+    Alert.alert("Remove item", `Remove "${name}" from this list?`, [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Remove",
+        style: "destructive",
+        onPress: () => void removeItem(list._id, index),
+      },
+    ]);
+  };
 
   useEffect(() => {
     if (!list.seenByCustomer) {
@@ -146,14 +173,23 @@ function ListCard({ list }: { list: CustomerGroceryList }) {
                 {formatPrice(item.price)}
               </Text>
             ) : null}
+            {canRemoveItems ? (
+              <Pressable
+                onPress={() => confirmRemove(index, item.name)}
+                hitSlop={8}
+                className="ml-2"
+              >
+                <Feather name="x-circle" size={16} color="#dc2626" />
+              </Pressable>
+            ) : null}
           </View>
         ))}
       </View>
 
       {isPriced ? (
-        <View className="flex-row items-center justify-between border-t border-border pt-3">
+        <View className="flex-row items-center justify-between rounded-xl bg-secondary px-4 py-3">
           <Text className="text-base font-semibold text-foreground">Total</Text>
-          <Text className="text-base font-semibold text-foreground">
+          <Text className="text-xl font-bold text-foreground">
             {formatPrice(list.totalAmount)}
           </Text>
         </View>
@@ -165,7 +201,7 @@ function ListCard({ list }: { list: CustomerGroceryList }) {
         </View>
       )}
 
-      <StatusTimeline status={list.status} />
+      <StatusTimeline list={list} />
 
       {/* Payment — only once priced */}
       {isPriced ? (

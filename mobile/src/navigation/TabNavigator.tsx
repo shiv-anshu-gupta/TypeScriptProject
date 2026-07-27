@@ -7,12 +7,13 @@ import { ShopScreen } from "@/screens/ShopScreen";
 import { AccountScreen } from "@/screens/AccountScreen";
 import { MyListsScreen } from "@/screens/MyListsScreen";
 import { useCustomerGroceryListStore } from "@/features/customer/grocery-list/store";
+import { useDraftListStore } from "@/features/customer/draft-list/store";
 
 const Tab = createBottomTabNavigator<TabParamList>();
 
 const iconByRoute: Record<keyof TabParamList, keyof typeof Feather.glyphMap> = {
   Home: "home",
-  Shop: "grid",
+  Shop: "search",
   Lists: "clipboard",
   Account: "user",
 };
@@ -22,6 +23,15 @@ export function TabNavigator() {
   const unseenLists = useCustomerGroceryListStore(
     (state) => state.unseenCount,
   );
+  // Unsent draft items — badged on Lists so the customer remembers the
+  // draft still has to be SENT from there.
+  const draftCount = useDraftListStore(
+    (state) =>
+      state.rows.filter((row) => (row.name ?? "").trim().length > 0).length,
+  );
+
+  const listsBadge =
+    unseenLists > 0 ? unseenLists : draftCount > 0 ? draftCount : undefined;
 
   return (
     <Tab.Navigator
@@ -53,7 +63,7 @@ export function TabNavigator() {
         name="Lists"
         component={MyListsScreen}
         options={{
-          tabBarBadge: unseenLists > 0 ? unseenLists : undefined,
+          tabBarBadge: listsBadge,
         }}
       />
       <Tab.Screen name="Account" component={AccountScreen} />

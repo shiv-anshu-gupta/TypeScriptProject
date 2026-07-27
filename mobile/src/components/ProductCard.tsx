@@ -39,7 +39,7 @@ export function ProductCard({ product, onPress }: ProductCardProps) {
         <Pressable
           onPress={() => {
             addProduct(product.title, product.unit);
-            toast.success("Added to your list");
+            toast.success("Added — send it from the Lists tab");
           }}
           hitSlop={8}
           className="absolute bottom-2 right-2 h-10 w-10 items-center justify-center rounded-full bg-primary shadow-lg active:opacity-80"
