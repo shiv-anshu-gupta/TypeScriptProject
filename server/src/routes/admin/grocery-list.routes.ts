@@ -39,11 +39,18 @@ type IncomingPricedItem = {
 };
 
 function mapGroceryList(item: GroceryListDocument) {
+  // `user` is populated with name/email in getAllGroceryLists, so lists
+  // created before the name-fallback existed still show who sent them.
+  const listUser = item.user as unknown as {
+    name?: string;
+    email?: string;
+  } | null;
+
   return {
     _id: String(item._id),
     code: String(item._id).slice(-8).toUpperCase(),
-    customerName: item.customerName,
-    customerEmail: item.customerEmail,
+    customerName: item.customerName || listUser?.name || listUser?.email || "",
+    customerEmail: item.customerEmail || listUser?.email || "",
     items: item.items.map((listItem) => ({
       name: listItem.name,
       quantity: listItem.quantity,
@@ -65,7 +72,9 @@ function mapGroceryList(item: GroceryListDocument) {
 }
 
 async function getAllGroceryLists() {
-  const lists = await GroceryList.find().sort({ createdAt: -1 });
+  const lists = await GroceryList.find()
+    .sort({ createdAt: -1 })
+    .populate("user", "name email");
 
   return lists.map(mapGroceryList);
 }

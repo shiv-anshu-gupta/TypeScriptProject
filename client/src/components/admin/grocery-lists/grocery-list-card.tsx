@@ -98,11 +98,12 @@ function GroceryListCard({
     <Card className={cardClass}>
       <CardHeader className={headerRowClass}>
         <div className="space-y-1">
-          <p className={codeClass}>List #{list.code}</p>
-          <p className={metaClass}>
-            {list.customerName || "Customer"}
-            {list.customerEmail ? ` · ${list.customerEmail}` : ""}
+          <p className={codeClass}>
+            List #{list.code} — {list.customerName || "Customer"}
           </p>
+          {list.customerEmail ? (
+            <p className={metaClass}>{list.customerEmail}</p>
+          ) : null}
           <p className={metaClass}>
             {list.totalItems} item{list.totalItems > 1 ? "s" : ""} ·{" "}
             {new Date(list.createdAt).toLocaleString()}
