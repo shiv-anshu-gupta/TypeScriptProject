@@ -104,7 +104,7 @@ customerGroceryListRouter.get(
     // Shop's UPI details so the app can build a "pay via UPI" deep link.
     const upi = {
       id: process.env.SHOP_UPI_ID || "",
-      name: process.env.SHOP_NAME || "Monster Grocery",
+      name: process.env.SHOP_NAME || "sKirana",
     };
 
     res.json(ok({ items, unseenCount, upi }));
