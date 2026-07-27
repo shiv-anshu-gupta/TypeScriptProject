@@ -1,6 +1,4 @@
-import { createBrowserRouter } from "react-router-dom";
-import { CustomerLayout } from "./components/layout/CustomerLayout";
-import { StoreHome } from "./pages/customer/Home";
+import { createBrowserRouter, Navigate } from "react-router-dom";
 import { PublicOnlyLayout } from "./components/auth/PublicOnlyLayout";
 import { SignInPage } from "./pages/auth/Sign-in";
 import { SignUpPage } from "./pages/auth/Sign-up";
@@ -13,48 +11,25 @@ import AdminCoupons from "./pages/admin/Promos";
 import AdminOrders from "./pages/admin/Orders";
 import AdminGroceryLists from "./pages/admin/GroceryLists";
 import AdminSettings from "./pages/admin/Settings";
-import Collections from "./pages/customer/Collections";
-import CollectionDetails from "./pages/customer/Collection-Details";
-import CustomerOrderSuccessPage from "./pages/customer/Order-Sucess";
 
+// This web app is the shop-owner ADMIN panel. Customers use the mobile app,
+// so the root and any unknown path send you straight to /admin (which in turn
+// redirects to sign-in when you're not logged in).
 export const router = createBrowserRouter([
   {
     path: "/",
-    element: <CustomerLayout />,
+    element: <Navigate to="/admin" replace />,
+  },
+  {
+    element: <PublicOnlyLayout />,
     children: [
       {
-        index: true,
-        element: <StoreHome />,
+        path: "/sign-in/*",
+        element: <SignInPage />,
       },
       {
-        element: <PublicOnlyLayout />,
-        children: [
-          {
-            path: "sign-in/*",
-            element: <SignInPage />,
-          },
-          {
-            path: "sign-up/*",
-            element: <SignUpPage />,
-          },
-          {
-            path: "collections",
-            element: <Collections />,
-          },
-          {
-            path: "collection/:id",
-            element: <CollectionDetails />,
-          },
-        ],
-      },
-      {
-        element: <ProtectedLayout />,
-        children: [
-          {
-            path: "order-success",
-            element: <CustomerOrderSuccessPage />,
-          },
-        ],
+        path: "/sign-up/*",
+        element: <SignUpPage />,
       },
     ],
   },
@@ -67,7 +42,6 @@ export const router = createBrowserRouter([
           {
             path: "/admin",
             element: <AdminLayout />,
-
             children: [
               {
                 index: true,
@@ -98,5 +72,9 @@ export const router = createBrowserRouter([
         ],
       },
     ],
+  },
+  {
+    path: "*",
+    element: <Navigate to="/admin" replace />,
   },
 ]);

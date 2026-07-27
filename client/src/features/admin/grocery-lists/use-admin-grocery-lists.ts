@@ -5,6 +5,7 @@ import type {
 } from "./types";
 import {
   getAdminGroceryLists,
+  markAdminGroceryListPaid,
   setAdminGroceryListPrices,
   updateAdminGroceryListStatus,
 } from "./api";
@@ -108,6 +109,17 @@ export function useAdminGroceryLists() {
     }
   }
 
+  async function markPaid(listId: string) {
+    try {
+      setSavingListId(listId);
+
+      const response = await markAdminGroceryListPaid(listId);
+      setLists((response ?? { items: [] }).items);
+    } finally {
+      setSavingListId("");
+    }
+  }
+
   return {
     search,
     setSearch,
@@ -120,5 +132,6 @@ export function useAdminGroceryLists() {
     getDraftTotal,
     savePrices,
     changeStatus,
+    markPaid,
   };
 }

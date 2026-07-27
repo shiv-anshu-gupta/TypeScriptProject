@@ -7,7 +7,7 @@ export type GroceryListStatus =
   | "completed"
   | "cancelled";
 
-export type GroceryListPaymentMethod = "online" | "at_shop";
+export type GroceryListPaymentMethod = "online" | "upi" | "at_shop";
 export type GroceryListPaymentStatus = "pending" | "paid";
 
 export type AdminGroceryListItem = {

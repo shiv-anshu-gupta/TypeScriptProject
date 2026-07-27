@@ -23,6 +23,7 @@ function AdminGroceryLists() {
     getDraftTotal,
     savePrices,
     changeStatus,
+    markPaid,
   } = useAdminGroceryLists();
 
   return (
@@ -59,6 +60,7 @@ function AdminGroceryLists() {
                   onChangeStatus={(status) =>
                     void changeStatus(list._id, status)
                   }
+                  onMarkPaid={() => void markPaid(list._id)}
                 />
               ))}
             </div>

@@ -72,6 +72,7 @@ type GroceryListCardProps = {
   onPriceChange: (index: number, value: string) => void;
   onSavePrices: () => void;
   onChangeStatus: (status: UpdateGroceryListStatusBody["status"]) => void;
+  onMarkPaid: () => void;
 };
 
 function GroceryListCard({
@@ -82,8 +83,10 @@ function GroceryListCard({
   onPriceChange,
   onSavePrices,
   onChangeStatus,
+  onMarkPaid,
 }: GroceryListCardProps) {
   const isPriced = list.totalAmount > 0;
+  const isPaid = list.paymentStatus === "paid";
 
   // How far along the flow this list is. -1 for "received" (not priced yet).
   const currentIndex = STATUS_FLOW.indexOf(list.status as FlowStatus);
@@ -110,15 +113,11 @@ function GroceryListCard({
           <Badge variant="secondary">{statusLabel[list.status]}</Badge>
           {isPriced ? (
             <Badge
-              variant={
-                list.paymentStatus === "paid" ? "default" : "outline"
-              }
+              variant={list.paymentStatus === "paid" ? "default" : "outline"}
             >
               {list.paymentStatus === "paid"
-                ? "Paid online"
-                : list.paymentMethod === "online"
-                  ? "Awaiting online payment"
-                  : "Pays at shop"}
+                ? "Payment received"
+                : "Payment pending"}
             </Badge>
           ) : null}
         </div>
@@ -155,6 +154,16 @@ function GroceryListCard({
           <Button onClick={onSavePrices} disabled={saving || isClosed}>
             {isPriced ? "Update prices" : "Send prices to customer"}
           </Button>
+
+          {isPriced && !isPaid ? (
+            <Button
+              variant="default"
+              disabled={saving}
+              onClick={onMarkPaid}
+            >
+              Mark as paid
+            </Button>
+          ) : null}
 
           {isPriced && !isClosed
             ? FLOW_ACTIONS.map((status) => {

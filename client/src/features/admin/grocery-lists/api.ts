@@ -28,3 +28,9 @@ export async function updateAdminGroceryListStatus(
     body,
   );
 }
+
+export async function markAdminGroceryListPaid(listId: string) {
+  return apiPatch<AdminGroceryListsResponse>(
+    `/admin/grocery-lists/${listId}/mark-paid`,
+  );
+}
