@@ -8,9 +8,9 @@ import { ClerkProvider, useAuth } from "@clerk/clerk-expo";
 
 import { env } from "@/lib/env";
 import { tokenCache } from "@/lib/token-cache";
-import { hydrateGuestCart } from "@/lib/guest-cart-storage";
 import { useBootstrapAuth } from "@/features/auth/useBootstrapAuth";
 import { useCustomerGroceryListStore } from "@/features/customer/grocery-list/store";
+import { useDraftListStore } from "@/features/customer/draft-list/store";
 import { usePushNotifications } from "@/features/customer/push/use-push-notifications";
 import { RootNavigator } from "@/navigation/RootNavigator";
 import { Toaster } from "@/components/Toaster";
@@ -23,8 +23,9 @@ function Bootstrap() {
   const loadLists = useCustomerGroceryListStore((state) => state.loadLists);
   const clearLists = useCustomerGroceryListStore((state) => state.clear);
 
+  // Restore any half-written draft list from the last session.
   useEffect(() => {
-    void hydrateGuestCart();
+    void useDraftListStore.getState().hydrate();
   }, []);
 
   // Keeps the "Lists" tab badge in sync with what the shop has sent back.

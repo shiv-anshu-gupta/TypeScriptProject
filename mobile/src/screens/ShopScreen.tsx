@@ -15,6 +15,7 @@ import { Feather } from "@expo/vector-icons";
 import type { RootStackParamList, TabParamList } from "@/navigation/types";
 import { useCustomerProductList } from "@/features/customer/products/use-customer-collections";
 import { getCoverImage } from "@/features/customer/products/product-list.shared";
+import { useDraftListStore } from "@/features/customer/draft-list/store";
 import type { ProductSort } from "@/features/customer/products/types";
 import { ProductCard } from "@/components/ProductCard";
 
@@ -81,6 +82,11 @@ export function ShopScreen() {
     clearFilters,
     activeFilterBadges,
   } = useCustomerProductList(route.params?.category);
+
+  const draftCount = useDraftListStore(
+    (state) =>
+      state.rows.filter((row) => (row.name ?? "").trim().length > 0).length,
+  );
 
   const resultLabel = useMemo(
     () => `${products.length} item${products.length === 1 ? "" : "s"}`,
@@ -180,6 +186,32 @@ export function ShopScreen() {
           </View>
         </ScrollView>
       )}
+
+      {/* Sticky "view & send" bar — appears once the draft has items, so a
+          customer who filled their list from the Shop knows where to send it. */}
+      {draftCount > 0 ? (
+        <Pressable
+          onPress={() => navigation.navigate("Tabs", { screen: "Lists" })}
+          className="absolute bottom-3 left-4 right-4 flex-row items-center justify-between rounded-2xl bg-primary px-5 py-3.5 shadow-lg active:opacity-90"
+          style={{
+            elevation: 6,
+            shadowColor: "#000",
+            shadowOpacity: 0.25,
+            shadowRadius: 6,
+            shadowOffset: { width: 0, height: 3 },
+          }}
+        >
+          <Text className="text-sm font-semibold text-primary-foreground">
+            {draftCount} item{draftCount > 1 ? "s" : ""} in your list
+          </Text>
+          <View className="flex-row items-center gap-1.5">
+            <Text className="text-sm font-semibold text-primary-foreground">
+              View & send
+            </Text>
+            <Feather name="arrow-right" size={16} color="#fafafa" />
+          </View>
+        </Pressable>
+      ) : null}
     </View>
   );
 }

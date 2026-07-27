@@ -19,6 +19,8 @@ import type {
   CustomerGroceryList,
   GroceryListStatus,
 } from "@/features/customer/grocery-list/types";
+import { useDraftListStore } from "@/features/customer/draft-list/store";
+import { useSendDraft } from "@/features/customer/draft-list/use-send-draft";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { formatPrice } from "@/lib/utils";
@@ -196,6 +198,51 @@ function ListCard({ list }: { list: CustomerGroceryList }) {
   );
 }
 
+// The customer's not-yet-sent draft (built on the Home paper and/or via
+// "Add to list" on products). Shown here too, because after adding products
+// from the Shop this is where people naturally come to send.
+function DraftCard() {
+  const { filledRows, submitting, send } = useSendDraft();
+
+  if (!filledRows.length) return null;
+
+  return (
+    <View className="gap-3 rounded-2xl border border-dashed border-primary/40 bg-card p-4">
+      <View className="flex-row items-center justify-between">
+        <Text className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Your new list
+        </Text>
+        <Badge className="border-0 bg-secondary">
+          <Text className="text-xs font-medium text-foreground">Not sent</Text>
+        </Badge>
+      </View>
+
+      <View className="gap-1.5">
+        {filledRows.map((row, index) => (
+          <Text key={row.id} className="text-sm text-foreground">
+            {index + 1}. {row.name.trim()}
+            {(row.quantity ?? "").trim() ? (
+              <Text className="text-muted-foreground">
+                {" "}
+                · {row.quantity.trim()}
+              </Text>
+            ) : null}
+          </Text>
+        ))}
+      </View>
+
+      <Button
+        label={`Send ${filledRows.length} item${filledRows.length > 1 ? "s" : ""} to shop`}
+        loading={submitting}
+        onPress={() => void send()}
+      />
+      <Text className="text-center text-[11px] text-muted-foreground">
+        Add more from the Shop tab, or edit it on the Home paper.
+      </Text>
+    </View>
+  );
+}
+
 export function MyListsScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Nav>();
@@ -203,6 +250,11 @@ export function MyListsScreen() {
 
   const { items, loading, loadLists } = useCustomerGroceryListStore(
     (state) => state,
+  );
+
+  const hasDraft = useDraftListStore(
+    (state) =>
+      state.rows.filter((row) => (row.name ?? "").trim().length > 0).length > 0,
   );
 
   useFocusEffect(
@@ -256,7 +308,9 @@ export function MyListsScreen() {
     >
       <Text className="text-2xl font-semibold text-foreground">My lists</Text>
 
-      {!items.length ? (
+      <DraftCard />
+
+      {!items.length && !hasDraft ? (
         <View className="mt-16 items-center gap-4">
           <Feather name="clipboard" size={40} color="#a1a1aa" />
           <Text className="text-center text-sm text-muted-foreground">

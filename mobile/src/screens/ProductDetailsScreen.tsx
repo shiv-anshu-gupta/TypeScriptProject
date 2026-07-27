@@ -16,7 +16,9 @@ import { Feather } from "@expo/vector-icons";
 import type { RootStackParamList } from "@/navigation/types";
 import { useCustomerProductDetailsStore } from "@/features/customer/products/details/store";
 import { useCustomerWishlistStore } from "@/features/customer/wishlist/store";
+import { useDraftListStore } from "@/features/customer/draft-list/store";
 import { useAuthStore } from "@/features/auth/store";
+import { toast } from "@/lib/toast";
 import {
   getCoverImage,
   getSwatchColor,
@@ -47,9 +49,10 @@ export function ProductDetailsScreen() {
     setSelectedImage,
     setSelectedColor,
     setSelectedSize,
-    addToCart,
     toggleWishlist,
   } = useCustomerProductDetailsStore((state) => state);
+
+  const addProduct = useDraftListStore((state) => state.addProduct);
 
   useEffect(() => {
     void loadProduct(productId);
@@ -286,10 +289,13 @@ export function ProductDetailsScreen() {
         </Pressable>
         <View className="flex-1">
           <Button
-            label={product.stock < 1 ? "Out of stock" : "Add to cart"}
+            label={product.stock < 1 ? "Out of stock" : "Add to list"}
             disabled={product.stock < 1}
-            onPress={() => addToCart(isLoaded, isBootstrapped, !!isSignedIn)}
-            icon={<Feather name="shopping-bag" size={16} color="#fafafa" />}
+            onPress={() => {
+              addProduct(product.title, product.unit);
+              toast.success("Added to your list");
+            }}
+            icon={<Feather name="plus" size={16} color="#fafafa" />}
           />
         </View>
       </View>

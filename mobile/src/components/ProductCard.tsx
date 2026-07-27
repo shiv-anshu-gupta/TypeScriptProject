@@ -1,5 +1,9 @@
 import { Pressable, Text, View } from "react-native";
 import { Image } from "expo-image";
+import { Feather } from "@expo/vector-icons";
+
+import { useDraftListStore } from "@/features/customer/draft-list/store";
+import { toast } from "@/lib/toast";
 
 export type ProductCardData = {
   id: string;
@@ -15,6 +19,8 @@ type ProductCardProps = {
 };
 
 export function ProductCard({ product, onPress }: ProductCardProps) {
+  const addProduct = useDraftListStore((state) => state.addProduct);
+
   return (
     <Pressable
       onPress={onPress}
@@ -27,6 +33,26 @@ export function ProductCard({ product, onPress }: ProductCardProps) {
           contentFit="cover"
           transition={200}
         />
+
+        {/* Quick "add to list" — nested Pressable takes the touch, so tapping
+            it doesn't open the details page. */}
+        <Pressable
+          onPress={() => {
+            addProduct(product.title, product.unit);
+            toast.success("Added to your list");
+          }}
+          hitSlop={8}
+          className="absolute bottom-2 right-2 h-10 w-10 items-center justify-center rounded-full bg-primary shadow-lg active:opacity-80"
+          style={{
+            elevation: 4,
+            shadowColor: "#000",
+            shadowOpacity: 0.25,
+            shadowRadius: 4,
+            shadowOffset: { width: 0, height: 2 },
+          }}
+        >
+          <Feather name="plus" size={20} color="#fafafa" />
+        </Pressable>
       </View>
 
       <View className="gap-1 p-3">

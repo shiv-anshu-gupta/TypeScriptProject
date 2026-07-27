@@ -8,7 +8,6 @@ import {
   removeCustomerWishlistItem,
 } from "../../wishlist/api";
 import { useCustomerWishlistStore } from "../../wishlist/store";
-import { useCustomerCartAndCheckoutStore } from "../../cart-and-checkout/store";
 
 type CustomerProductDetailsStore = {
   loading: boolean;
@@ -21,11 +20,6 @@ type CustomerProductDetailsStore = {
   setSelectedImage: (value: string) => void;
   setSelectedColor: (value: string) => void;
   setSelectedSize: (value: ProductSize | "") => void;
-  addToCart: (
-    isLoaded: boolean,
-    isBootstrapped: boolean,
-    isSignedIn: boolean,
-  ) => Promise<void>;
   toggleWishlist: (
     isLoaded: boolean,
     isBootstrapped: boolean,
@@ -121,29 +115,5 @@ export const useCustomerProductDetailsStore =
       } catch {
         toast.error("Failed to toggle wishlist items");
       }
-    },
-    addToCart: async (isLoaded, isBootatraped, isSignedIn) => {
-      const { data, selectedColor, selectedSize } = get();
-      const product = data?.product ?? null;
-
-      if (!product || product.stock < 1) return;
-
-      if (!isLoaded || !isBootatraped) {
-        toast.error("Try again");
-        return;
-      }
-
-      await useCustomerCartAndCheckoutStore.getState().addItem(
-        {
-          productId: product._id,
-          quantity: 1,
-          color: selectedColor || undefined,
-          size: selectedSize || undefined,
-          title: product.title,
-          brand: product.brand,
-          image: getCoverImage(product),
-        },
-        isSignedIn,
-      );
     },
   }));

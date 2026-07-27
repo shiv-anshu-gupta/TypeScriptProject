@@ -4,7 +4,6 @@ export type TabParamList = {
   Home: undefined;
   Shop: { category?: string } | undefined;
   Lists: undefined;
-  Cart: undefined;
   Account: undefined;
 };
 

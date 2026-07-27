@@ -4,10 +4,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { TabParamList } from "./types";
 import { HomeScreen } from "@/screens/HomeScreen";
 import { ShopScreen } from "@/screens/ShopScreen";
-import { CartScreen } from "@/screens/CartScreen";
 import { AccountScreen } from "@/screens/AccountScreen";
 import { MyListsScreen } from "@/screens/MyListsScreen";
-import { useCustomerCartAndCheckoutStore } from "@/features/customer/cart-and-checkout/store";
 import { useCustomerGroceryListStore } from "@/features/customer/grocery-list/store";
 
 const Tab = createBottomTabNavigator<TabParamList>();
@@ -16,15 +14,11 @@ const iconByRoute: Record<keyof TabParamList, keyof typeof Feather.glyphMap> = {
   Home: "home",
   Shop: "grid",
   Lists: "clipboard",
-  Cart: "shopping-bag",
   Account: "user",
 };
 
 export function TabNavigator() {
   const insets = useSafeAreaInsets();
-  const cartCount = useCustomerCartAndCheckoutStore(
-    (state) => state.cart.totalQuantity,
-  );
   const unseenLists = useCustomerGroceryListStore(
     (state) => state.unseenCount,
   );
@@ -60,13 +54,6 @@ export function TabNavigator() {
         component={MyListsScreen}
         options={{
           tabBarBadge: unseenLists > 0 ? unseenLists : undefined,
-        }}
-      />
-      <Tab.Screen
-        name="Cart"
-        component={CartScreen}
-        options={{
-          tabBarBadge: cartCount > 0 ? cartCount : undefined,
         }}
       />
       <Tab.Screen name="Account" component={AccountScreen} />
