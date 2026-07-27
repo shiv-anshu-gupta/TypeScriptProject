@@ -1,3 +1,5 @@
+import { useEffect, useRef } from "react";
+import { Animated } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -18,13 +20,61 @@ const iconByRoute: Record<keyof TabParamList, keyof typeof Feather.glyphMap> = {
   Account: "user",
 };
 
+// Heartbeat-pulsing icon: grabs attention while the draft is waiting to be
+// sent, so even first-time / less-literate users notice where to go next.
+function PulsingIcon({
+  name,
+  color,
+  size,
+  pulse,
+}: {
+  name: keyof typeof Feather.glyphMap;
+  color: string;
+  size: number;
+  pulse: boolean;
+}) {
+  const scale = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (!pulse) {
+      scale.setValue(1);
+      return;
+    }
+
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(scale, {
+          toValue: 1.35,
+          duration: 450,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scale, {
+          toValue: 1,
+          duration: 450,
+          useNativeDriver: true,
+        }),
+        Animated.delay(400),
+      ]),
+    );
+
+    loop.start();
+    return () => loop.stop();
+  }, [pulse, scale]);
+
+  return (
+    <Animated.View style={{ transform: [{ scale }] }}>
+      <Feather name={name} size={size} color={color} />
+    </Animated.View>
+  );
+}
+
 export function TabNavigator() {
   const insets = useSafeAreaInsets();
   const unseenLists = useCustomerGroceryListStore(
     (state) => state.unseenCount,
   );
-  // Unsent draft items — badged on Lists so the customer remembers the
-  // draft still has to be SENT from there.
+  // Unsent draft items — badged + heartbeat on Lists so the customer
+  // remembers the draft still has to be SENT from there.
   const draftCount = useDraftListStore(
     (state) =>
       state.rows.filter((row) => (row.name ?? "").trim().length > 0).length,
@@ -48,13 +98,21 @@ export function TabNavigator() {
           paddingTop: 8,
         },
         tabBarLabelStyle: { fontSize: 11, fontWeight: "600" },
-        tabBarIcon: ({ color, size }) => (
-          <Feather
-            name={iconByRoute[route.name]}
-            size={size ?? 22}
-            color={color}
-          />
-        ),
+        tabBarIcon: ({ color, size }) =>
+          route.name === "Lists" ? (
+            <PulsingIcon
+              name={iconByRoute[route.name]}
+              size={size ?? 22}
+              color={draftCount > 0 ? "#dc2626" : color}
+              pulse={draftCount > 0}
+            />
+          ) : (
+            <Feather
+              name={iconByRoute[route.name]}
+              size={size ?? 22}
+              color={color}
+            />
+          ),
       })}
     >
       <Tab.Screen name="Home" component={HomeScreen} />

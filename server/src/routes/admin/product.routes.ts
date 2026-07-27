@@ -15,6 +15,8 @@ type UploadedImage = {
   isCover: boolean;
 };
 
+const CATEGORY_IMAGE_FOLDER = "ecommerce-monster-video/categories";
+
 export const adminProductRouter = Router();
 
 const upload = multer({
@@ -42,12 +44,25 @@ adminProductRouter.get(
 
 adminProductRouter.post(
   "/categories",
+  upload.single("image"),
   asyncHandler(async (req: Request, res: Response) => {
     const name = String(req.body.name || "").trim();
 
     requireText(name, "Category name is needed");
 
-    const category = await Category.create({ name });
+    let imageUrl = "";
+    let imagePublicId = "";
+
+    if (req.file) {
+      const uploaded = await uploadManyBuffersToCloudinary(
+        [req.file.buffer],
+        CATEGORY_IMAGE_FOLDER,
+      );
+      imageUrl = uploaded[0].url;
+      imagePublicId = uploaded[0].publicId;
+    }
+
+    const category = await Category.create({ name, imageUrl, imagePublicId });
 
     res.status(201).json(ok(category));
   }),
@@ -55,6 +70,7 @@ adminProductRouter.post(
 
 adminProductRouter.put(
   "/categories/:id",
+  upload.single("image"),
   asyncHandler(async (req: Request, res: Response) => {
     const name = String(req.body.name || "").trim();
     const extractCategoryId = req.params.id as string;
@@ -65,6 +81,16 @@ adminProductRouter.put(
     const category = requireFound(existingCategory, "Category not found");
 
     category.name = name;
+
+    // A new image replaces the old one; otherwise the existing image stays.
+    if (req.file) {
+      const uploaded = await uploadManyBuffersToCloudinary(
+        [req.file.buffer],
+        CATEGORY_IMAGE_FOLDER,
+      );
+      category.imageUrl = uploaded[0].url;
+      category.imagePublicId = uploaded[0].publicId;
+    }
 
     await category.save();
     res.json(ok(category));

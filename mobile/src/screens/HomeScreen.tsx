@@ -6,6 +6,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -49,8 +50,8 @@ export function HomeScreen() {
           <Text className="mb-3 text-lg font-semibold text-foreground">
             Browse by collection
           </Text>
-          <View className="flex-row flex-wrap gap-3">
-            {data.categories.slice(0, 6).map((category) => (
+          <View className="flex-row flex-wrap">
+            {data.categories.slice(0, 8).map((category) => (
               <Pressable
                 key={category._id}
                 onPress={() =>
@@ -59,10 +60,25 @@ export function HomeScreen() {
                     params: { category: category._id },
                   })
                 }
-                className="flex-row items-center gap-2 rounded-full border border-border bg-card px-4 py-2.5"
+                style={{ width: "25%" }}
+                className="items-center gap-1.5 py-2"
               >
-                <Feather name="tag" size={14} color="#18181b" />
-                <Text className="text-sm font-medium text-foreground">
+                {category.imageUrl ? (
+                  <Image
+                    source={{ uri: category.imageUrl }}
+                    style={{ width: 56, height: 56, borderRadius: 28 }}
+                    contentFit="cover"
+                    transition={150}
+                  />
+                ) : (
+                  <View className="h-14 w-14 items-center justify-center rounded-full bg-secondary">
+                    <Feather name="tag" size={20} color="#18181b" />
+                  </View>
+                )}
+                <Text
+                  numberOfLines={2}
+                  className="text-center text-xs font-medium text-foreground"
+                >
                   {category.name}
                 </Text>
               </Pressable>

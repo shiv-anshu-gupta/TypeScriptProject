@@ -55,6 +55,7 @@ export function CategoryDialog({
   onSaved,
 }: CategoryDialogProps) {
   const [name, setName] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [saving, setSaving] = useState(false);
   const [deletingCategoryId, setDeletingCategoryId] = useState("");
@@ -68,12 +69,17 @@ export function CategoryDialog({
       setError("");
 
       if (editingCategory) {
-        await updateAdminCategory(editingCategory._id, { name: name.trim() });
+        await updateAdminCategory(
+          editingCategory._id,
+          { name: name.trim() },
+          imageFile,
+        );
       } else {
-        await createAdminCategory({ name: name.trim() });
+        await createAdminCategory({ name: name.trim() }, imageFile);
       }
 
       setName("");
+      setImageFile(null);
       setEditingCategory(null);
       await onSaved();
     } catch (err) {
@@ -116,11 +122,13 @@ export function CategoryDialog({
   function handleEdit(getCurrentCategory: Category) {
     setEditingCategory(getCurrentCategory);
     setName(getCurrentCategory.name);
+    setImageFile(null);
   }
 
   function handleClose(nextOpen: boolean) {
     if (!nextOpen) {
       setName("");
+      setImageFile(null);
       setEditingCategory(null);
       setError("");
     }
@@ -147,6 +155,24 @@ export function CategoryDialog({
             </Button>
           </div>
 
+          {/* Optional category image — shown as a circle in the mobile app */}
+          <div className="flex items-center gap-3">
+            {editingCategory?.imageUrl && !imageFile ? (
+              <img
+                src={editingCategory.imageUrl}
+                alt={editingCategory.name}
+                className="h-10 w-10 rounded-full border border-border object-cover"
+              />
+            ) : null}
+            <Input
+              type="file"
+              accept="image/*"
+              onChange={(event) =>
+                setImageFile(event.target.files?.[0] ?? null)
+              }
+            />
+          </div>
+
           {error ? <p className={errorTextClass}>{error}</p> : null}
 
           <Separator />
@@ -155,7 +181,15 @@ export function CategoryDialog({
             {categories.map((cat) => (
               <div key={cat._id} className={categoryRow}>
                 <div className={categoryInfo}>
-                  <Tag className={categoryIcon} />
+                  {cat.imageUrl ? (
+                    <img
+                      src={cat.imageUrl}
+                      alt={cat.name}
+                      className="h-8 w-8 rounded-full border border-border object-cover"
+                    />
+                  ) : (
+                    <Tag className={categoryIcon} />
+                  )}
                   <span className={categoryName}>{cat.name}</span>
                 </div>
 

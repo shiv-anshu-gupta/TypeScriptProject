@@ -177,9 +177,11 @@ function ListCard({ list }: { list: CustomerGroceryList }) {
               <Pressable
                 onPress={() => confirmRemove(index, item.name)}
                 hitSlop={8}
-                className="ml-2"
+                className="ml-3 rounded-md border border-destructive/40 px-2 py-0.5"
               >
-                <Feather name="x-circle" size={16} color="#dc2626" />
+                <Text className="text-xs font-semibold text-destructive">
+                  Delete
+                </Text>
               </Pressable>
             ) : null}
           </View>

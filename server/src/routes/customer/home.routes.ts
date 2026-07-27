@@ -16,6 +16,7 @@ type BannerRow = {
 type CategoryRow = {
   _id: Types.ObjectId;
   name: string;
+  imageUrl?: string;
 };
 
 type ProductRow = {
@@ -74,6 +75,7 @@ customerHomeRouter.get(
         categories: categories.map((categoryItem) => ({
           _id: String(categoryItem._id),
           name: categoryItem.name,
+          imageUrl: categoryItem.imageUrl || "",
         })),
         recentProducts: recentProducts.map((recentProductItem) => {
           const image =

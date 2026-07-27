@@ -71,6 +71,41 @@ customerGroceryListRouter.post(
       throw new AppError(400, "Add at least one item to your list");
     }
 
+    // If the customer already has a list the shop hasn't touched yet
+    // (status "received" — same stage a new submission starts in), merge the
+    // new items into it instead of opening a parallel order. Lists that were
+    // already priced/packed are never merged: their quote would go stale.
+    const mergeTarget = await GroceryList.findOne({
+      user: dbUser._id,
+      status: "received",
+      paymentStatus: "pending",
+    }).sort({ createdAt: -1 });
+
+    if (mergeTarget) {
+      const mergedItems = [
+        ...mergeTarget.items.map((item: GroceryListItem) => ({
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+        })),
+        ...items,
+      ];
+
+      mergeTarget.set("items", mergedItems);
+      mergeTarget.totalItems = mergedItems.length;
+
+      if (note) {
+        mergeTarget.note = [mergeTarget.note, note]
+          .filter(Boolean)
+          .join(" | ");
+      }
+
+      await mergeTarget.save();
+
+      res.status(200).json(ok({ ...mapGroceryList(mergeTarget), merged: true }));
+      return;
+    }
+
     const groceryList = await GroceryList.create({
       user: dbUser._id,
       // Fall back to the email so the shopkeeper always sees WHO sent it.
@@ -86,7 +121,9 @@ customerGroceryListRouter.post(
       note,
     });
 
-    res.status(201).json(ok(mapGroceryList(groceryList)));
+    res
+      .status(201)
+      .json(ok({ ...mapGroceryList(groceryList), merged: false }));
   }),
 );
 

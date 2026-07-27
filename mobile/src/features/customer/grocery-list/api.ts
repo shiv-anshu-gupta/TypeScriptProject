@@ -6,7 +6,9 @@ import type {
 } from "./types";
 
 export async function submitGroceryList(body: SubmitGroceryListBody) {
-  return apiPost<CustomerGroceryList, SubmitGroceryListBody>(
+  // `merged` is true when the server appended these items to an existing
+  // not-yet-priced list instead of creating a new one.
+  return apiPost<CustomerGroceryList & { merged?: boolean }, SubmitGroceryListBody>(
     "/customer/grocery-lists",
     body,
   );

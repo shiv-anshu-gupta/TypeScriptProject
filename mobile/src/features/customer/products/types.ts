@@ -14,6 +14,7 @@ export type ProductUnit =
 export type ProductCategory = {
   _id: string;
   name: string;
+  imageUrl?: string;
 };
 
 export type ProductImage = {

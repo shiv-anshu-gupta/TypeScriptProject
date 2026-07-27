@@ -2,6 +2,8 @@ import mongoose, { HydratedDocument } from "mongoose";
 
 export type Category = {
   name: string;
+  imageUrl: string;
+  imagePublicId: string;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -13,6 +15,17 @@ const CategorySchema = new mongoose.Schema(
     name: {
       type: String,
       required: true,
+      trim: true,
+    },
+    // Optional category image shown in the mobile app's category rail/circles.
+    imageUrl: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    imagePublicId: {
+      type: String,
+      default: "",
       trim: true,
     },
   },

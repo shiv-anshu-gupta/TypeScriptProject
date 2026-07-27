@@ -59,9 +59,13 @@ export const useCustomerGroceryListStore = create<CustomerGroceryListStore>(
     submitList: async (body) => {
       try {
         set({ submitting: true });
-        await submitGroceryList(body);
+        const created = await submitGroceryList(body);
         set({ submitting: false });
-        toast.success("List sent to the shop");
+        toast.success(
+          created?.merged
+            ? "Added to your earlier list (shop hasn't started it yet)"
+            : "List sent to the shop",
+        );
         await get().loadLists();
         return true;
       } catch (error) {

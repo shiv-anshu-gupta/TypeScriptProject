@@ -6,6 +6,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -26,31 +27,46 @@ const sortOptions: { key: ProductSort; label: string }[] = [
   { key: "recent", label: "Newest" },
 ];
 
-// One entry in the vertical category rail on the left of the product grid.
+// One entry in the vertical category rail on the left of the product grid:
+// a rounded category image (fallback icon) with the name under it.
 function RailItem({
   label,
   active,
   onPress,
+  image,
 }: {
   label: string;
   active: boolean;
   onPress: () => void;
+  image?: string;
 }) {
   return (
     <Pressable
       onPress={onPress}
       className={
         active
-          ? "items-center border-l-4 border-primary bg-secondary px-1 py-3.5"
-          : "items-center border-l-4 border-transparent px-1 py-3.5"
+          ? "items-center gap-1.5 border-l-4 border-primary bg-secondary px-1 py-3"
+          : "items-center gap-1.5 border-l-4 border-transparent px-1 py-3"
       }
     >
+      {image ? (
+        <Image
+          source={{ uri: image }}
+          style={{ width: 44, height: 44, borderRadius: 22 }}
+          contentFit="cover"
+          transition={150}
+        />
+      ) : (
+        <View className="h-11 w-11 items-center justify-center rounded-full bg-muted">
+          <Feather name="grid" size={18} color="#71717a" />
+        </View>
+      )}
       <Text
         numberOfLines={2}
         className={
           active
-            ? "text-center text-xs font-bold text-foreground"
-            : "text-center text-xs font-medium text-muted-foreground"
+            ? "text-center text-[11px] font-bold text-foreground"
+            : "text-center text-[11px] font-medium text-muted-foreground"
         }
       >
         {label}
@@ -164,31 +180,37 @@ export function ShopScreen() {
       </View>
 
       <View className="flex-1 flex-row">
-        {/* Vertical category rail (Blinkit/Zepto-style) */}
+        {/* Vertical category rail (Blinkit/Zepto-style) — hard-capped at
+            ~20% of the screen via the wrapper View's explicit width. */}
         {categories.length ? (
-          <ScrollView
-            className="w-24 border-r border-border bg-card"
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingVertical: 4, paddingBottom: 90 }}
+          <View
+            style={{ width: "20%" }}
+            className="border-r border-border bg-card"
           >
-            <RailItem
-              label="All"
-              active={!filters.category}
-              onPress={() => {
-                if (filters.category) {
-                  toggleFacet("category", filters.category);
-                }
-              }}
-            />
-            {categories.map((category) => (
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingVertical: 4, paddingBottom: 90 }}
+            >
               <RailItem
-                key={category._id}
-                label={category.name}
-                active={filters.category === category._id}
-                onPress={() => toggleFacet("category", category._id)}
+                label="All"
+                active={!filters.category}
+                onPress={() => {
+                  if (filters.category) {
+                    toggleFacet("category", filters.category);
+                  }
+                }}
               />
-            ))}
-          </ScrollView>
+              {categories.map((category) => (
+                <RailItem
+                  key={category._id}
+                  label={category.name}
+                  image={category.imageUrl}
+                  active={filters.category === category._id}
+                  onPress={() => toggleFacet("category", category._id)}
+                />
+              ))}
+            </ScrollView>
+          </View>
         ) : null}
 
         <View className="flex-1">

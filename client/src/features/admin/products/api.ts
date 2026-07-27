@@ -13,17 +13,40 @@ export async function getAdminCategories() {
   return apiGet<Category[]>("/admin/categories");
 }
 
-export async function createAdminCategory(body: CreateCategoryBody) {
-  return apiPost<Category, CreateCategoryBody>("/admin/categories", body);
+// Categories are sent as multipart form-data because they can carry an
+// optional image (shown as circles in the mobile app).
+function buildCategoryFormData(
+  body: CreateCategoryBody | UpdateCategoryBody,
+  image?: File | null,
+) {
+  const formData = new FormData();
+  formData.append("name", body.name);
+
+  if (image) {
+    formData.append("image", image);
+  }
+
+  return formData;
+}
+
+export async function createAdminCategory(
+  body: CreateCategoryBody,
+  image?: File | null,
+) {
+  return apiPost<Category, FormData>(
+    "/admin/categories",
+    buildCategoryFormData(body, image),
+  );
 }
 
 export async function updateAdminCategory(
   categoryId: string,
   body: UpdateCategoryBody,
+  image?: File | null,
 ) {
-  return apiPut<Category, UpdateCategoryBody>(
+  return apiPut<Category, FormData>(
     `/admin/categories/${categoryId}`,
-    body,
+    buildCategoryFormData(body, image),
   );
 }
 

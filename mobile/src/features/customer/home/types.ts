@@ -7,6 +7,7 @@ export type CustomerHomeBanner = {
 export type CustomerHomeCategory = {
   _id: string;
   name: string;
+  imageUrl?: string;
 };
 
 export type CustomerHomeProduct = {
