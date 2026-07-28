@@ -19,6 +19,15 @@ export type ProductCategory = {
 
 export type ProductStatus = "active" | "inactive";
 
+export type ProductUnit =
+  | "kg"
+  | "g"
+  | "litre"
+  | "ml"
+  | "piece"
+  | "dozen"
+  | "pack";
+
 export type Product = {
   _id: string;
   title: string;
@@ -26,10 +35,7 @@ export type Product = {
   brand: string;
   category: ProductCategory;
   images: ProductImage[];
-  colors: string[];
-  sizes: string[];
-  price: number;
-  salePercentage: number;
+  unit?: ProductUnit;
   stock: number;
   status: ProductStatus;
   createdAt: string;
@@ -49,10 +55,7 @@ export type CreateProductBody = {
   description: string;
   category: string;
   brand: string;
-  colors: string[];
-  sizes: string[];
-  price: number;
-  salePercentage: number;
+  unit: ProductUnit;
   stock: number;
   status: ProductStatus;
 };
@@ -62,10 +65,7 @@ export type UpdateProductBody = {
   description: string;
   category: string;
   brand: string;
-  colors: string[];
-  sizes: string[];
-  price: number;
-  salePercentage: number;
+  unit: ProductUnit;
   stock: number;
   status: ProductStatus;
   existingImages?: ProductImage[];
@@ -77,10 +77,7 @@ export type ProductFormState = {
   description: string;
   category: string;
   brand: string;
-  colors: string[];
-  sizes: string[];
-  price: string;
-  salePercentage: string;
+  unit: ProductUnit;
   stock: string;
   status: ProductStatus;
   existingImages: ProductImage[];

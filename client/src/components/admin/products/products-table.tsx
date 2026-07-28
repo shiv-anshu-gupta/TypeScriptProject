@@ -51,7 +51,7 @@ export function ProductsTable({
             <TableHead>Title</TableHead>
             <TableHead>Brand</TableHead>
             <TableHead>Category</TableHead>
-            <TableHead>Price</TableHead>
+            <TableHead>Unit</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Stock</TableHead>
             <TableHead className={editHeadClass}>Edit</TableHead>
@@ -90,7 +90,7 @@ export function ProductsTable({
                   <TableCell>{product.title}</TableCell>
                   <TableCell>{product.brand}</TableCell>
                   <TableCell>{product.category?.name}</TableCell>
-                  <TableCell>{product.price}</TableCell>
+                  <TableCell>per {product.unit ?? "piece"}</TableCell>
                   <TableCell>
                     <Badge
                       variant={

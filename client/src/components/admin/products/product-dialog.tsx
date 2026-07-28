@@ -15,14 +15,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { BRANDS } from "@/features/admin/products/constants";
+import { UNIT_OPTIONS } from "@/features/admin/products/constants";
 import type {
   Category,
   Product,
   ProductStatus,
+  ProductUnit,
 } from "@/features/admin/products/types";
-import { ColorPicker } from "./color-picker";
-import { SizeSelector } from "./size-selector";
 import { ImagePicker } from "./image-picker";
 import { Button } from "@/components/ui/button";
 import { useProductForm } from "@/features/admin/products/use-product-form";
@@ -41,18 +40,14 @@ const contentWrapClass = "grid gap-6";
 
 const twoColumnGridClass = "grid gap-4 md:grid-cols-2";
 
-const threeColumnGridClass = "grid gap-4 md:grid-cols-3";
-
 const fieldGroupClass = "space-y-2";
-
-const sectionGridClass = "grid gap-6 md:grid-cols-2";
 
 const statusGroupClass =
   "flex gap-6 rounded-xl border border-border bg-card px-4 py-3";
 
 const statusItemClass = "flex items-center space-x-2";
 
-const actionsRowClass = "flex justify-end gap-3";
+const actionsRowClass = "flex items-center justify-between gap-3";
 
 export function ProductDialog({
   open,
@@ -64,13 +59,12 @@ export function ProductDialog({
   const {
     form,
     saving,
+    deleting,
     isEditMode,
     updateField,
-    toggleSize,
-    addColor,
-    removeColor,
     addFiles,
     submit,
+    removeProduct,
     removeExistingImage,
     changeCoverImage,
   } = useProductForm({
@@ -101,22 +95,11 @@ export function ProductDialog({
 
             <div className={fieldGroupClass}>
               <Label>Brand</Label>
-              <Select
+              <Input
                 value={form.brand}
-                onValueChange={(val) => updateField("brand", val)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Brand" />
-                </SelectTrigger>
-
-                <SelectContent>
-                  {BRANDS.map((brand) => (
-                    <SelectItem key={brand} value={brand}>
-                      {brand}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                onChange={(event) => updateField("brand", event.target.value)}
+                placeholder="e.g. Amul, Fresh Farm, Tata"
+              />
             </div>
           </div>
           <div className={fieldGroupClass}>
@@ -176,27 +159,26 @@ export function ProductDialog({
             </div>
           </div>
 
-          <div className={threeColumnGridClass}>
+          <div className={twoColumnGridClass}>
             <div className={fieldGroupClass}>
-              <Label>Price</Label>
-              <Input
-                value={form.price}
-                onChange={(e) => updateField("price", e.target.value)}
-                type="number"
-                min="0"
-                placeholder="0"
-              />
-            </div>
-
-            <div className={fieldGroupClass}>
-              <Label>Sale Percentage</Label>
-              <Input
-                value={form.salePercentage}
-                onChange={(e) => updateField("salePercentage", e.target.value)}
-                type="number"
-                min="0"
-                placeholder="0"
-              />
+              <Label>Sold per (unit)</Label>
+              <Select
+                value={form.unit}
+                onValueChange={(val) =>
+                  updateField("unit", val as ProductUnit)
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Unit" />
+                </SelectTrigger>
+                <SelectContent>
+                  {UNIT_OPTIONS.map((unit) => (
+                    <SelectItem key={unit} value={unit}>
+                      {unit}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className={fieldGroupClass}>
@@ -211,16 +193,6 @@ export function ProductDialog({
             </div>
           </div>
 
-          <div className={sectionGridClass}>
-            <ColorPicker
-              colors={form.colors}
-              onAdd={addColor}
-              onRemove={removeColor}
-            />
-
-            <SizeSelector selectedSizes={form.sizes} onToggle={toggleSize} />
-          </div>
-
           <ImagePicker
             existingImages={form.existingImages}
             newFiles={form.newFiles}
@@ -231,17 +203,31 @@ export function ProductDialog({
           />
 
           <div className={actionsRowClass}>
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
+            {isEditMode ? (
+              <Button
+                variant="destructive"
+                onClick={() => void removeProduct()}
+                disabled={saving || deleting}
+              >
+                {deleting ? "Deleting..." : "Delete Product"}
+              </Button>
+            ) : (
+              <span />
+            )}
 
-            <Button onClick={submit} disabled={saving}>
-              {saving
-                ? "Saving..."
-                : isEditMode
-                  ? "Update Product"
-                  : "Create Product"}
-            </Button>
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={() => onOpenChange(false)}>
+                Cancel
+              </Button>
+
+              <Button onClick={submit} disabled={saving || deleting}>
+                {saving
+                  ? "Saving..."
+                  : isEditMode
+                    ? "Update Product"
+                    : "Create Product"}
+              </Button>
+            </div>
           </div>
         </div>
       </DialogContent>

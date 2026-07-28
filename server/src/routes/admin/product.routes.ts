@@ -322,3 +322,19 @@ adminProductRouter.put(
     res.json(ok(updatedProduct));
   }),
 );
+
+adminProductRouter.delete(
+  "/products/:id",
+  asyncHandler(async (req: Request, res: Response) => {
+    const productId = req.params.id as string;
+
+    const existingProduct = await Product.findById(productId);
+    const product = requireFound(existingProduct, "Product not found");
+
+    // Carts/wishlists referencing this product already null-guard missing
+    // populated products, so a plain delete is safe.
+    await Product.findByIdAndDelete(product._id);
+
+    res.json(ok({ _id: String(product._id) }));
+  }),
+);

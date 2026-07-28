@@ -77,13 +77,9 @@ function buildProductFormData(
   formData.append("description", body.description);
   formData.append("category", body.category);
   formData.append("brand", body.brand);
-  formData.append("price", String(body.price));
-  formData.append("salePercentage", String(body.salePercentage));
+  formData.append("unit", body.unit);
   formData.append("stock", String(body.stock));
   formData.append("status", body.status);
-
-  body.colors.forEach((color) => formData.append("colors", color));
-  body.sizes.forEach((size) => formData.append("sizes", size));
 
   if ("existingImages" in body && body.existingImages) {
     formData.append("existingImages", JSON.stringify(body.existingImages));
@@ -115,4 +111,8 @@ export async function updateAdminProduct(
   const formData = buildProductFormData(body, files);
 
   return apiPut<Product, FormData>(`/admin/products/${productId}`, formData);
+}
+
+export async function deleteAdminProduct(productId: string) {
+  return apiDelete<{ _id: string }>(`/admin/products/${productId}`);
 }
