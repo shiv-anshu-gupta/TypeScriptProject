@@ -13,7 +13,7 @@ import {
   updateAdminCategory,
 } from "@/features/admin/products/api";
 import type { Category } from "@/features/admin/products/types";
-import { Pencil, Tag, Trash2 } from "lucide-react";
+import { Camera, Pencil, Tag, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 const dialogContentClass = "sm:max-w-xl";
@@ -171,7 +171,28 @@ export function CategoryDialog({
                 setImageFile(event.target.files?.[0] ?? null)
               }
             />
+            {/* Opens the phone camera directly (no-op difference on desktop) */}
+            <Button type="button" variant="outline" asChild>
+              <label className="cursor-pointer">
+                <Camera className="mr-1.5 h-4 w-4" />
+                Take photo
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                  onChange={(event) =>
+                    setImageFile(event.target.files?.[0] ?? null)
+                  }
+                />
+              </label>
+            </Button>
           </div>
+          {imageFile ? (
+            <p className="text-xs text-muted-foreground">
+              Selected: {imageFile.name}
+            </p>
+          ) : null}
 
           {error ? <p className={errorTextClass}>{error}</p> : null}
 

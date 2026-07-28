@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import type { ProductImage } from "@/features/admin/products/types";
-import { ImagePlus, Star, X } from "lucide-react";
+import { Camera, ImagePlus, Star, X } from "lucide-react";
 import { useEffect, useMemo } from "react";
 
 const wrapperClass = "space-y-4";
@@ -70,18 +70,36 @@ export function ImagePicker({
       <div className={headerClass}>
         <h3 className={titleClass}>Images</h3>
       </div>
-      <label className={uploadLabelClass}>
-        <ImagePlus className={uploadIconClass} />
-        <span className={uploadTitleClass}>Upload Product Images</span>
+      <div className="grid grid-cols-2 gap-3">
+        <label className={uploadLabelClass}>
+          <ImagePlus className={uploadIconClass} />
+          <span className={uploadTitleClass}>Choose from gallery</span>
 
-        <input
-          type="file"
-          accept="image/*"
-          multiple
-          className={hiddenInputClass}
-          onChange={(event) => onFilesAdd(event.target.files)}
-        />
-      </label>
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            className={hiddenInputClass}
+            onChange={(event) => onFilesAdd(event.target.files)}
+          />
+        </label>
+
+        {/* `capture` opens the phone camera DIRECTLY (rear lens) — the key
+            affordance for a shopkeeper adding products from their mobile.
+            On desktop browsers it simply behaves like a file picker. */}
+        <label className={uploadLabelClass}>
+          <Camera className={uploadIconClass} />
+          <span className={uploadTitleClass}>Take photo</span>
+
+          <input
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className={hiddenInputClass}
+            onChange={(event) => onFilesAdd(event.target.files)}
+          />
+        </label>
+      </div>
 
       {existingImages.length > 0 ? (
         <div className={sectionClass}>
