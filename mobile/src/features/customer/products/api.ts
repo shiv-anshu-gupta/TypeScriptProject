@@ -17,6 +17,7 @@ export async function getCustomerProducts(params?: GetCustomerProductsParams) {
   if (params?.brand) query.push(`brand=${encodeURIComponent(params.brand)}`);
   if (params?.color) query.push(`color=${encodeURIComponent(params.color)}`);
   if (params?.size) query.push(`size=${encodeURIComponent(params.size)}`);
+  if (params?.search) query.push(`search=${encodeURIComponent(params.search)}`);
   if (params?.sort) query.push(`sort=${encodeURIComponent(params.sort)}`);
 
   const queryString = query.join("&");

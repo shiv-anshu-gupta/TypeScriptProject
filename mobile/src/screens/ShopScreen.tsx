@@ -1,9 +1,11 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  FlatList,
   Pressable,
   ScrollView,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import { Image } from "expo-image";
@@ -125,12 +127,16 @@ export function ShopScreen() {
     loading,
     filters,
     sort,
+    search,
+    setSearch,
     hasActiveFilters,
     changeSort,
     toggleFacet,
     clearFilters,
     activeFilterBadges,
   } = useCustomerProductList(route.params?.category);
+
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const draftCount = useDraftListStore(
     (state) =>
@@ -145,7 +151,47 @@ export function ShopScreen() {
   return (
     <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
       <View className="border-b border-border px-4 pb-3 pt-2">
-        <Text className="text-2xl font-semibold text-foreground">Shop</Text>
+        <View className="flex-row items-center justify-between">
+          <Text className="text-2xl font-semibold text-foreground">Shop</Text>
+
+          {/* Search toggle — top right */}
+          <Pressable
+            onPress={() =>
+              setSearchOpen((open) => {
+                const next = !open;
+                if (!next) setSearch("");
+                return next;
+              })
+            }
+            hitSlop={8}
+            className="h-10 w-10 items-center justify-center rounded-full bg-secondary"
+          >
+            <Feather
+              name={searchOpen ? "x" : "search"}
+              size={18}
+              color="#18181b"
+            />
+          </Pressable>
+        </View>
+
+        {searchOpen ? (
+          <View className="mt-2 flex-row items-center gap-2 rounded-xl border border-border bg-card px-3">
+            <Feather name="search" size={16} color="#71717a" />
+            <TextInput
+              value={search}
+              onChangeText={setSearch}
+              placeholder="Search any product…"
+              autoFocus
+              returnKeyType="search"
+              className="h-11 flex-1 text-base text-foreground"
+            />
+            {search ? (
+              <Pressable onPress={() => setSearch("")} hitSlop={8}>
+                <Feather name="x-circle" size={16} color="#71717a" />
+              </Pressable>
+            ) : null}
+          </View>
+        ) : null}
 
         {/* Sort */}
         <ScrollView
@@ -226,31 +272,34 @@ export function ShopScreen() {
               </Text>
             </View>
           ) : (
-            <ScrollView
+            // Virtualized: only visible cards are mounted, so the grid stays
+            // fast no matter how many products the shop adds.
+            <FlatList
+              data={products}
+              keyExtractor={(item) => item._id}
+              numColumns={2}
+              columnWrapperStyle={{ justifyContent: "space-between" }}
               contentContainerStyle={{ padding: 12, paddingBottom: 90 }}
               showsVerticalScrollIndicator={false}
-            >
-              <View className="flex-row flex-wrap justify-between gap-y-3">
-                {products.map((product) => (
-                  <View key={product._id} style={{ width: "48.5%" }}>
-                    <ProductCard
-                      product={{
-                        id: product._id,
-                        title: product.title,
-                        brand: product.brand,
-                        image: getCoverImage(product),
-                        unit: product.unit,
-                      }}
-                      onPress={() =>
-                        navigation.navigate("ProductDetails", {
-                          productId: product._id,
-                        })
-                      }
-                    />
-                  </View>
-                ))}
-              </View>
-            </ScrollView>
+              renderItem={({ item }) => (
+                <View style={{ width: "48.5%", marginBottom: 12 }}>
+                  <ProductCard
+                    product={{
+                      id: item._id,
+                      title: item.title,
+                      brand: item.brand,
+                      image: getCoverImage(item),
+                      unit: item.unit,
+                    }}
+                    onPress={() =>
+                      navigation.navigate("ProductDetails", {
+                        productId: item._id,
+                      })
+                    }
+                  />
+                </View>
+              )}
+            />
           )}
         </View>
       </View>

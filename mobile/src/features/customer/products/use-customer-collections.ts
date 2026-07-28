@@ -33,15 +33,25 @@ export function useCustomerProductList(initialCategory?: string) {
   });
   const [sort, setSort] = useState<ProductSort>("recent");
 
+  // Free-text search, debounced so we don't hit the API on every keystroke.
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search.trim()), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+
   const query = useMemo<GetCustomerProductsParams>(
     () => ({
       category: filters.category || undefined,
       brand: filters.brand || undefined,
       color: filters.color || undefined,
       size: filters.size || undefined,
+      search: debouncedSearch || undefined,
       sort,
     }),
-    [filters, sort],
+    [filters, sort, debouncedSearch],
   );
 
   const hasActiveFilters = Boolean(
@@ -138,6 +148,8 @@ export function useCustomerProductList(initialCategory?: string) {
     loading,
     filters,
     sort,
+    search,
+    setSearch,
     hasActiveFilters,
     changeSort,
     availableColors,

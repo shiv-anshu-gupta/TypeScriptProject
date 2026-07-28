@@ -14,6 +14,7 @@ type ProductAppliedFilterListQuery = {
   brand?: string;
   color?: string;
   size?: string;
+  search?: string;
   sort?: ProductSort;
 };
 
@@ -39,6 +40,7 @@ customerProductRouter.get(
       const brand = (req.query.brand || "").trim();
       const color = (req.query.color || "").trim();
       const size = (req.query.size || "").trim();
+      const search = (req.query.search || "").trim();
 
       const query: Record<string, unknown> = {
         status: "active",
@@ -55,6 +57,10 @@ customerProductRouter.get(
       }
       if (size) {
         query.sizes = size;
+      }
+      if (search) {
+        // Case-insensitive title match, same pattern as the admin search.
+        query.title = { $regex: search, $options: "i" };
       }
 
       const sortOption: Record<string, 1 | -1> = { createdAt: -1 };

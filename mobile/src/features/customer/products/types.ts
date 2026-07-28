@@ -44,6 +44,7 @@ export type GetCustomerProductsParams = {
   brand?: string;
   color?: string;
   size?: string;
+  search?: string;
   sort?: ProductSort;
 };
 

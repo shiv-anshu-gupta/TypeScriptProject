@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import {
   ActivityIndicator,
+  FlatList,
   Pressable,
-  ScrollView,
   Text,
   View,
 } from "react-native";
@@ -36,13 +36,39 @@ export function HomeScreen() {
     );
   }
 
-  return (
-    <ScrollView
-      className="flex-1 bg-background"
-      contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 32 }}
-      showsVerticalScrollIndicator={false}
-    >
-      <GroceryList />
+  // Everything above the product grid lives in the list header so the whole
+  // screen scrolls as ONE virtualized list (no nested scroll views).
+  const listHeader = (
+    <View>
+      {/* Brand header */}
+      <View className="flex-row items-center justify-between border-b border-border/60 px-4 pb-3">
+        <View className="flex-row items-center gap-2.5">
+          <View className="h-10 w-10 items-center justify-center rounded-xl bg-primary">
+            <Feather name="shopping-bag" size={19} color="#fafafa" />
+          </View>
+          <View>
+            <Text className="text-xl font-bold tracking-tight text-foreground">
+              sKirana
+            </Text>
+            <Text className="text-[11px] text-muted-foreground">
+              Your local shop, on your phone
+            </Text>
+          </View>
+        </View>
+
+        <Pressable
+          onPress={() => navigation.navigate("Tabs", { screen: "Lists" })}
+          hitSlop={8}
+          className="h-10 w-10 items-center justify-center rounded-full bg-secondary"
+        >
+          <Feather name="clipboard" size={18} color="#18181b" />
+        </Pressable>
+      </View>
+
+      {/* Handwritten-style draft paper */}
+      <View className="mt-3">
+        <GroceryList />
+      </View>
 
       {/* Categories */}
       {data.categories.length ? (
@@ -87,43 +113,53 @@ export function HomeScreen() {
         </View>
       ) : null}
 
-      {/* Recent products */}
+      {/* Products section title */}
       {data.recentProducts.length ? (
-        <View className="mt-8 px-4">
-          <View className="mb-3 flex-row items-center justify-between">
-            <Text className="text-lg font-semibold text-foreground">
-              New arrivals
+        <View className="mb-3 mt-8 flex-row items-center justify-between px-4">
+          <Text className="text-lg font-semibold text-foreground">
+            New arrivals
+          </Text>
+          <Pressable
+            onPress={() => navigation.navigate("Tabs", { screen: "Shop" })}
+          >
+            <Text className="text-sm font-semibold text-foreground">
+              View all
             </Text>
-            <Pressable
-              onPress={() => navigation.navigate("Tabs", { screen: "Shop" })}
-            >
-              <Text className="text-sm font-semibold text-foreground">
-                View all
-              </Text>
-            </Pressable>
-          </View>
-          <View className="flex-row flex-wrap justify-between gap-y-4">
-            {data.recentProducts.map((product) => (
-              <View key={product._id} style={{ width: "48%" }}>
-                <ProductCard
-                  product={{
-                    id: product._id,
-                    title: product.title,
-                    brand: product.brand,
-                    image: product.image,
-                    unit: product.unit,
-                  }}
-                  onPress={() =>
-                    navigation.navigate("ProductDetails", {
-                      productId: product._id,
-                    })
-                  }
-                />
-              </View>
-            ))}
-          </View>
+          </Pressable>
         </View>
       ) : null}
-    </ScrollView>
+    </View>
+  );
+
+  return (
+    <FlatList
+      className="flex-1 bg-background"
+      data={data.recentProducts}
+      keyExtractor={(item) => item._id}
+      numColumns={2}
+      columnWrapperStyle={{
+        justifyContent: "space-between",
+        paddingHorizontal: 16,
+      }}
+      contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 32 }}
+      showsVerticalScrollIndicator={false}
+      ListHeaderComponent={listHeader}
+      renderItem={({ item }) => (
+        <View style={{ width: "48%", marginBottom: 16 }}>
+          <ProductCard
+            product={{
+              id: item._id,
+              title: item.title,
+              brand: item.brand,
+              image: item.image,
+              unit: item.unit,
+            }}
+            onPress={() =>
+              navigation.navigate("ProductDetails", { productId: item._id })
+            }
+          />
+        </View>
+      )}
+    />
   );
 }

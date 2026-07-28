@@ -2,9 +2,9 @@ import { useCallback, useEffect } from "react";
 import {
   ActivityIndicator,
   Alert,
+  FlatList,
   Pressable,
   RefreshControl,
-  ScrollView,
   Text,
   View,
 } from "react-native";
@@ -331,8 +331,10 @@ export function MyListsScreen() {
   }
 
   return (
-    <ScrollView
+    <FlatList
       className="flex-1 bg-background"
+      data={items}
+      keyExtractor={(list) => list._id}
       contentContainerStyle={{
         paddingTop: insets.top + 12,
         paddingBottom: 32,
@@ -343,26 +345,32 @@ export function MyListsScreen() {
         <RefreshControl refreshing={loading} onRefresh={() => void loadLists()} />
       }
       showsVerticalScrollIndicator={false}
-    >
-      <Text className="text-2xl font-semibold text-foreground">My lists</Text>
-
-      <DraftCard />
-
-      {!items.length && !hasDraft ? (
-        <View className="mt-16 items-center gap-4">
-          <Feather name="clipboard" size={40} color="#a1a1aa" />
-          <Text className="text-center text-sm text-muted-foreground">
-            You haven't sent any list yet. Write one on the home page.
+      ListHeaderComponent={
+        <View className="gap-3">
+          <Text className="text-2xl font-semibold text-foreground">
+            My lists
           </Text>
-          <Pressable onPress={() => navigation.navigate("Tabs", { screen: "Home" })}>
-            <Text className="text-sm font-semibold text-foreground">
-              Go to home
-            </Text>
-          </Pressable>
+          <DraftCard />
         </View>
-      ) : (
-        items.map((list) => <ListCard key={list._id} list={list} />)
-      )}
-    </ScrollView>
+      }
+      ListEmptyComponent={
+        !hasDraft ? (
+          <View className="mt-16 items-center gap-4">
+            <Feather name="clipboard" size={40} color="#a1a1aa" />
+            <Text className="text-center text-sm text-muted-foreground">
+              You haven't sent any list yet. Write one on the home page.
+            </Text>
+            <Pressable
+              onPress={() => navigation.navigate("Tabs", { screen: "Home" })}
+            >
+              <Text className="text-sm font-semibold text-foreground">
+                Go to home
+              </Text>
+            </Pressable>
+          </View>
+        ) : null
+      }
+      renderItem={({ item }) => <ListCard list={item} />}
+    />
   );
 }
