@@ -153,8 +153,10 @@ adminGroceryListRouter.patch(
 
     await foundList.save();
 
-    // Fire-and-forget: never let a push failure fail the shopkeeper's request.
-    void notifyUser(
+    // MUST be awaited: on Vercel serverless the function freezes as soon as
+    // the response is sent, which would kill an un-awaited push mid-flight.
+    // notifyUser never throws, so awaiting cannot fail the request.
+    await notifyUser(
       foundList.user,
       "Your list is priced",
       `List #${String(foundList._id)
@@ -212,7 +214,8 @@ adminGroceryListRouter.patch(
 
     await foundList.save();
 
-    void notifyUser(
+    // Awaited — see the note on the pricing route (Vercel serverless).
+    await notifyUser(
       foundList.user,
       `Order #${String(foundList._id).slice(-8).toUpperCase()}`,
       statusNotification[status],
@@ -257,7 +260,8 @@ adminGroceryListRouter.patch(
 
     await foundList.save();
 
-    void notifyUser(
+    // Awaited — see the note on the pricing route (Vercel serverless).
+    await notifyUser(
       foundList.user,
       "Payment received",
       `The shop confirmed payment for order #${String(foundList._id)
