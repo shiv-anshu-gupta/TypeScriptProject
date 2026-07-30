@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import type { Product, ProductFormState, ProductImage } from "./types";
 import {
   createAdminProduct,
@@ -105,7 +106,27 @@ export function useProductForm({
     updateField("coverImagePublicId", publicId);
   }
 
+  // Catch the common problems on the client so the admin gets instant, clear
+  // feedback instead of a round-trip 400. Mirrors the server's requirements.
+  function validate(): string | null {
+    if (!form.title.trim()) return "Title is required";
+    if (!form.description.trim()) return "Description is required";
+    if (!form.category) return "Please choose a category";
+    if (!form.brand.trim()) return "Brand is required";
+    if (form.stock === "" || Number.isNaN(Number(form.stock)))
+      return "Stock must be a number";
+    const totalImages = form.existingImages.length + form.newFiles.length;
+    if (totalImages === 0) return "Add at least one image";
+    return null;
+  }
+
   async function submit() {
+    const problem = validate();
+    if (problem) {
+      toast.error(problem);
+      return;
+    }
+
     try {
       setSaving(true);
 
@@ -140,8 +161,13 @@ export function useProductForm({
         );
       }
 
+      toast.success(product ? "Product updated" : "Product created");
       await onSaved();
       onClose();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Could not save the product",
+      );
     } finally {
       setSaving(false);
     }
@@ -159,8 +185,13 @@ export function useProductForm({
     try {
       setDeleting(true);
       await deleteAdminProduct(product._id);
+      toast.success("Product deleted");
       await onSaved();
       onClose();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Could not delete the product",
+      );
     } finally {
       setDeleting(false);
     }
