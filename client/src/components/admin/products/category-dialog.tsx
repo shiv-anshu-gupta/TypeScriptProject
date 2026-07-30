@@ -13,16 +13,17 @@ import {
   updateAdminCategory,
 } from "@/features/admin/products/api";
 import type { Category } from "@/features/admin/products/types";
-import { Camera, Pencil, Tag, Trash2 } from "lucide-react";
+import { Camera, Pencil, Search, Tag, Trash2 } from "lucide-react";
 import { useState } from "react";
 
-const dialogContentClass = "sm:max-w-xl";
+const dialogContentClass = "flex max-h-[90vh] flex-col sm:max-w-xl";
 
-const contentWrap = "space-y-4";
+const contentWrap = "flex min-h-0 flex-1 flex-col gap-4";
 
 const formRow = "flex gap-3";
 
-const categoriesList = "space-y-2";
+const categoriesList =
+  "min-h-0 flex-1 space-y-2 overflow-y-auto rounded-xl border border-border bg-muted/30 p-2";
 
 const categoryRow =
   "flex items-center justify-between rounded-xl border border-border bg-card px-3 py-3";
@@ -60,6 +61,12 @@ export function CategoryDialog({
   const [saving, setSaving] = useState(false);
   const [deletingCategoryId, setDeletingCategoryId] = useState("");
   const [error, setError] = useState("");
+  const [filter, setFilter] = useState("");
+
+  const query = filter.trim().toLowerCase();
+  const visibleCategories = query
+    ? categories.filter((cat) => cat.name.toLowerCase().includes(query))
+    : categories;
 
   async function handleSave() {
     if (!name.trim()) return;
@@ -131,6 +138,7 @@ export function CategoryDialog({
       setImageFile(null);
       setEditingCategory(null);
       setError("");
+      setFilter("");
     }
 
     onOpenChange(nextOpen);
@@ -140,7 +148,7 @@ export function CategoryDialog({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className={dialogContentClass}>
         <DialogHeader>
-          <DialogTitle>Manage Catgories</DialogTitle>
+          <DialogTitle>Manage Categories</DialogTitle>
         </DialogHeader>
 
         <div className={contentWrap}>
@@ -198,44 +206,72 @@ export function CategoryDialog({
 
           <Separator />
 
+          {/* Header + search so a long list (40+) stays manageable */}
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-medium text-foreground">
+              All categories
+              <span className="ml-1.5 text-muted-foreground">
+                ({categories.length})
+              </span>
+            </p>
+            <div className="relative w-44">
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={filter}
+                onChange={(event) => setFilter(event.target.value)}
+                placeholder="Search…"
+                className="h-9 pl-8"
+              />
+            </div>
+          </div>
+
+          {/* Fixed-height scroll area — the dialog no longer grows with the list */}
           <div className={categoriesList}>
-            {categories.map((cat) => (
-              <div key={cat._id} className={categoryRow}>
-                <div className={categoryInfo}>
-                  {cat.imageUrl ? (
-                    <img
-                      src={cat.imageUrl}
-                      alt={cat.name}
-                      className="h-8 w-8 rounded-full border border-border object-cover"
-                    />
-                  ) : (
-                    <Tag className={categoryIcon} />
-                  )}
-                  <span className={categoryName}>{cat.name}</span>
-                </div>
+            {visibleCategories.length === 0 ? (
+              <p className="px-2 py-6 text-center text-sm text-muted-foreground">
+                {query
+                  ? `No category matches “${filter.trim()}”.`
+                  : "No categories yet."}
+              </p>
+            ) : (
+              visibleCategories.map((cat) => (
+                <div key={cat._id} className={categoryRow}>
+                  <div className={categoryInfo}>
+                    {cat.imageUrl ? (
+                      <img
+                        src={cat.imageUrl}
+                        alt={cat.name}
+                        className="h-8 w-8 rounded-full border border-border object-cover"
+                      />
+                    ) : (
+                      <Tag className={categoryIcon} />
+                    )}
+                    <span className={categoryName}>{cat.name}</span>
+                  </div>
 
-                <div className={rowActions}>
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => handleEdit(cat)}
-                  >
-                    <Pencil className={editButtonClass} />
-                  </Button>
+                  <div className={rowActions}>
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => handleEdit(cat)}
+                    >
+                      <Pencil className={editButtonClass} />
+                    </Button>
 
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="ghost"
-                    disabled={deletingCategoryId === cat._id}
-                    onClick={() => void handleDelete(cat)}
-                  >
-                    <Trash2 className={deleteButtonClass} />
-                  </Button>
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      disabled={deletingCategoryId === cat._id}
+                      onClick={() => void handleDelete(cat)}
+                    >
+                      <Trash2 className={deleteButtonClass} />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </DialogContent>
