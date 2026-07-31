@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { compressImages, MAX_IMAGE_BYTES, formatBytes } from "@/lib/image";
 import type { Product, ProductFormState, ProductImage } from "./types";
 import {
   createAdminProduct,
@@ -21,6 +22,7 @@ function getEmptyForm(): ProductFormState {
     category: "",
     brand: "",
     unit: "piece",
+    unitValue: "1",
     stock: "",
     status: "active",
     existingImages: [],
@@ -42,6 +44,7 @@ function mapProductToFormValues(product: Product): ProductFormState {
     category: product.category._id,
     brand: product.brand,
     unit: product.unit ?? "piece",
+    unitValue: String(product.unitValue ?? 1),
     stock: String(product.stock),
     status: product.status,
     existingImages: product.images ?? [],
@@ -64,12 +67,30 @@ export function useProductForm({
     setForm(product ? mapProductToFormValues(product) : getEmptyForm());
   }, [open, product]);
 
-  function addFiles(files: FileList | null) {
+  async function addFiles(files: FileList | null) {
     if (!files?.length) return;
+
+    // Shrink before they ever hit the network, so large camera photos don't
+    // exceed the host's upload limit (the "Network error" cause).
+    const compressed = await compressImages(Array.from(files));
+
+    // Hard 1 MB cap — reject anything still too large even after compression.
+    const accepted: File[] = [];
+    for (const file of compressed) {
+      if (file.size > MAX_IMAGE_BYTES) {
+        toast.error(
+          `Image is too large (${formatBytes(file.size)}). Each image must be under 1 MB.`,
+        );
+      } else {
+        accepted.push(file);
+      }
+    }
+
+    if (!accepted.length) return;
 
     setForm((prev) => ({
       ...prev,
-      newFiles: [...prev.newFiles, ...Array.from(files)],
+      newFiles: [...prev.newFiles, ...accepted],
     }));
   }
 
@@ -139,6 +160,7 @@ export function useProductForm({
             category: form.category,
             brand: form.brand.trim(),
             unit: form.unit,
+            unitValue: Number(form.unitValue) || 1,
             stock: Number(form.stock),
             status: form.status,
             existingImages: form.existingImages,
@@ -154,6 +176,7 @@ export function useProductForm({
             category: form.category,
             brand: form.brand.trim(),
             unit: form.unit,
+            unitValue: Number(form.unitValue) || 1,
             stock: Number(form.stock),
             status: form.status,
           },

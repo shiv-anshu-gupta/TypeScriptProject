@@ -46,7 +46,7 @@ type DraftListStore = {
   nextId: number;
   hydrate: () => Promise<void>;
   updateRow: (id: number, key: "name" | "quantity", value: string) => void;
-  addProduct: (name: string, unit?: string) => void;
+  addProduct: (name: string, unit?: string, unitValue?: number) => void;
   clearDraft: () => void;
   filledCount: () => number;
 };
@@ -92,7 +92,7 @@ export const useDraftListStore = create<DraftListStore>((set, get) => ({
   // "Add to list" from the catalog. Fills the first empty line (like writing
   // on the next free line of the paper). If the product is already on the
   // list with a plain numeric quantity, bump it instead of adding a twin row.
-  addProduct: (name, unit) => {
+  addProduct: (name, unit, unitValue) => {
     const trimmed = name.trim();
     if (!trimmed) return;
 
@@ -115,7 +115,15 @@ export const useDraftListStore = create<DraftListStore>((set, get) => ({
           row.id === existing.id ? { ...row, quantity: bumped } : row,
         );
       } else {
-        const defaultQty = unit && unit !== "piece" ? `1 ${unit}` : "1";
+        // A pack (e.g. a 10 kg bag) starts the quantity at its real pack size
+        // "10 kg". Loose items keep "1 kg"; single/piece items keep "1".
+        const isPack = typeof unitValue === "number" && unitValue !== 1;
+        const defaultQty =
+          isPack && unit
+            ? `${unitValue} ${unit}`
+            : unit && unit !== "piece"
+              ? `1 ${unit}`
+              : "1";
         const firstBlank = state.rows.find((row) => !isRowFilled(row));
 
         rows = firstBlank

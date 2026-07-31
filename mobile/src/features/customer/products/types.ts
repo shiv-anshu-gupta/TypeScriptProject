@@ -34,6 +34,7 @@ export type CustomerProduct = {
   colors: string[];
   sizes: ProductSize[];
   unit: ProductUnit;
+  unitValue?: number;
   status: "active" | "inactive";
   createdAt: string;
   updatedAt: string;

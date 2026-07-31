@@ -78,6 +78,7 @@ function buildProductFormData(
   formData.append("category", body.category);
   formData.append("brand", body.brand);
   formData.append("unit", body.unit);
+  formData.append("unitValue", String(body.unitValue));
   formData.append("stock", String(body.stock));
   formData.append("status", body.status);
 

@@ -27,6 +27,9 @@ export type Product = {
   colors: string[];
   sizes: ProductSize[];
   unit: ProductUnit;
+  // How much of `unit` makes one sellable item, e.g. a 10 kg bag => unitValue 10,
+  // unit "kg". Loose items sold by the unit keep the default of 1.
+  unitValue: number;
   status: ProductStatus;
   createdBy: Types.ObjectId;
   createdAt: Date;
@@ -101,6 +104,11 @@ const ProductSchema = new mongoose.Schema(
       type: String,
       enum: ["kg", "g", "litre", "ml", "piece", "dozen", "pack"],
       default: "piece",
+    },
+    unitValue: {
+      type: Number,
+      default: 1,
+      min: 0,
     },
     status: {
       type: String,

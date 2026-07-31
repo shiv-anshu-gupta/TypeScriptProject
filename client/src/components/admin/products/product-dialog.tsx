@@ -161,24 +161,40 @@ export function ProductDialog({
 
           <div className={twoColumnGridClass}>
             <div className={fieldGroupClass}>
-              <Label>Sold per (unit)</Label>
-              <Select
-                value={form.unit}
-                onValueChange={(val) =>
-                  updateField("unit", val as ProductUnit)
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Unit" />
-                </SelectTrigger>
-                <SelectContent>
-                  {UNIT_OPTIONS.map((unit) => (
-                    <SelectItem key={unit} value={unit}>
-                      {unit}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>Sold per</Label>
+              <div className="flex gap-2">
+                <Input
+                  value={form.unitValue}
+                  onChange={(event) =>
+                    updateField("unitValue", event.target.value)
+                  }
+                  type="number"
+                  min="0"
+                  step="any"
+                  placeholder="1"
+                  className="w-24"
+                />
+                <Select
+                  value={form.unit}
+                  onValueChange={(val) =>
+                    updateField("unit", val as ProductUnit)
+                  }
+                >
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Unit" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {UNIT_OPTIONS.map((unit) => (
+                      <SelectItem key={unit} value={unit}>
+                        {unit}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                e.g. 10 + kg for a 10&nbsp;kg bag. Keep 1 for loose/single items.
+              </p>
             </div>
 
             <div className={fieldGroupClass}>

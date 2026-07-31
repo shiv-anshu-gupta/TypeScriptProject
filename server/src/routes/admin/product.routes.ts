@@ -173,6 +173,9 @@ adminProductRouter.post(
     const stock = Number(req.body.stock);
     const status = String(req.body.status || "active").trim();
     const unit = String(req.body.unit || "piece").trim();
+    const unitValueRaw = Number(req.body.unitValue);
+    const unitValue =
+      Number.isFinite(unitValueRaw) && unitValueRaw > 0 ? unitValueRaw : 1;
     const colors = req.body.colors || [];
     const sizes = req.body.sizes || [];
 
@@ -214,6 +217,7 @@ adminProductRouter.post(
       colors,
       sizes,
       unit,
+      unitValue,
       stock,
       status,
       createdBy: user._id,
@@ -242,6 +246,9 @@ adminProductRouter.put(
       | "active"
       | "inactive";
     const unit = String(req.body.unit || "piece").trim();
+    const unitValueRaw = Number(req.body.unitValue);
+    const unitValue =
+      Number.isFinite(unitValueRaw) && unitValueRaw > 0 ? unitValueRaw : 1;
     const colors = req.body.colors || [];
     const sizes = req.body.sizes || [];
     const coverImagePublicId = String(req.body.coverImagePublicId || "").trim();
@@ -308,6 +315,7 @@ adminProductRouter.put(
     product.colors = colors;
     product.sizes = sizes;
     product.unit = unit;
+    product.unitValue = unitValue;
     product.stock = stock;
     product.status = status;
     product.set("images", finalImages);

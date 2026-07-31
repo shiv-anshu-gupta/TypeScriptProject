@@ -13,6 +13,7 @@ import {
   updateAdminCategory,
 } from "@/features/admin/products/api";
 import type { Category } from "@/features/admin/products/types";
+import { compressImage, MAX_IMAGE_BYTES, formatBytes } from "@/lib/image";
 import { Camera, Pencil, Search, Tag, Trash2 } from "lucide-react";
 import { useState } from "react";
 
@@ -67,6 +68,29 @@ export function CategoryDialog({
   const visibleCategories = query
     ? categories.filter((cat) => cat.name.toLowerCase().includes(query))
     : categories;
+
+  // Shrink the picked image before it is uploaded (avoids the host's upload
+  // size limit that surfaces as a bare "Network error").
+  async function pickImage(file: File | null) {
+    if (!file) {
+      setImageFile(null);
+      return;
+    }
+
+    const compressed = await compressImage(file);
+
+    // Hard 1 MB cap even after compression.
+    if (compressed.size > MAX_IMAGE_BYTES) {
+      setError(
+        `Image is too large (${formatBytes(compressed.size)}). It must be under 1 MB.`,
+      );
+      setImageFile(null);
+      return;
+    }
+
+    setError("");
+    setImageFile(compressed);
+  }
 
   async function handleSave() {
     if (!name.trim()) return;
@@ -176,7 +200,7 @@ export function CategoryDialog({
               type="file"
               accept="image/*"
               onChange={(event) =>
-                setImageFile(event.target.files?.[0] ?? null)
+                void pickImage(event.target.files?.[0] ?? null)
               }
             />
             {/* Opens the phone camera directly (no-op difference on desktop) */}
@@ -190,7 +214,7 @@ export function CategoryDialog({
                   capture="environment"
                   className="hidden"
                   onChange={(event) =>
-                    setImageFile(event.target.files?.[0] ?? null)
+                    void pickImage(event.target.files?.[0] ?? null)
                   }
                 />
               </label>

@@ -153,6 +153,7 @@ export function HomeScreen() {
               brand: item.brand,
               image: item.image,
               unit: item.unit,
+              unitValue: item.unitValue,
             }}
             onPress={() =>
               navigation.navigate("ProductDetails", { productId: item._id })

@@ -90,7 +90,12 @@ export function ProductsTable({
                   <TableCell>{product.title}</TableCell>
                   <TableCell>{product.brand}</TableCell>
                   <TableCell>{product.category?.name}</TableCell>
-                  <TableCell>per {product.unit ?? "piece"}</TableCell>
+                  <TableCell>
+                    per{" "}
+                    {product.unitValue && product.unitValue !== 1
+                      ? `${product.unitValue} ${product.unit ?? "piece"}`
+                      : (product.unit ?? "piece")}
+                  </TableCell>
                   <TableCell>
                     <Badge
                       variant={

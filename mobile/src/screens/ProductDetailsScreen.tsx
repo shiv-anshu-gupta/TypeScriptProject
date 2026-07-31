@@ -19,6 +19,7 @@ import { useCustomerWishlistStore } from "@/features/customer/wishlist/store";
 import { useDraftListStore } from "@/features/customer/draft-list/store";
 import { useAuthStore } from "@/features/auth/store";
 import { toast } from "@/lib/toast";
+import { formatPack } from "@/lib/utils";
 import {
   getCoverImage,
   getSwatchColor,
@@ -157,7 +158,7 @@ export function ProductDetailsScreen() {
             <Text className="text-sm text-muted-foreground">
               Sold per{" "}
               <Text className="font-semibold text-foreground">
-                {product.unit}
+                {formatPack(product.unit, product.unitValue)}
               </Text>
               . Price will be confirmed by the shop after they review your
               order.
@@ -258,7 +259,7 @@ export function ProductDetailsScreen() {
                       {related.title}
                     </Text>
                     <Text className="text-sm text-muted-foreground">
-                      per {related.unit}
+                      per {formatPack(related.unit, related.unitValue)}
                     </Text>
                   </Pressable>
                 ))}
@@ -292,7 +293,7 @@ export function ProductDetailsScreen() {
             label={product.stock < 1 ? "Out of stock" : "Add to list"}
             disabled={product.stock < 1}
             onPress={() => {
-              addProduct(product.title, product.unit);
+              addProduct(product.title, product.unit, product.unitValue);
               toast.success("Added — send it from the Lists tab");
             }}
             icon={<Feather name="plus" size={16} color="#fafafa" />}

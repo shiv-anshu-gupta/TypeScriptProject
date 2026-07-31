@@ -16,6 +16,7 @@ export type CustomerHomeProduct = {
   brand: string;
   image: string;
   unit: string;
+  unitValue?: number;
   createdAt: string;
 };
 

@@ -290,6 +290,7 @@ export function ShopScreen() {
                       brand: item.brand,
                       image: getCoverImage(item),
                       unit: item.unit,
+                      unitValue: item.unitValue,
                     }}
                     onPress={() =>
                       navigation.navigate("ProductDetails", {

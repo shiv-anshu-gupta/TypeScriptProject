@@ -24,6 +24,7 @@ type ProductRow = {
   title: string;
   brand: string;
   unit: string;
+  unitValue?: number;
   images: Array<{
     url: string;
     isCover?: boolean;
@@ -51,7 +52,7 @@ customerHomeRouter.get(
       Banner.find().sort({ createdAt: -1 }).limit(6).lean<BannerRow[]>(),
       Category.find().sort({ name: 1 }).lean<CategoryRow[]>(),
       Product.find({ status: "active" })
-        .select("title brand unit images createdAt")
+        .select("title brand unit unitValue images createdAt")
         .sort({ createdAt: -1 })
         .limit(4)
         .lean<ProductRow[]>(),
@@ -89,6 +90,7 @@ customerHomeRouter.get(
             brand: recentProductItem.brand,
             image,
             unit: recentProductItem.unit,
+            unitValue: recentProductItem.unitValue ?? 1,
             createAt: recentProductItem.createdAt.toISOString(),
           };
         }),

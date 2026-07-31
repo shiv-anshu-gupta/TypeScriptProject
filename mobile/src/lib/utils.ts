@@ -12,3 +12,12 @@ export function formatPrice(val: number) {
     maximumFractionDigits: 0,
   }).format(val);
 }
+
+// A product's pack label: a 10 kg bag shows "10 kg", a loose/single item just
+// shows its unit ("kg", "piece"). Keeps the customer from seeing "1 kg" when
+// the pack is actually 10 kg.
+export function formatPack(unit?: string, unitValue?: number) {
+  const u = (unit ?? "").trim();
+  if (!u) return "";
+  return unitValue && unitValue !== 1 ? `${unitValue} ${u}` : u;
+}

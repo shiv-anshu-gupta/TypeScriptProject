@@ -4,6 +4,7 @@ import { Feather } from "@expo/vector-icons";
 
 import { useDraftListStore } from "@/features/customer/draft-list/store";
 import { toast } from "@/lib/toast";
+import { formatPack } from "@/lib/utils";
 
 export type ProductCardData = {
   id: string;
@@ -11,6 +12,7 @@ export type ProductCardData = {
   brand: string;
   image: string;
   unit: string;
+  unitValue?: number;
 };
 
 type ProductCardProps = {
@@ -20,6 +22,7 @@ type ProductCardProps = {
 
 export function ProductCard({ product, onPress }: ProductCardProps) {
   const addProduct = useDraftListStore((state) => state.addProduct);
+  const packLabel = formatPack(product.unit, product.unitValue);
 
   return (
     <Pressable
@@ -38,7 +41,7 @@ export function ProductCard({ product, onPress }: ProductCardProps) {
             it doesn't open the details page. */}
         <Pressable
           onPress={() => {
-            addProduct(product.title, product.unit);
+            addProduct(product.title, product.unit, product.unitValue);
             toast.success("Added — send it from the Lists tab");
           }}
           hitSlop={8}
@@ -62,9 +65,9 @@ export function ProductCard({ product, onPress }: ProductCardProps) {
         <Text numberOfLines={2} className="text-sm font-medium text-foreground">
           {product.title}
         </Text>
-        {product.unit ? (
+        {packLabel ? (
           <Text className="mt-1 text-xs text-muted-foreground">
-            per {product.unit}
+            per {packLabel}
           </Text>
         ) : null}
       </View>

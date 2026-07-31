@@ -36,6 +36,7 @@ export type Product = {
   category: ProductCategory;
   images: ProductImage[];
   unit?: ProductUnit;
+  unitValue?: number;
   stock: number;
   status: ProductStatus;
   createdAt: string;
@@ -56,6 +57,7 @@ export type CreateProductBody = {
   category: string;
   brand: string;
   unit: ProductUnit;
+  unitValue: number;
   stock: number;
   status: ProductStatus;
 };
@@ -66,6 +68,7 @@ export type UpdateProductBody = {
   category: string;
   brand: string;
   unit: ProductUnit;
+  unitValue: number;
   stock: number;
   status: ProductStatus;
   existingImages?: ProductImage[];
@@ -78,6 +81,7 @@ export type ProductFormState = {
   category: string;
   brand: string;
   unit: ProductUnit;
+  unitValue: string;
   stock: string;
   status: ProductStatus;
   existingImages: ProductImage[];
