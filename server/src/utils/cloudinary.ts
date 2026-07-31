@@ -50,3 +50,15 @@ export async function uploadManyBuffersToCloudinary(
     files.map((file) => uploadSingleBufferToCloudinary(file, folder)),
   );
 }
+
+// Best-effort removal of images the admin deleted. We never let a failed
+// cleanup block the update itself — the DB is the source of truth.
+export async function deleteFromCloudinary(publicIds: string[]): Promise<void> {
+  await Promise.all(
+    publicIds.map((publicId) =>
+      cloudinary.uploader
+        .destroy(publicId, { resource_type: "image" })
+        .catch(() => undefined),
+    ),
+  );
+}

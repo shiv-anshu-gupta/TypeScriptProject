@@ -7,7 +7,10 @@ import { ok } from "../../utils/envelope";
 import { requireFound, requireNumber, requireText } from "../../utils/helpers";
 import { Product } from "../../models/Product";
 import { AppError } from "../../utils/AppError";
-import { uploadManyBuffersToCloudinary } from "../../utils/cloudinary";
+import {
+  deleteFromCloudinary,
+  uploadManyBuffersToCloudinary,
+} from "../../utils/cloudinary";
 
 type UploadedImage = {
   url: string;
@@ -281,7 +284,10 @@ adminProductRouter.put(
       isCover: false,
     }));
 
-    let existingImages: UploadedImage[] = product.images.map(
+    // The client sends the images it kept (after any removals) as JSON. Honour
+    // that list so removed images actually disappear. If the field is absent
+    // (older client), fall back to keeping all current images.
+    const currentImages: UploadedImage[] = product.images.map(
       (img: UploadedImage) => ({
         url: img.url,
         publicId: img.publicId,
@@ -289,10 +295,41 @@ adminProductRouter.put(
       }),
     );
 
-    const mergedImages: UploadedImage[] = [
-      ...existingImages,
-      ...newlyAddedImages,
-    ];
+    let keptImages: UploadedImage[];
+    if (req.body.existingImages === undefined) {
+      keptImages = currentImages;
+    } else {
+      let parsed: unknown = [];
+      try {
+        parsed = JSON.parse(String(req.body.existingImages) || "[]");
+      } catch {
+        parsed = [];
+      }
+
+      const keptPublicIds = new Set(
+        Array.isArray(parsed)
+          ? parsed
+              .map((img) => (img && img.publicId ? String(img.publicId) : ""))
+              .filter(Boolean)
+          : [],
+      );
+
+      // Keep only the current images whose publicId the client still has.
+      keptImages = currentImages.filter((img) =>
+        keptPublicIds.has(img.publicId),
+      );
+    }
+
+    // Delete the removed images from Cloudinary (best-effort, non-blocking).
+    const removedPublicIds = currentImages
+      .filter((img) => !keptImages.some((k) => k.publicId === img.publicId))
+      .map((img) => img.publicId);
+
+    if (removedPublicIds.length) {
+      await deleteFromCloudinary(removedPublicIds);
+    }
+
+    const mergedImages: UploadedImage[] = [...keptImages, ...newlyAddedImages];
 
     if (!mergedImages.length) {
       throw new AppError(400, "Atleast one img is needed");
