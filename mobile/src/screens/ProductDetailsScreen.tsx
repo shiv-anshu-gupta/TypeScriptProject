@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -17,9 +17,14 @@ import type { RootStackParamList } from "@/navigation/types";
 import { useCustomerProductDetailsStore } from "@/features/customer/products/details/store";
 import { useCustomerWishlistStore } from "@/features/customer/wishlist/store";
 import { useDraftListStore } from "@/features/customer/draft-list/store";
+import {
+  buildQuantityString,
+  defaultQuantityValue,
+} from "@/features/customer/draft-list/quantity";
 import { useAuthStore } from "@/features/auth/store";
 import { toast } from "@/lib/toast";
 import { formatPack } from "@/lib/utils";
+import { QuantityControl } from "@/components/QuantityControl";
 import {
   getCoverImage,
   getSwatchColor,
@@ -53,13 +58,23 @@ export function ProductDetailsScreen() {
     toggleWishlist,
   } = useCustomerProductDetailsStore((state) => state);
 
-  const addProduct = useDraftListStore((state) => state.addProduct);
+  const addProductWithQuantity = useDraftListStore(
+    (state) => state.addProductWithQuantity,
+  );
+
+  const [qty, setQty] = useState(1);
 
   useEffect(() => {
     void loadProduct(productId);
   }, [productId, loadProduct]);
 
   const product = data?.product ?? null;
+
+  // Seed the quantity with a sensible default once the product (and its unit)
+  // is known.
+  useEffect(() => {
+    if (product) setQty(defaultQuantityValue(product.unit, product.unitValue));
+  }, [product?._id, product?.unit, product?.unitValue]);
 
   const isWishlistActive = useMemo(
     () => wishlistItems.some((item) => item.productId === product?._id),
@@ -164,6 +179,21 @@ export function ProductDetailsScreen() {
               order.
             </Text>
           </View>
+
+          {/* Quantity picker — inline on the details page */}
+          {product.stock > 0 ? (
+            <View className="gap-2">
+              <Text className="text-sm font-semibold text-foreground">
+                Quantity
+              </Text>
+              <QuantityControl
+                unit={product.unit}
+                unitValue={product.unitValue}
+                value={qty}
+                onChange={setQty}
+              />
+            </View>
+          ) : null}
 
           {product.description ? (
             <Text className="text-sm leading-6 text-muted-foreground">
@@ -290,10 +320,17 @@ export function ProductDetailsScreen() {
         </Pressable>
         <View className="flex-1">
           <Button
-            label={product.stock < 1 ? "Out of stock" : "Add to list"}
+            label={
+              product.stock < 1
+                ? "Out of stock"
+                : `Add ${buildQuantityString(product.unit, product.unitValue, qty)} to list`
+            }
             disabled={product.stock < 1}
             onPress={() => {
-              addProduct(product.title, product.unit, product.unitValue);
+              addProductWithQuantity(
+                product.title,
+                buildQuantityString(product.unit, product.unitValue, qty),
+              );
               toast.success("Added — send it from the Lists tab");
             }}
             icon={<Feather name="plus" size={16} color="#fafafa" />}

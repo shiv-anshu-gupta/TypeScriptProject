@@ -47,6 +47,7 @@ type DraftListStore = {
   hydrate: () => Promise<void>;
   updateRow: (id: number, key: "name" | "quantity", value: string) => void;
   addProduct: (name: string, unit?: string, unitValue?: number) => void;
+  addProductWithQuantity: (name: string, quantity: string) => void;
   clearDraft: () => void;
   filledCount: () => number;
 };
@@ -136,6 +137,42 @@ export const useDraftListStore = create<DraftListStore>((set, get) => ({
               ...state.rows,
               { id: takeId(), name: trimmed, quantity: defaultQty },
             ];
+      }
+
+      const next = withTrailingBlank(rows, takeId);
+      persist(next);
+      return { rows: next, nextId: counter };
+    });
+  },
+
+  // Add (or update) a product with an exact quantity chosen in the quantity
+  // picker. Unlike addProduct's "+1 bump", this sets the quantity outright.
+  addProductWithQuantity: (name, quantity) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+
+    set((state) => {
+      let counter = state.nextId;
+      const takeId = () => counter++;
+
+      const existing = state.rows.find(
+        (row) => row.name.trim().toLowerCase() === trimmed.toLowerCase(),
+      );
+
+      let rows: DraftRow[];
+      if (existing) {
+        rows = state.rows.map((row) =>
+          row.id === existing.id ? { ...row, quantity } : row,
+        );
+      } else {
+        const firstBlank = state.rows.find((row) => !isRowFilled(row));
+        rows = firstBlank
+          ? state.rows.map((row) =>
+              row.id === firstBlank.id
+                ? { ...row, name: trimmed, quantity }
+                : row,
+            )
+          : [...state.rows, { id: takeId(), name: trimmed, quantity }];
       }
 
       const next = withTrailingBlank(rows, takeId);

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { Image } from "expo-image";
 import { Feather } from "@expo/vector-icons";
@@ -5,6 +6,7 @@ import { Feather } from "@expo/vector-icons";
 import { useDraftListStore } from "@/features/customer/draft-list/store";
 import { toast } from "@/lib/toast";
 import { formatPack } from "@/lib/utils";
+import { QuantitySheet } from "@/components/QuantitySheet";
 
 export type ProductCardData = {
   id: string;
@@ -21,8 +23,11 @@ type ProductCardProps = {
 };
 
 export function ProductCard({ product, onPress }: ProductCardProps) {
-  const addProduct = useDraftListStore((state) => state.addProduct);
+  const addProductWithQuantity = useDraftListStore(
+    (state) => state.addProductWithQuantity,
+  );
   const packLabel = formatPack(product.unit, product.unitValue);
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   return (
     <Pressable
@@ -37,13 +42,10 @@ export function ProductCard({ product, onPress }: ProductCardProps) {
           transition={200}
         />
 
-        {/* Quick "add to list" — nested Pressable takes the touch, so tapping
-            it doesn't open the details page. */}
+        {/* Quick "add to list" — opens the quantity picker. Nested Pressable
+            takes the touch, so tapping it doesn't open the details page. */}
         <Pressable
-          onPress={() => {
-            addProduct(product.title, product.unit, product.unitValue);
-            toast.success("Added — send it from the Lists tab");
-          }}
+          onPress={() => setSheetOpen(true)}
           hitSlop={8}
           className="absolute bottom-2 right-2 h-10 w-10 items-center justify-center rounded-full bg-primary shadow-lg active:opacity-80"
           style={{
@@ -57,6 +59,18 @@ export function ProductCard({ product, onPress }: ProductCardProps) {
           <Feather name="plus" size={20} color="#fafafa" />
         </Pressable>
       </View>
+
+      <QuantitySheet
+        open={sheetOpen}
+        onClose={() => setSheetOpen(false)}
+        title={product.title}
+        unit={product.unit}
+        unitValue={product.unitValue}
+        onConfirm={(quantity) => {
+          addProductWithQuantity(product.title, quantity);
+          toast.success("Added — send it from the Lists tab");
+        }}
+      />
 
       <View className="gap-1 p-3">
         <Text className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
