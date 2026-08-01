@@ -14,4 +14,5 @@ export type RootStackParamList = {
   Orders: undefined;
   SignIn: undefined;
   SignUp: undefined;
+  Legal: undefined;
 };

@@ -6,6 +6,7 @@ import { WishlistScreen } from "@/screens/WishlistScreen";
 import { OrdersScreen } from "@/screens/OrdersScreen";
 import { SignInScreen } from "@/screens/SignInScreen";
 import { SignUpScreen } from "@/screens/SignUpScreen";
+import { LegalScreen } from "@/screens/LegalScreen";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -49,6 +50,11 @@ export function RootNavigator() {
         name="SignUp"
         component={SignUpScreen}
         options={{ title: "Create account", presentation: "modal" }}
+      />
+      <Stack.Screen
+        name="Legal"
+        component={LegalScreen}
+        options={{ title: "Privacy & Terms" }}
       />
     </Stack.Navigator>
   );

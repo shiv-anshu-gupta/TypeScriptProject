@@ -189,10 +189,18 @@ function ListCard({ list }: { list: CustomerGroceryList }) {
       </View>
 
       {isPriced ? (
-        <View className="flex-row items-center justify-between rounded-xl bg-secondary px-4 py-3">
-          <Text className="text-base font-semibold text-foreground">Total</Text>
-          <Text className="text-xl font-bold text-foreground">
-            {formatPrice(list.totalAmount)}
+        <View className="gap-1.5">
+          <View className="flex-row items-center justify-between rounded-xl bg-secondary px-4 py-3">
+            <Text className="text-base font-semibold text-foreground">
+              Total
+            </Text>
+            <Text className="text-xl font-bold text-foreground">
+              {formatPrice(list.totalAmount)}
+            </Text>
+          </View>
+          {/* Passive legal note — an estimate; final bill is at the counter */}
+          <Text className="text-center text-[11px] text-muted-foreground">
+            Estimated total — your final bill is issued at the shop counter.
           </Text>
         </View>
       ) : (

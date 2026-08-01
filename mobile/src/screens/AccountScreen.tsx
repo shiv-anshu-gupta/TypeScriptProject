@@ -98,6 +98,12 @@ export function AccountScreen() {
             onPress={() => navigation.navigate("SignUp")}
           />
         </View>
+        <Text
+          className="text-xs text-muted-foreground underline"
+          onPress={() => navigation.navigate("Legal")}
+        >
+          Privacy Policy & Terms
+        </Text>
       </View>
     );
   }
@@ -138,6 +144,11 @@ export function AccountScreen() {
           icon="heart"
           label="Wishlist"
           onPress={() => navigation.navigate("Wishlist")}
+        />
+        <LinkRow
+          icon="shield"
+          label="Privacy & Terms"
+          onPress={() => navigation.navigate("Legal")}
         />
       </View>
 

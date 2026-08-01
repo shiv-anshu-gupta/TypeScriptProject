@@ -11,6 +11,7 @@ import AdminCoupons from "./pages/admin/Promos";
 import AdminOrders from "./pages/admin/Orders";
 import AdminGroceryLists from "./pages/admin/GroceryLists";
 import AdminSettings from "./pages/admin/Settings";
+import PrivacyPage from "./pages/legal/Privacy";
 
 // This web app is the shop-owner ADMIN panel. Customers use the mobile app,
 // so the root and any unknown path send you straight to /admin (which in turn
@@ -19,6 +20,15 @@ export const router = createBrowserRouter([
   {
     path: "/",
     element: <Navigate to="/admin" replace />,
+  },
+  // Public, no-login legal pages — this is the URL Google Play Console needs.
+  {
+    path: "/privacy",
+    element: <PrivacyPage />,
+  },
+  {
+    path: "/terms",
+    element: <PrivacyPage />,
   },
   {
     element: <PublicOnlyLayout />,

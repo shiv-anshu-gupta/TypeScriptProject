@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { KeyboardAvoidingView, Platform, Text, TextInput, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useSignUp } from "@clerk/clerk-expo";
+
+import type { RootStackParamList } from "@/navigation/types";
 
 import { Button } from "@/components/ui/Button";
 import { GoogleAuthButton } from "@/components/GoogleAuthButton";
@@ -9,7 +12,8 @@ import { toast } from "@/lib/toast";
 import { getClerkErrorMessage } from "@/lib/clerk-error";
 
 export function SignUpScreen() {
-  const navigation = useNavigation();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { signUp, setActive, isLoaded } = useSignUp();
 
   const [email, setEmail] = useState("");
@@ -128,6 +132,18 @@ export function SignUpScreen() {
               onPress={onSignUp}
               className="mt-2"
             />
+
+            {/* Passive consent — no extra step, just a line under the button */}
+            <Text className="text-center text-xs leading-5 text-muted-foreground">
+              By continuing, you agree to our{" "}
+              <Text
+                className="font-semibold text-foreground underline"
+                onPress={() => navigation.navigate("Legal")}
+              >
+                Privacy Policy &amp; Terms
+              </Text>
+              .
+            </Text>
 
             <View className="my-1 flex-row items-center gap-3">
               <View className="h-px flex-1 bg-border" />
