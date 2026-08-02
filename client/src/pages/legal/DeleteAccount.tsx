@@ -3,7 +3,7 @@
 //
 // EDIT THESE for the real shop before publishing (keep in sync with Privacy):
 const SHOP_NAME = "sKirana";
-const CONTACT_EMAIL = "support@skirana.app"; // <-- the shop's real email
+const CONTACT_EMAIL = "shivanshu2019gupta@gmail.com";
 const LAST_UPDATED = "August 2026";
 
 function Section({

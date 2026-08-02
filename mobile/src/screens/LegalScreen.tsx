@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 //
 // EDIT THESE for the real shop before publishing:
 const SHOP_NAME = "sKirana";
-const CONTACT_EMAIL = "support@skirana.app"; // <-- put the shop's real email
+const CONTACT_EMAIL = "shivanshu2019gupta@gmail.com";
 const LAST_UPDATED = "July 2026";
 
 function H({ children }: { children: string }) {
