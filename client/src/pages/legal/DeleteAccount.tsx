@@ -62,6 +62,21 @@ export default function DeleteAccountPage() {
         <p>• All your grocery lists and their history</p>
       </Section>
 
+      <Section title="Delete only some data (keep your account)">
+        <p>
+          You don't have to delete your whole account to remove data:
+        </p>
+        <p>• In the app, delete any <b>saved address</b> (Account → Addresses → Delete).</p>
+        <p>• <b>Remove items</b> from a list before the shop starts packing it.</p>
+        <p>
+          • To remove any other specific data, email us at{" "}
+          <a className="underline" href={`mailto:${CONTACT_EMAIL}`}>
+            {CONTACT_EMAIL}
+          </a>{" "}
+          and tell us what to delete — your account stays active.
+        </p>
+      </Section>
+
       <Section title="What we keep">
         <p>
           Nothing personal is retained after deletion. Backup copies are fully
