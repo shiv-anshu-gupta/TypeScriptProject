@@ -50,6 +50,13 @@ const UserSchema = new mongoose.Schema(
       type: String,
       required: false,
     },
+    // Customer's mobile number so the shop can call about an order. Collected
+    // once, the first time they send a list.
+    phone: {
+      type: String,
+      default: "",
+      trim: true,
+    },
     role: {
       type: String,
       enum: ["user", "admin"],

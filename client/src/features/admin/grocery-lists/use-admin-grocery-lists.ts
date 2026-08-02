@@ -44,7 +44,8 @@ export function useAdminGroceryLists() {
       (list) =>
         list.code.toLowerCase().includes(query) ||
         list.customerName.toLowerCase().includes(query) ||
-        list.customerEmail.toLowerCase().includes(query),
+        list.customerEmail.toLowerCase().includes(query) ||
+        (list.customerPhone ?? "").includes(query),
     );
   }, [lists, search]);
 

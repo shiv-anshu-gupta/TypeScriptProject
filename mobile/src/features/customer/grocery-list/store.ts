@@ -20,6 +20,9 @@ type CustomerGroceryListStore = {
   items: CustomerGroceryList[];
   unseenCount: number;
   upi: ShopUpi;
+  // The customer's saved mobile number. null = not fetched yet, "" = none on
+  // file (prompt for it), otherwise the number.
+  customerPhone: string | null;
   loading: boolean;
   submitting: boolean;
   payingListId: string;
@@ -37,6 +40,7 @@ export const useCustomerGroceryListStore = create<CustomerGroceryListStore>(
     items: [],
     unseenCount: 0,
     upi: emptyUpi,
+    customerPhone: null,
     loading: false,
     submitting: false,
     payingListId: "",
@@ -49,6 +53,7 @@ export const useCustomerGroceryListStore = create<CustomerGroceryListStore>(
           items: response?.items ?? [],
           unseenCount: response?.unseenCount ?? 0,
           upi: response?.upi ?? emptyUpi,
+          customerPhone: response?.customerPhone ?? "",
           loading: false,
         });
       } catch {
@@ -163,6 +168,7 @@ export const useCustomerGroceryListStore = create<CustomerGroceryListStore>(
         items: [],
         unseenCount: 0,
         upi: emptyUpi,
+        customerPhone: null,
         loading: false,
         submitting: false,
         payingListId: "",

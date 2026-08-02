@@ -84,7 +84,7 @@ export function ProductDetailsScreen() {
   if (loading) {
     return (
       <View className="flex-1 items-center justify-center bg-background">
-        <ActivityIndicator color="#18181b" />
+        <ActivityIndicator color="#3c5a64" />
       </View>
     );
   }
@@ -315,7 +315,7 @@ export function ProductDetailsScreen() {
           <Feather
             name="heart"
             size={20}
-            color={isWishlistActive ? "#dc2626" : "#18181b"}
+            color={isWishlistActive ? "#dc2626" : "#1d2a2f"}
           />
         </Pressable>
         <View className="flex-1">
@@ -333,7 +333,7 @@ export function ProductDetailsScreen() {
               );
               toast.success("Added — send it from the Lists tab");
             }}
-            icon={<Feather name="plus" size={16} color="#fafafa" />}
+            icon={<Feather name="plus" size={16} color="#ffffff" />}
           />
         </View>
       </View>

@@ -31,7 +31,7 @@ export function HomeScreen() {
   if (loading) {
     return (
       <View className="flex-1 items-center justify-center bg-background">
-        <ActivityIndicator color="#18181b" />
+        <ActivityIndicator color="#3c5a64" />
       </View>
     );
   }
@@ -44,7 +44,7 @@ export function HomeScreen() {
       <View className="flex-row items-center justify-between border-b border-border/60 px-4 pb-3">
         <View className="flex-row items-center gap-2.5">
           <View className="h-10 w-10 items-center justify-center rounded-xl bg-primary">
-            <Feather name="shopping-bag" size={19} color="#fafafa" />
+            <Feather name="shopping-bag" size={19} color="#ffffff" />
           </View>
           <View>
             <Text className="text-xl font-bold tracking-tight text-foreground">
@@ -61,7 +61,7 @@ export function HomeScreen() {
           hitSlop={8}
           className="h-10 w-10 items-center justify-center rounded-full bg-secondary"
         >
-          <Feather name="clipboard" size={18} color="#18181b" />
+          <Feather name="clipboard" size={18} color="#1d2a2f" />
         </Pressable>
       </View>
 
@@ -98,7 +98,7 @@ export function HomeScreen() {
                   />
                 ) : (
                   <View className="h-14 w-14 items-center justify-center rounded-full bg-secondary">
-                    <Feather name="tag" size={20} color="#18181b" />
+                    <Feather name="tag" size={20} color="#1d2a2f" />
                   </View>
                 )}
                 <Text

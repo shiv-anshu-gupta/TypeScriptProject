@@ -17,6 +17,15 @@ type IncomingItem = {
   quantity?: string;
 };
 
+// Normalise an Indian mobile number to 10 digits (strips +91 / leading 0 /
+// spaces). Returns "" if it isn't a valid mobile.
+function normalizeMobile(raw: unknown): string {
+  let d = String(raw || "").replace(/\D/g, "");
+  if (d.length === 12 && d.startsWith("91")) d = d.slice(2);
+  else if (d.length === 11 && d.startsWith("0")) d = d.slice(1);
+  return /^[6-9]\d{9}$/.test(d) ? d : "";
+}
+
 function mapGroceryList(item: GroceryListDocument) {
   return {
     _id: String(item._id),
@@ -51,6 +60,15 @@ customerGroceryListRouter.post(
   "/grocery-lists",
   asyncHandler(async (req: Request, res: Response) => {
     const dbUser = await getDbUserFromReq(req);
+
+    // Capture the customer's mobile the first time they send a list (or when
+    // they provide a new valid one). The app prompts for it up front.
+    const phoneInput = normalizeMobile(req.body.phone);
+    if (phoneInput && phoneInput !== dbUser.phone) {
+      dbUser.phone = phoneInput;
+      await dbUser.save();
+    }
+    const customerPhone = dbUser.phone || phoneInput || "";
 
     const incomingItems = Array.isArray(req.body.items)
       ? (req.body.items as IncomingItem[])
@@ -93,6 +111,9 @@ customerGroceryListRouter.post(
 
       mergeTarget.set("items", mergedItems);
       mergeTarget.totalItems = mergedItems.length;
+      if (!mergeTarget.customerPhone && customerPhone) {
+        mergeTarget.customerPhone = customerPhone;
+      }
 
       if (note) {
         mergeTarget.note = [mergeTarget.note, note]
@@ -111,6 +132,7 @@ customerGroceryListRouter.post(
       // Fall back to the email so the shopkeeper always sees WHO sent it.
       customerName: dbUser.name || dbUser.email || "",
       customerEmail: dbUser.email || "",
+      customerPhone,
       items,
       totalItems: items.length,
       totalAmount: 0,
@@ -149,7 +171,8 @@ customerGroceryListRouter.get(
       name: process.env.SHOP_NAME || "sKirana",
     };
 
-    res.json(ok({ items, unseenCount, upi }));
+    // Lets the app decide whether to prompt for a mobile number on first send.
+    res.json(ok({ items, unseenCount, upi, customerPhone: dbUser.phone || "" }));
   }),
 );
 

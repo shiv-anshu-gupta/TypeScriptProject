@@ -56,7 +56,7 @@ export function ProductCard({ product, onPress }: ProductCardProps) {
             shadowOffset: { width: 0, height: 2 },
           }}
         >
-          <Feather name="plus" size={20} color="#fafafa" />
+          <Feather name="plus" size={20} color="#ffffff" />
         </Pressable>
       </View>
 

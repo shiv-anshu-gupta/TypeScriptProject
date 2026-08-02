@@ -81,7 +81,7 @@ export function QuantityControl({
           hitSlop={6}
           className="h-11 w-11 items-center justify-center rounded-lg bg-secondary active:opacity-70"
         >
-          <Feather name="minus" size={20} color="#18181b" />
+          <Feather name="minus" size={20} color="#1d2a2f" />
         </Pressable>
 
         <View className="flex-1 flex-row items-baseline justify-center gap-1.5">
@@ -122,7 +122,7 @@ export function QuantityControl({
           hitSlop={6}
           className="h-11 w-11 items-center justify-center rounded-lg bg-secondary active:opacity-70"
         >
-          <Feather name="plus" size={20} color="#18181b" />
+          <Feather name="plus" size={20} color="#1d2a2f" />
         </Pressable>
       </View>
 

@@ -44,6 +44,7 @@ export type CustomerGroceryListsResponse = {
   items: CustomerGroceryList[];
   unseenCount: number;
   upi: ShopUpi;
+  customerPhone: string;
 };
 
 export type SubmitGroceryListBody = {
@@ -52,4 +53,5 @@ export type SubmitGroceryListBody = {
     quantity: string;
   }>;
   note?: string;
+  phone?: string;
 };

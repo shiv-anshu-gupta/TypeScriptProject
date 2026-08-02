@@ -34,7 +34,7 @@ export function OrdersScreen() {
   if (!isSignedIn) {
     return (
       <View className="flex-1 items-center justify-center bg-background px-8">
-        <Feather name="package" size={32} color="#a1a1aa" />
+        <Feather name="package" size={32} color="#94a6ac" />
         <Text className="mt-3 text-center text-base text-muted-foreground">
           Sign in to view your orders.
         </Text>
@@ -45,7 +45,7 @@ export function OrdersScreen() {
   if (loading) {
     return (
       <View className="flex-1 items-center justify-center bg-background">
-        <ActivityIndicator color="#18181b" />
+        <ActivityIndicator color="#3c5a64" />
       </View>
     );
   }
@@ -53,7 +53,7 @@ export function OrdersScreen() {
   if (items.length === 0) {
     return (
       <View className="flex-1 items-center justify-center bg-background px-8">
-        <Feather name="package" size={32} color="#a1a1aa" />
+        <Feather name="package" size={32} color="#94a6ac" />
         <Text className="mt-3 text-center text-base text-muted-foreground">
           You have no orders yet.
         </Text>

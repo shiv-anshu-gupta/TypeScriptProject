@@ -24,6 +24,7 @@ import { useDraftListStore } from "@/features/customer/draft-list/store";
 import { useSendDraft } from "@/features/customer/draft-list/use-send-draft";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { PhonePrompt } from "@/components/PhonePrompt";
 import { formatPrice } from "@/lib/utils";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -82,7 +83,7 @@ function StatusTimeline({ list }: { list: CustomerGroceryList }) {
               }
             >
               {done ? (
-                <Feather name="check" size={13} color="#fafafa" />
+                <Feather name="check" size={13} color="#ffffff" />
               ) : (
                 <View className="h-1.5 w-1.5 rounded-full bg-muted-foreground" />
               )}
@@ -248,7 +249,14 @@ function ListCard({ list }: { list: CustomerGroceryList }) {
 // "Add to list" on products). Shown here too, because after adding products
 // from the Shop this is where people naturally come to send.
 function DraftCard() {
-  const { filledRows, submitting, send } = useSendDraft();
+  const {
+    filledRows,
+    submitting,
+    send,
+    phonePromptOpen,
+    closePhonePrompt,
+    submitWithPhone,
+  } = useSendDraft();
 
   if (!filledRows.length) return null;
 
@@ -285,6 +293,13 @@ function DraftCard() {
       <Text className="text-center text-[11px] text-muted-foreground">
         Add more from the Shop tab, or edit it on the Home paper.
       </Text>
+
+      <PhonePrompt
+        open={phonePromptOpen}
+        submitting={submitting}
+        onClose={closePhonePrompt}
+        onSubmit={submitWithPhone}
+      />
     </View>
   );
 }
@@ -317,7 +332,7 @@ export function MyListsScreen() {
         className="flex-1 items-center justify-center gap-4 bg-background px-8"
         style={{ paddingTop: insets.top }}
       >
-        <Feather name="clipboard" size={40} color="#a1a1aa" />
+        <Feather name="clipboard" size={40} color="#94a6ac" />
         <Text className="text-center text-sm text-muted-foreground">
           Sign in to see the lists you've sent to the shop.
         </Text>
@@ -333,7 +348,7 @@ export function MyListsScreen() {
   if (loading && !items.length) {
     return (
       <View className="flex-1 items-center justify-center bg-background">
-        <ActivityIndicator color="#18181b" />
+        <ActivityIndicator color="#3c5a64" />
       </View>
     );
   }
@@ -364,7 +379,7 @@ export function MyListsScreen() {
       ListEmptyComponent={
         !hasDraft ? (
           <View className="mt-16 items-center gap-4">
-            <Feather name="clipboard" size={40} color="#a1a1aa" />
+            <Feather name="clipboard" size={40} color="#94a6ac" />
             <Text className="text-center text-sm text-muted-foreground">
               You haven't sent any list yet. Write one on the home page.
             </Text>

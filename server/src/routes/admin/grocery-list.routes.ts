@@ -44,6 +44,7 @@ function mapGroceryList(item: GroceryListDocument) {
   const listUser = item.user as unknown as {
     name?: string;
     email?: string;
+    phone?: string;
   } | null;
 
   return {
@@ -51,6 +52,7 @@ function mapGroceryList(item: GroceryListDocument) {
     code: String(item._id).slice(-8).toUpperCase(),
     customerName: item.customerName || listUser?.name || listUser?.email || "",
     customerEmail: item.customerEmail || listUser?.email || "",
+    customerPhone: item.customerPhone || listUser?.phone || "",
     items: item.items.map((listItem) => ({
       name: listItem.name,
       quantity: listItem.quantity,
@@ -74,7 +76,7 @@ function mapGroceryList(item: GroceryListDocument) {
 async function getAllGroceryLists() {
   const lists = await GroceryList.find()
     .sort({ createdAt: -1 })
-    .populate("user", "name email");
+    .populate("user", "name email phone");
 
   return lists.map(mapGroceryList);
 }

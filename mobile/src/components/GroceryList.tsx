@@ -3,6 +3,7 @@ import { Dimensions, ScrollView, TextInput, View, Text } from "react-native";
 import { useDraftListStore } from "@/features/customer/draft-list/store";
 import { useSendDraft } from "@/features/customer/draft-list/use-send-draft";
 import { Button } from "@/components/ui/Button";
+import { PhonePrompt } from "@/components/PhonePrompt";
 
 // Let the paper take most of the screen but leave a peek of the section
 // below so the user knows the page scrolls further.
@@ -14,7 +15,14 @@ export function GroceryList() {
   const rows = useDraftListStore((state) => state.rows);
   const updateRow = useDraftListStore((state) => state.updateRow);
 
-  const { filledRows, submitting, send } = useSendDraft();
+  const {
+    filledRows,
+    submitting,
+    send,
+    phonePromptOpen,
+    closePhonePrompt,
+    submitWithPhone,
+  } = useSendDraft();
 
   return (
     <View className="gap-3">
@@ -87,6 +95,13 @@ export function GroceryList() {
           The shop will price your list and send it back.
         </Text>
       </View>
+
+      <PhonePrompt
+        open={phonePromptOpen}
+        submitting={submitting}
+        onClose={closePhonePrompt}
+        onSubmit={submitWithPhone}
+      />
     </View>
   );
 }

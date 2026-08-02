@@ -60,7 +60,7 @@ function RailItem({
         />
       ) : (
         <View className="h-11 w-11 items-center justify-center rounded-full bg-muted">
-          <Feather name="grid" size={18} color="#71717a" />
+          <Feather name="grid" size={18} color="#5c6e74" />
         </View>
       )}
       <Text
@@ -169,14 +169,14 @@ export function ShopScreen() {
             <Feather
               name={searchOpen ? "x" : "search"}
               size={18}
-              color="#18181b"
+              color="#1d2a2f"
             />
           </Pressable>
         </View>
 
         {searchOpen ? (
           <View className="mt-2 flex-row items-center gap-2 rounded-xl border border-border bg-card px-3">
-            <Feather name="search" size={16} color="#71717a" />
+            <Feather name="search" size={16} color="#5c6e74" />
             <TextInput
               value={search}
               onChangeText={setSearch}
@@ -187,7 +187,7 @@ export function ShopScreen() {
             />
             {search ? (
               <Pressable onPress={() => setSearch("")} hitSlop={8}>
-                <Feather name="x-circle" size={16} color="#71717a" />
+                <Feather name="x-circle" size={16} color="#5c6e74" />
               </Pressable>
             ) : null}
           </View>
@@ -216,7 +216,7 @@ export function ShopScreen() {
               onPress={clearFilters}
               className="flex-row items-center gap-1"
             >
-              <Feather name="x" size={14} color="#71717a" />
+              <Feather name="x" size={14} color="#5c6e74" />
               <Text className="text-sm text-muted-foreground">
                 Clear ({activeFilterBadges.length})
               </Text>
@@ -262,11 +262,11 @@ export function ShopScreen() {
         <View className="flex-1">
           {loading ? (
             <View className="flex-1 items-center justify-center">
-              <ActivityIndicator color="#18181b" />
+              <ActivityIndicator color="#3c5a64" />
             </View>
           ) : products.length === 0 ? (
             <View className="flex-1 items-center justify-center px-8">
-              <Feather name="search" size={32} color="#a1a1aa" />
+              <Feather name="search" size={32} color="#94a6ac" />
               <Text className="mt-3 text-center text-base text-muted-foreground">
                 No products match your filters.
               </Text>
@@ -326,7 +326,7 @@ export function ShopScreen() {
             <Text className="text-sm font-semibold text-primary-foreground">
               View & send
             </Text>
-            <Feather name="arrow-right" size={16} color="#fafafa" />
+            <Feather name="arrow-right" size={16} color="#ffffff" />
           </View>
         </Pressable>
       ) : null}

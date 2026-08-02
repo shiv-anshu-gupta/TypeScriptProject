@@ -101,6 +101,17 @@ function GroceryListCard({
           <p className={codeClass}>
             List #{list.code} — {list.customerName || "Customer"}
           </p>
+          {list.customerPhone ? (
+            <p className={metaClass}>
+              📞{" "}
+              <a
+                href={`tel:${list.customerPhone}`}
+                className="font-medium text-foreground underline underline-offset-2"
+              >
+                {list.customerPhone}
+              </a>
+            </p>
+          ) : null}
           {list.customerEmail ? (
             <p className={metaClass}>{list.customerEmail}</p>
           ) : null}

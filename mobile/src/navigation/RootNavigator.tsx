@@ -16,9 +16,10 @@ export function RootNavigator() {
       screenOptions={{
         headerShown: true,
         headerBackButtonDisplayMode: "minimal",
-        headerTintColor: "#18181b",
+        headerTintColor: "#1d2a2f",
         headerTitleStyle: { fontWeight: "600" },
-        contentStyle: { backgroundColor: "#ffffff" },
+        headerStyle: { backgroundColor: "#eaf0f2" },
+        contentStyle: { backgroundColor: "#eaf0f2" },
       }}
     >
       <Stack.Screen

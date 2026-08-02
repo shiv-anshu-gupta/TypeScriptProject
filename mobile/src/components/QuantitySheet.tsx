@@ -75,7 +75,7 @@ export function QuantitySheet({
               hitSlop={8}
               className="h-8 w-8 items-center justify-center rounded-full bg-secondary"
             >
-              <Feather name="x" size={16} color="#18181b" />
+              <Feather name="x" size={16} color="#1d2a2f" />
             </Pressable>
           </View>
 
@@ -92,7 +92,7 @@ export function QuantitySheet({
 
           <Button
             label="Add to list"
-            icon={<Feather name="plus" size={16} color="#fafafa" />}
+            icon={<Feather name="plus" size={16} color="#ffffff" />}
             onPress={() => {
               onConfirm(buildQuantityString(unit, unitValue, value));
               onClose();

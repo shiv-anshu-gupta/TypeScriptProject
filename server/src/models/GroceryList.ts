@@ -25,6 +25,7 @@ export type GroceryList = {
   user: Types.ObjectId;
   customerName: string;
   customerEmail: string;
+  customerPhone: string;
   items: GroceryListItem[];
   totalItems: number;
   totalAmount: number; // 0 until priced
@@ -80,6 +81,11 @@ const GroceryListSchema = new Schema<GroceryList>(
       trim: true,
     },
     customerEmail: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    customerPhone: {
       type: String,
       default: "",
       trim: true,

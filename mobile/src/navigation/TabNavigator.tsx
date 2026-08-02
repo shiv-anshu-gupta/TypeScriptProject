@@ -87,12 +87,12 @@ export function TabNavigator() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarActiveTintColor: "#18181b",
-        tabBarInactiveTintColor: "#a1a1aa",
+        tabBarActiveTintColor: "#3c5a64",
+        tabBarInactiveTintColor: "#94a6ac",
         // Reserve the bottom safe-area inset so the bar stays above the
         // Android system nav (edge-to-edge is on by default in RN 0.81).
         tabBarStyle: {
-          borderTopColor: "#e4e4e7",
+          borderTopColor: "#d6e0e2",
           height: 58 + insets.bottom,
           paddingBottom: insets.bottom + 6,
           paddingTop: 8,

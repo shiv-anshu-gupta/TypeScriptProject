@@ -59,7 +59,7 @@ export function SignInScreen() {
             autoCapitalize="none"
             keyboardType="email-address"
             placeholder="you@example.com"
-            placeholderTextColor="#a1a1aa"
+            placeholderTextColor="#94a6ac"
             className="h-12 rounded-xl border border-border bg-card px-3 text-foreground"
           />
         </View>
@@ -73,7 +73,7 @@ export function SignInScreen() {
             onChangeText={setPassword}
             secureTextEntry
             placeholder="••••••••"
-            placeholderTextColor="#a1a1aa"
+            placeholderTextColor="#94a6ac"
             className="h-12 rounded-xl border border-border bg-card px-3 text-foreground"
           />
         </View>

@@ -21,6 +21,7 @@ export type AdminGroceryList = {
   code: string;
   customerName: string;
   customerEmail: string;
+  customerPhone: string;
   items: AdminGroceryListItem[];
   totalItems: number;
   totalAmount: number;

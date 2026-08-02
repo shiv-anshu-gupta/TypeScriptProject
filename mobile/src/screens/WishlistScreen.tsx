@@ -25,7 +25,7 @@ export function WishlistScreen() {
   if (!isSignedIn) {
     return (
       <View className="flex-1 items-center justify-center bg-background px-8">
-        <Feather name="heart" size={32} color="#a1a1aa" />
+        <Feather name="heart" size={32} color="#94a6ac" />
         <Text className="mt-3 text-center text-base text-muted-foreground">
           Sign in to view your saved items.
         </Text>
@@ -36,7 +36,7 @@ export function WishlistScreen() {
   if (items.length === 0) {
     return (
       <View className="flex-1 items-center justify-center bg-background px-8">
-        <Feather name="heart" size={32} color="#a1a1aa" />
+        <Feather name="heart" size={32} color="#94a6ac" />
         <Text className="mt-3 text-center text-base text-muted-foreground">
           Your wishlist is empty.
         </Text>
