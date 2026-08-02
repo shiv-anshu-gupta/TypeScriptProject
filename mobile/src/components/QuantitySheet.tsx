@@ -75,7 +75,7 @@ export function QuantitySheet({
               hitSlop={8}
               className="h-8 w-8 items-center justify-center rounded-full bg-secondary"
             >
-              <Feather name="x" size={16} color="#1d2a2f" />
+              <Feather name="x" size={16} color="#1f2a2e" />
             </Pressable>
           </View>
 

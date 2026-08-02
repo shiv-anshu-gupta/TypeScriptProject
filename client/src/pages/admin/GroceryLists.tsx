@@ -15,6 +15,9 @@ function AdminGroceryLists() {
   const {
     search,
     setSearch,
+    amountReceived,
+    setAmountReceived,
+    amountMatchCount,
     lists,
     loading,
     savingListId,
@@ -31,9 +34,45 @@ function AdminGroceryLists() {
       <Card className={cardClass}>
         <CardHeader className={cardHeaderClass}>
           <CardTitle className={cardTitleClass}>Grocery lists</CardTitle>
+
+          {/* Money-received matcher — got a UPI payment? Type the amount to
+              find the order to mark paid. */}
+          <div className="rounded-xl border border-primary/30 bg-secondary/60 p-3">
+            <label className="text-sm font-medium text-foreground">
+              💰 Payment received? Enter the amount to find the order
+            </label>
+            <div className="mt-2 flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">₹</span>
+              <Input
+                className="max-w-[160px]"
+                type="number"
+                inputMode="numeric"
+                placeholder="e.g. 450"
+                value={amountReceived}
+                onChange={(event) => setAmountReceived(event.target.value)}
+              />
+              {amountReceived.trim() ? (
+                <button
+                  type="button"
+                  onClick={() => setAmountReceived("")}
+                  className="text-xs text-muted-foreground underline"
+                >
+                  clear
+                </button>
+              ) : null}
+            </div>
+            {amountReceived.trim() ? (
+              <p className="mt-2 text-xs text-muted-foreground">
+                {amountMatchCount === 0
+                  ? "No unpaid order of this amount — check the amount, or it may already be marked paid."
+                  : `${amountMatchCount} unpaid order${amountMatchCount > 1 ? "s" : ""} of ₹${amountReceived.trim()}. Match the order code with your UPI note, then Mark paid.`}
+              </p>
+            ) : null}
+          </div>
+
           <Input
             className={searchInputClass}
-            placeholder="Search by code, customer or email"
+            placeholder="Search by code, customer, phone or email"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />

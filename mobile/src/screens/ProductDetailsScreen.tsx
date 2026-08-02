@@ -315,7 +315,7 @@ export function ProductDetailsScreen() {
           <Feather
             name="heart"
             size={20}
-            color={isWishlistActive ? "#dc2626" : "#1d2a2f"}
+            color={isWishlistActive ? "#c0492f" : "#1f2a2e"}
           />
         </Pressable>
         <View className="flex-1">

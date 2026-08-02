@@ -46,10 +46,10 @@ function LinkRow({
       className="flex-row items-center justify-between border-b border-border py-4"
     >
       <View className="flex-row items-center gap-3">
-        <Feather name={icon} size={18} color="#1d2a2f" />
+        <Feather name={icon} size={18} color="#1f2a2e" />
         <Text className="text-base text-foreground">{label}</Text>
       </View>
-      <Feather name="chevron-right" size={18} color="#94a6ac" />
+      <Feather name="chevron-right" size={18} color="#ada291" />
     </Pressable>
   );
 }
@@ -83,7 +83,7 @@ export function AccountScreen() {
         className="flex-1 items-center justify-center gap-4 bg-background px-8"
         style={{ paddingTop: insets.top }}
       >
-        <Feather name="user" size={36} color="#94a6ac" />
+        <Feather name="user" size={36} color="#ada291" />
         <Text className="text-center text-base text-muted-foreground">
           Sign in to manage your account, orders and addresses.
         </Text>
@@ -136,13 +136,8 @@ export function AccountScreen() {
 
       <View className="mb-4">
         <LinkRow
-          icon="package"
-          label="My orders"
-          onPress={() => navigation.navigate("Orders")}
-        />
-        <LinkRow
           icon="heart"
-          label="Wishlist"
+          label="Saved products"
           onPress={() => navigation.navigate("Wishlist")}
         />
         <LinkRow
@@ -163,7 +158,7 @@ export function AccountScreen() {
               onPress={startAdd}
               className="flex-row items-center gap-1"
             >
-              <Feather name="plus" size={16} color="#1d2a2f" />
+              <Feather name="plus" size={16} color="#1f2a2e" />
               <Text className="text-sm font-semibold text-foreground">Add</Text>
             </Pressable>
           ) : null}
@@ -180,7 +175,7 @@ export function AccountScreen() {
                   value={form[field.key]}
                   onChangeText={(text) => updateForm(field.key, text)}
                   placeholder={field.placeholder}
-                  placeholderTextColor="#94a6ac"
+                  placeholderTextColor="#ada291"
                   className="h-11 rounded-xl border border-border bg-background px-3 text-foreground"
                 />
               </View>
@@ -236,14 +231,14 @@ export function AccountScreen() {
                     onPress={() => startEdit(address)}
                     className="flex-row items-center gap-1"
                   >
-                    <Feather name="edit-2" size={14} color="#1d2a2f" />
+                    <Feather name="edit-2" size={14} color="#1f2a2e" />
                     <Text className="text-sm text-foreground">Edit</Text>
                   </Pressable>
                   <Pressable
                     onPress={() => void removeAddress(address._id)}
                     className="flex-row items-center gap-1"
                   >
-                    <Feather name="trash-2" size={14} color="#dc2626" />
+                    <Feather name="trash-2" size={14} color="#c0492f" />
                     <Text className="text-sm text-destructive">Delete</Text>
                   </Pressable>
                 </View>

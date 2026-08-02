@@ -25,7 +25,7 @@ export function WishlistScreen() {
   if (!isSignedIn) {
     return (
       <View className="flex-1 items-center justify-center bg-background px-8">
-        <Feather name="heart" size={32} color="#94a6ac" />
+        <Feather name="heart" size={32} color="#ada291" />
         <Text className="mt-3 text-center text-base text-muted-foreground">
           Sign in to view your saved items.
         </Text>
@@ -36,7 +36,7 @@ export function WishlistScreen() {
   if (items.length === 0) {
     return (
       <View className="flex-1 items-center justify-center bg-background px-8">
-        <Feather name="heart" size={32} color="#94a6ac" />
+        <Feather name="heart" size={32} color="#ada291" />
         <Text className="mt-3 text-center text-base text-muted-foreground">
           Your wishlist is empty.
         </Text>
@@ -75,7 +75,7 @@ export function WishlistScreen() {
             <Text className="text-xs text-muted-foreground">{item.brand}</Text>
           </View>
           <Pressable onPress={() => removeItem(item.productId)} hitSlop={8}>
-            <Feather name="trash-2" size={18} color="#dc2626" />
+            <Feather name="trash-2" size={18} color="#c0492f" />
           </Pressable>
         </Pressable>
       ))}

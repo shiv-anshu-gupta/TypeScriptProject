@@ -10,7 +10,7 @@ import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Feather } from "@expo/vector-icons";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 
 import type { RootStackParamList } from "@/navigation/types";
 import { useCustomerHomeStore } from "@/features/customer/home/store";
@@ -44,7 +44,7 @@ export function HomeScreen() {
       <View className="flex-row items-center justify-between border-b border-border/60 px-4 pb-3">
         <View className="flex-row items-center gap-2.5">
           <View className="h-10 w-10 items-center justify-center rounded-xl bg-primary">
-            <Feather name="shopping-bag" size={19} color="#ffffff" />
+            <MaterialCommunityIcons name="storefront" size={20} color="#ffffff" />
           </View>
           <View>
             <Text className="text-xl font-bold tracking-tight text-foreground">
@@ -61,7 +61,7 @@ export function HomeScreen() {
           hitSlop={8}
           className="h-10 w-10 items-center justify-center rounded-full bg-secondary"
         >
-          <Feather name="clipboard" size={18} color="#1d2a2f" />
+          <MaterialCommunityIcons name="notebook" size={19} color="#1f2a2e" />
         </Pressable>
       </View>
 
@@ -98,7 +98,7 @@ export function HomeScreen() {
                   />
                 ) : (
                   <View className="h-14 w-14 items-center justify-center rounded-full bg-secondary">
-                    <Feather name="tag" size={20} color="#1d2a2f" />
+                    <Feather name="tag" size={20} color="#1f2a2e" />
                   </View>
                 )}
                 <Text

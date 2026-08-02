@@ -15,6 +15,9 @@ type PriceDrafts = Record<string, string[]>;
 
 export function useAdminGroceryLists() {
   const [search, setSearch] = useState("");
+  // "Money received" matcher: the shopkeeper types the amount they got on UPI
+  // and instantly sees the still-unpaid orders of exactly that amount.
+  const [amountReceived, setAmountReceived] = useState("");
   const [lists, setLists] = useState<AdminGroceryList[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingListId, setSavingListId] = useState("");
@@ -36,18 +39,43 @@ export function useAdminGroceryLists() {
   }, []);
 
   const filteredLists = useMemo(() => {
+    let result = lists;
+
+    // Money-received matcher takes priority: narrow to UNPAID orders whose
+    // total equals the amount the shopkeeper just received.
+    const amount = Number(amountReceived.trim());
+    if (amountReceived.trim() && !Number.isNaN(amount) && amount > 0) {
+      result = result.filter(
+        (list) =>
+          list.paymentStatus !== "paid" &&
+          Math.round(list.totalAmount) === Math.round(amount),
+      );
+    }
+
     const query = search.trim().toLowerCase();
+    if (query) {
+      result = result.filter(
+        (list) =>
+          list.code.toLowerCase().includes(query) ||
+          list.customerName.toLowerCase().includes(query) ||
+          list.customerEmail.toLowerCase().includes(query) ||
+          (list.customerPhone ?? "").includes(query),
+      );
+    }
 
-    if (!query) return lists;
+    return result;
+  }, [lists, search, amountReceived]);
 
+  // How many unpaid orders match the entered amount (drives the helper text).
+  const amountMatchCount = useMemo(() => {
+    const amount = Number(amountReceived.trim());
+    if (!amountReceived.trim() || Number.isNaN(amount) || amount <= 0) return 0;
     return lists.filter(
       (list) =>
-        list.code.toLowerCase().includes(query) ||
-        list.customerName.toLowerCase().includes(query) ||
-        list.customerEmail.toLowerCase().includes(query) ||
-        (list.customerPhone ?? "").includes(query),
-    );
-  }, [lists, search]);
+        list.paymentStatus !== "paid" &&
+        Math.round(list.totalAmount) === Math.round(amount),
+    ).length;
+  }, [lists, amountReceived]);
 
   // Seed the draft prices from whatever the list already has.
   function getDraft(list: AdminGroceryList) {
@@ -124,6 +152,9 @@ export function useAdminGroceryLists() {
   return {
     search,
     setSearch,
+    amountReceived,
+    setAmountReceived,
+    amountMatchCount,
     lists: filteredLists,
     loading,
     savingListId,

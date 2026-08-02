@@ -76,6 +76,12 @@ const UserSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
+    // Firebase Cloud Messaging web-push tokens — for the admin browser to be
+    // alerted of new orders (one per browser/device the admin signed in on).
+    webPushTokens: {
+      type: [String],
+      default: [],
+    },
   },
   { timestamps: true },
 );

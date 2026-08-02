@@ -24,6 +24,7 @@ import { customerHomeRouter } from "./routes/customer/home.routes";
 import { customerGroceryListRouter } from "./routes/customer/grocery-list.routes";
 import { customerPushTokenRouter } from "./routes/customer/push-token.routes";
 import { adminGroceryListRouter } from "./routes/admin/grocery-list.routes";
+import { adminPushTokenRouter } from "./routes/admin/push-token.routes";
 
 async function mainEntryFunction() {
   await connectDB();
@@ -68,6 +69,7 @@ async function mainEntryFunction() {
   // admin routes
   app.use("/admin", adminProductRouter);
   app.use("/admin", adminGroceryListRouter);
+  app.use("/admin", adminPushTokenRouter);
   app.use("/admin", adminPromoRouter);
   app.use("/admin", adminOrderRouter);
   app.use("/admin", adminSettingsRouter);

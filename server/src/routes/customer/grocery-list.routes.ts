@@ -11,6 +11,7 @@ import {
   GroceryListItem,
 } from "../../models/GroceryList";
 import { razorpay, toSubUnits } from "../../utils/razorpay";
+import { notifyAdmins } from "../../utils/webPush";
 
 type IncomingItem = {
   name?: string;
@@ -123,6 +124,16 @@ customerGroceryListRouter.post(
 
       await mergeTarget.save();
 
+      // Alert the shop's browser. Awaited because serverless freezes after the
+      // response; notifyAdmins never throws.
+      await notifyAdmins(
+        "List updated",
+        `${dbUser.name || dbUser.email || "A customer"} added ${items.length} more item${
+          items.length > 1 ? "s" : ""
+        }`,
+        { listId: String(mergeTarget._id), type: "list_updated" },
+      );
+
       res.status(200).json(ok({ ...mapGroceryList(mergeTarget), merged: true }));
       return;
     }
@@ -142,6 +153,14 @@ customerGroceryListRouter.post(
       seenByCustomer: true,
       note,
     });
+
+    await notifyAdmins(
+      "New grocery list",
+      `${dbUser.name || dbUser.email || "A customer"} sent ${items.length} item${
+        items.length > 1 ? "s" : ""
+      }`,
+      { listId: String(groceryList._id), type: "new_list" },
+    );
 
     res
       .status(201)

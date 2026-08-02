@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Animated } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { Feather } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { TabParamList } from "./types";
 import { HomeScreen } from "@/screens/HomeScreen";
@@ -13,11 +13,16 @@ import { useDraftListStore } from "@/features/customer/draft-list/store";
 
 const Tab = createBottomTabNavigator<TabParamList>();
 
-const iconByRoute: Record<keyof TabParamList, keyof typeof Feather.glyphMap> = {
-  Home: "home",
-  Shop: "search",
-  Lists: "clipboard",
-  Account: "user",
+// Richer, more object-like icons (MaterialCommunityIcons). The Lists tab uses a
+// real spiral "notebook" — the grocery pad is the heart of the app.
+const iconByRoute: Record<
+  keyof TabParamList,
+  keyof typeof MaterialCommunityIcons.glyphMap
+> = {
+  Home: "home-variant",
+  Shop: "storefront",
+  Lists: "notebook",
+  Account: "account",
 };
 
 // Heartbeat-pulsing icon: grabs attention while the draft is waiting to be
@@ -28,7 +33,7 @@ function PulsingIcon({
   size,
   pulse,
 }: {
-  name: keyof typeof Feather.glyphMap;
+  name: keyof typeof MaterialCommunityIcons.glyphMap;
   color: string;
   size: number;
   pulse: boolean;
@@ -63,7 +68,7 @@ function PulsingIcon({
 
   return (
     <Animated.View style={{ transform: [{ scale }] }}>
-      <Feather name={name} size={size} color={color} />
+      <MaterialCommunityIcons name={name} size={size} color={color} />
     </Animated.View>
   );
 }
@@ -88,11 +93,11 @@ export function TabNavigator() {
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarActiveTintColor: "#3c5a64",
-        tabBarInactiveTintColor: "#94a6ac",
+        tabBarInactiveTintColor: "#ada291",
         // Reserve the bottom safe-area inset so the bar stays above the
         // Android system nav (edge-to-edge is on by default in RN 0.81).
         tabBarStyle: {
-          borderTopColor: "#d6e0e2",
+          borderTopColor: "#e6dcc9",
           height: 58 + insets.bottom,
           paddingBottom: insets.bottom + 6,
           paddingTop: 8,
@@ -103,11 +108,11 @@ export function TabNavigator() {
             <PulsingIcon
               name={iconByRoute[route.name]}
               size={size ?? 22}
-              color={draftCount > 0 ? "#dc2626" : color}
+              color={draftCount > 0 ? "#c0492f" : color}
               pulse={draftCount > 0}
             />
           ) : (
-            <Feather
+            <MaterialCommunityIcons
               name={iconByRoute[route.name]}
               size={size ?? 22}
               color={color}

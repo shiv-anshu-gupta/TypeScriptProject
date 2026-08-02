@@ -45,7 +45,7 @@ export async function registerForPushNotificationsAsync(): Promise<PushRegistrat
       importance: Notifications.AndroidImportance.MAX,
       vibrationPattern: [0, 250, 250, 250],
       sound: "default",
-      lightColor: "#1d2a2f",
+      lightColor: "#1f2a2e",
     });
   }
 

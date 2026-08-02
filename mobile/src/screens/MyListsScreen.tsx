@@ -11,7 +11,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Feather } from "@expo/vector-icons";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useAuth } from "@clerk/clerk-expo";
 
 import type { RootStackParamList } from "@/navigation/types";
@@ -332,7 +332,7 @@ export function MyListsScreen() {
         className="flex-1 items-center justify-center gap-4 bg-background px-8"
         style={{ paddingTop: insets.top }}
       >
-        <Feather name="clipboard" size={40} color="#94a6ac" />
+        <MaterialCommunityIcons name="notebook" size={44} color="#ada291" />
         <Text className="text-center text-sm text-muted-foreground">
           Sign in to see the lists you've sent to the shop.
         </Text>
@@ -379,7 +379,7 @@ export function MyListsScreen() {
       ListEmptyComponent={
         !hasDraft ? (
           <View className="mt-16 items-center gap-4">
-            <Feather name="clipboard" size={40} color="#94a6ac" />
+            <MaterialCommunityIcons name="notebook" size={44} color="#ada291" />
             <Text className="text-center text-sm text-muted-foreground">
               You haven't sent any list yet. Write one on the home page.
             </Text>

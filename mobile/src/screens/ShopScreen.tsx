@@ -60,7 +60,7 @@ function RailItem({
         />
       ) : (
         <View className="h-11 w-11 items-center justify-center rounded-full bg-muted">
-          <Feather name="grid" size={18} color="#5c6e74" />
+          <Feather name="grid" size={18} color="#6f6857" />
         </View>
       )}
       <Text
@@ -169,14 +169,14 @@ export function ShopScreen() {
             <Feather
               name={searchOpen ? "x" : "search"}
               size={18}
-              color="#1d2a2f"
+              color="#1f2a2e"
             />
           </Pressable>
         </View>
 
         {searchOpen ? (
           <View className="mt-2 flex-row items-center gap-2 rounded-xl border border-border bg-card px-3">
-            <Feather name="search" size={16} color="#5c6e74" />
+            <Feather name="search" size={16} color="#6f6857" />
             <TextInput
               value={search}
               onChangeText={setSearch}
@@ -187,7 +187,7 @@ export function ShopScreen() {
             />
             {search ? (
               <Pressable onPress={() => setSearch("")} hitSlop={8}>
-                <Feather name="x-circle" size={16} color="#5c6e74" />
+                <Feather name="x-circle" size={16} color="#6f6857" />
               </Pressable>
             ) : null}
           </View>
@@ -216,7 +216,7 @@ export function ShopScreen() {
               onPress={clearFilters}
               className="flex-row items-center gap-1"
             >
-              <Feather name="x" size={14} color="#5c6e74" />
+              <Feather name="x" size={14} color="#6f6857" />
               <Text className="text-sm text-muted-foreground">
                 Clear ({activeFilterBadges.length})
               </Text>
@@ -266,7 +266,7 @@ export function ShopScreen() {
             </View>
           ) : products.length === 0 ? (
             <View className="flex-1 items-center justify-center px-8">
-              <Feather name="search" size={32} color="#94a6ac" />
+              <Feather name="search" size={32} color="#ada291" />
               <Text className="mt-3 text-center text-base text-muted-foreground">
                 No products match your filters.
               </Text>

@@ -3,7 +3,6 @@ import type { RootStackParamList } from "./types";
 import { TabNavigator } from "./TabNavigator";
 import { ProductDetailsScreen } from "@/screens/ProductDetailsScreen";
 import { WishlistScreen } from "@/screens/WishlistScreen";
-import { OrdersScreen } from "@/screens/OrdersScreen";
 import { SignInScreen } from "@/screens/SignInScreen";
 import { SignUpScreen } from "@/screens/SignUpScreen";
 import { LegalScreen } from "@/screens/LegalScreen";
@@ -16,10 +15,10 @@ export function RootNavigator() {
       screenOptions={{
         headerShown: true,
         headerBackButtonDisplayMode: "minimal",
-        headerTintColor: "#1d2a2f",
+        headerTintColor: "#1f2a2e",
         headerTitleStyle: { fontWeight: "600" },
-        headerStyle: { backgroundColor: "#eaf0f2" },
-        contentStyle: { backgroundColor: "#eaf0f2" },
+        headerStyle: { backgroundColor: "#f6f1e8" },
+        contentStyle: { backgroundColor: "#f6f1e8" },
       }}
     >
       <Stack.Screen
@@ -35,12 +34,7 @@ export function RootNavigator() {
       <Stack.Screen
         name="Wishlist"
         component={WishlistScreen}
-        options={{ title: "Wishlist" }}
-      />
-      <Stack.Screen
-        name="Orders"
-        component={OrdersScreen}
-        options={{ title: "My Orders" }}
+        options={{ title: "Saved products" }}
       />
       <Stack.Screen
         name="SignIn"

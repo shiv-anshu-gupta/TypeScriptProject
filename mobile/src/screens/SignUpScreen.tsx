@@ -76,7 +76,7 @@ export function SignUpScreen() {
               onChangeText={setCode}
               keyboardType="number-pad"
               placeholder="123456"
-              placeholderTextColor="#94a6ac"
+              placeholderTextColor="#ada291"
               className="h-12 rounded-xl border border-border bg-card px-3 text-center text-lg tracking-[6px] text-foreground"
             />
             <Button
@@ -107,7 +107,7 @@ export function SignUpScreen() {
                 autoCapitalize="none"
                 keyboardType="email-address"
                 placeholder="you@example.com"
-                placeholderTextColor="#94a6ac"
+                placeholderTextColor="#ada291"
                 className="h-12 rounded-xl border border-border bg-card px-3 text-foreground"
               />
             </View>
@@ -121,7 +121,7 @@ export function SignUpScreen() {
                 onChangeText={setPassword}
                 secureTextEntry
                 placeholder="At least 8 characters"
-                placeholderTextColor="#94a6ac"
+                placeholderTextColor="#ada291"
                 className="h-12 rounded-xl border border-border bg-card px-3 text-foreground"
               />
             </View>

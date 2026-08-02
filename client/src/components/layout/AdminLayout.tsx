@@ -16,6 +16,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { AdminPushBell } from "@/components/admin/AdminPushBell";
 
 export function AdminLayout() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -59,6 +60,7 @@ export function AdminLayout() {
             </div>
 
             <div className="ml-auto flex items-center gap-2">
+              <AdminPushBell />
               <UserButton />
             </div>
           </header>

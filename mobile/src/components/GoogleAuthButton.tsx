@@ -55,10 +55,10 @@ export function GoogleAuthButton({ onDone }: GoogleAuthButtonProps) {
       }
     >
       {loading ? (
-        <ActivityIndicator size="small" color="#1d2a2f" />
+        <ActivityIndicator size="small" color="#1f2a2e" />
       ) : (
         <View className="flex-row items-center gap-2">
-          <Feather name="chrome" size={18} color="#1d2a2f" />
+          <Feather name="chrome" size={18} color="#1f2a2e" />
           <Text className="text-sm font-semibold text-foreground">
             Continue with Google
           </Text>

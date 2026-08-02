@@ -2,21 +2,21 @@
 // ActivityIndicator, placeholderTextColor) — mirrors the Tailwind tokens in
 // tailwind.config.js. Keep the two in sync.
 //
-// Theme: "Ocean Gray on Cool Mist".
+// Theme: "Ocean Gray on Warm Sand".
 export const colors = {
-  background: "#eaf0f2", // cool mist ground
-  foreground: "#1d2a2f", // ocean ink
+  background: "#f6f1e8", // warm sand ground
+  foreground: "#1f2a2e", // deep ocean ink
   card: "#ffffff",
   primary: "#3c5a64", // ocean gray
   primaryForeground: "#ffffff",
-  secondary: "#dbe6ea",
-  muted: "#e6edef",
-  mutedForeground: "#5c6e74",
-  placeholder: "#94a6ac", // input placeholders / empty-state icons
-  accent: "#d3e1e4",
-  border: "#d6e0e2",
-  destructive: "#dc2626",
-  success: "#16a34a",
-  // Signature warm "list paper" — deliberate warm accent on the cool palette.
+  secondary: "#efe7d8", // warm sand tint
+  muted: "#f1ebe0",
+  mutedForeground: "#6f6857", // warm gray
+  placeholder: "#ada291", // input placeholders / empty-state icons
+  accent: "#dde8e7", // soft ocean-sage highlight
+  border: "#e6dcc9", // warm border
+  destructive: "#c0492f", // warm terracotta-red
+  success: "#4f7a4d", // muted sage-green
+  // Signature "list paper" — the handwritten grocery pad on Home.
   paper: "#fdf8ea",
 } as const;

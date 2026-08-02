@@ -11,8 +11,8 @@ const iconByVariant: Record<ToastVariant, keyof typeof Feather.glyphMap> = {
 };
 
 const colorByVariant: Record<ToastVariant, string> = {
-  success: "#16a34a",
-  error: "#dc2626",
+  success: "#4f7a4d",
+  error: "#c0492f",
   info: "#2563eb",
 };
 

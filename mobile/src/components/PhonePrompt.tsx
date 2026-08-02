@@ -70,7 +70,7 @@ export function PhonePrompt({
               hitSlop={8}
               className="h-8 w-8 items-center justify-center rounded-full bg-secondary"
             >
-              <Feather name="x" size={16} color="#1d2a2f" />
+              <Feather name="x" size={16} color="#1f2a2e" />
             </Pressable>
           </View>
 
@@ -87,11 +87,11 @@ export function PhonePrompt({
               maxLength={14}
               autoFocus
               placeholder="10-digit number"
-              placeholderTextColor="#94a6ac"
+              placeholderTextColor="#ada291"
               className="h-12 flex-1 text-base text-foreground"
             />
             {valid ? (
-              <Feather name="check-circle" size={18} color="#16a34a" />
+              <Feather name="check-circle" size={18} color="#4f7a4d" />
             ) : null}
           </View>
 
@@ -103,7 +103,7 @@ export function PhonePrompt({
 
           {/* Trust line — why we ask */}
           <View className="flex-row items-start gap-2 rounded-xl bg-secondary p-3">
-            <Feather name="shield" size={15} color="#5c6e74" />
+            <Feather name="shield" size={15} color="#6f6857" />
             <Text className="flex-1 text-xs leading-5 text-muted-foreground">
               ये नंबर हम सिर्फ़ ज़रूरत पड़ने पर आपको कॉल करने के लिए ले रहे हैं।
               {"\n"}
