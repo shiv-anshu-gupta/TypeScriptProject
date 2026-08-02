@@ -88,13 +88,36 @@ export function SignUpScreen() {
           </>
         ) : (
           <>
-            <View className="mb-2">
+            <View className="mb-3">
               <Text className="text-3xl font-semibold text-foreground">
                 Create account
               </Text>
               <Text className="mt-1 text-sm text-muted-foreground">
-                Join to save items and track orders.
+                The fastest way — one tap with Google.
               </Text>
+            </View>
+
+            {/* Primary path: Google (verified + one tap) */}
+            <GoogleAuthButton onDone={() => navigation.goBack()} />
+
+            {/* Passive consent — covers both Google and email sign-up */}
+            <Text className="text-center text-xs leading-5 text-muted-foreground">
+              By continuing, you agree to our{" "}
+              <Text
+                className="font-semibold text-foreground underline"
+                onPress={() => navigation.navigate("Legal")}
+              >
+                Privacy Policy &amp; Terms
+              </Text>
+              .
+            </Text>
+
+            <View className="my-2 flex-row items-center gap-3">
+              <View className="h-px flex-1 bg-border" />
+              <Text className="text-xs text-muted-foreground">
+                or sign up with email
+              </Text>
+              <View className="h-px flex-1 bg-border" />
             </View>
 
             <View className="gap-1">
@@ -127,31 +150,11 @@ export function SignUpScreen() {
             </View>
 
             <Button
-              label="Sign up"
+              label="Sign up with email"
+              variant="outline"
               loading={submitting}
               onPress={onSignUp}
-              className="mt-2"
             />
-
-            {/* Passive consent — no extra step, just a line under the button */}
-            <Text className="text-center text-xs leading-5 text-muted-foreground">
-              By continuing, you agree to our{" "}
-              <Text
-                className="font-semibold text-foreground underline"
-                onPress={() => navigation.navigate("Legal")}
-              >
-                Privacy Policy &amp; Terms
-              </Text>
-              .
-            </Text>
-
-            <View className="my-1 flex-row items-center gap-3">
-              <View className="h-px flex-1 bg-border" />
-              <Text className="text-xs text-muted-foreground">or</Text>
-              <View className="h-px flex-1 bg-border" />
-            </View>
-
-            <GoogleAuthButton onDone={() => navigation.goBack()} />
 
             <Button
               label="I already have an account"

@@ -1,13 +1,14 @@
 import { useState } from "react";
-import { ActivityIndicator, Pressable, Text, View } from "react-native";
+import { ActivityIndicator, Image, Pressable, Text } from "react-native";
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
 import { useSSO } from "@clerk/clerk-expo";
-import { Feather } from "@expo/vector-icons";
 
 import { useWarmUpBrowser } from "@/lib/use-warm-up-browser";
 import { toast } from "@/lib/toast";
 import { getClerkErrorMessage } from "@/lib/clerk-error";
+
+const googleG = require("../../assets/google-g.png");
 
 // Required so the auth session can be dismissed after the OAuth redirect.
 WebBrowser.maybeCompleteAuthSession();
@@ -48,21 +49,25 @@ export function GoogleAuthButton({ onDone }: GoogleAuthButtonProps) {
     <Pressable
       onPress={onPress}
       disabled={loading}
-      className={
-        loading
-          ? "h-11 flex-row items-center justify-center gap-2 rounded-xl border border-border bg-card opacity-60"
-          : "h-11 flex-row items-center justify-center gap-2 rounded-xl border border-border bg-card"
-      }
+      className="h-14 w-full flex-row items-center justify-center gap-3 rounded-2xl border border-border bg-card active:opacity-90"
+      style={{
+        opacity: loading ? 0.7 : 1,
+        elevation: 3,
+        shadowColor: "#1f2a2e",
+        shadowOpacity: 0.14,
+        shadowRadius: 7,
+        shadowOffset: { width: 0, height: 3 },
+      }}
     >
       {loading ? (
-        <ActivityIndicator size="small" color="#1f2a2e" />
+        <ActivityIndicator size="small" color="#3c5a64" />
       ) : (
-        <View className="flex-row items-center gap-2">
-          <Feather name="chrome" size={18} color="#1f2a2e" />
-          <Text className="text-sm font-semibold text-foreground">
+        <>
+          <Image source={googleG} style={{ width: 22, height: 22 }} />
+          <Text className="text-base font-bold text-foreground">
             Continue with Google
           </Text>
-        </View>
+        </>
       )}
     </Pressable>
   );

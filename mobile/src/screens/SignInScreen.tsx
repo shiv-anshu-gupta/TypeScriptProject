@@ -40,13 +40,24 @@ export function SignInScreen() {
       className="flex-1 bg-background"
     >
       <View className="flex-1 justify-center gap-4 px-6">
-        <View className="mb-2">
+        <View className="mb-3">
           <Text className="text-3xl font-semibold text-foreground">
             Welcome back
           </Text>
           <Text className="mt-1 text-sm text-muted-foreground">
-            Sign in to continue shopping.
+            Sign in with one tap using Google.
           </Text>
+        </View>
+
+        {/* Primary path: Google (verified + one tap) */}
+        <GoogleAuthButton onDone={() => navigation.goBack()} />
+
+        <View className="my-2 flex-row items-center gap-3">
+          <View className="h-px flex-1 bg-border" />
+          <Text className="text-xs text-muted-foreground">
+            or sign in with email
+          </Text>
+          <View className="h-px flex-1 bg-border" />
         </View>
 
         <View className="gap-1">
@@ -79,19 +90,11 @@ export function SignInScreen() {
         </View>
 
         <Button
-          label="Sign in"
+          label="Sign in with email"
+          variant="outline"
           loading={submitting}
           onPress={onSubmit}
-          className="mt-2"
         />
-
-        <View className="my-1 flex-row items-center gap-3">
-          <View className="h-px flex-1 bg-border" />
-          <Text className="text-xs text-muted-foreground">or</Text>
-          <View className="h-px flex-1 bg-border" />
-        </View>
-
-        <GoogleAuthButton onDone={() => navigation.goBack()} />
 
         <Button
           label="Create an account"
