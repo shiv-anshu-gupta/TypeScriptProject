@@ -13,7 +13,7 @@
       [
         "expo-notifications",
         {
-          "color": "#18181b",
+          "color": "#3c5a64",
           "defaultChannel": "default"
         }
       ]
@@ -27,10 +27,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "backgroundColor": "#3c5a64",
+        "foregroundImage": "./assets/android-icon-foreground.png"
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.skirana.app",
