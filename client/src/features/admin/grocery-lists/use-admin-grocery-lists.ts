@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type {
   AdminGroceryList,
   UpdateGroceryListStatusBody,
@@ -9,6 +9,10 @@ import {
   setAdminGroceryListPrices,
   updateAdminGroceryListStatus,
 } from "./api";
+import { notifyNewOrders } from "@/lib/order-alert";
+
+// How often to check for new customer lists while the page is open.
+const POLL_MS = 15000;
 
 // priceDrafts: listId -> array of price strings, one per item line.
 type PriceDrafts = Record<string, string[]>;
@@ -23,19 +27,40 @@ export function useAdminGroceryLists() {
   const [savingListId, setSavingListId] = useState("");
   const [priceDrafts, setPriceDrafts] = useState<PriceDrafts>({});
 
-  async function refreshAll() {
+  // Track which list IDs we've already seen so a background poll can detect a
+  // genuinely new customer list and alert (sound + toast + tab-title flash).
+  const knownIds = useRef<Set<string>>(new Set());
+  const seededOnce = useRef(false);
+
+  // silent = background poll (don't flip the loading spinner / don't flicker).
+  async function refreshAll(silent = false) {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
 
       const response = await getAdminGroceryLists();
-      setLists((response ?? { items: [] }).items);
+      const items = (response ?? { items: [] }).items;
+
+      if (seededOnce.current) {
+        const fresh = items.filter((list) => !knownIds.current.has(list._id));
+        if (fresh.length) {
+          notifyNewOrders(fresh.length, fresh[0]?.customerName);
+        }
+      }
+      knownIds.current = new Set(items.map((list) => list._id));
+      seededOnce.current = true;
+
+      setLists(items);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }
 
   useEffect(() => {
     void refreshAll();
+    // Keep the page live: check for new lists every POLL_MS while it's open.
+    const timer = window.setInterval(() => void refreshAll(true), POLL_MS);
+    return () => window.clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const filteredLists = useMemo(() => {

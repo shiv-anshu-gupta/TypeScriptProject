@@ -12,6 +12,7 @@ import {
 } from "../../models/GroceryList";
 import { razorpay, toSubUnits } from "../../utils/razorpay";
 import { notifyAdmins } from "../../utils/webPush";
+import { sendTelegram } from "../../utils/telegram";
 
 type IncomingItem = {
   name?: string;
@@ -133,6 +134,11 @@ customerGroceryListRouter.post(
         }`,
         { listId: String(mergeTarget._id), type: "list_updated" },
       );
+      await sendTelegram(
+        `🛒 <b>Order updated</b>\n${dbUser.name || dbUser.email || "A customer"} added ${items.length} more item${
+          items.length > 1 ? "s" : ""
+        } (now ${mergeTarget.totalItems}).`,
+      );
 
       res.status(200).json(ok({ ...mapGroceryList(mergeTarget), merged: true }));
       return;
@@ -160,6 +166,11 @@ customerGroceryListRouter.post(
         items.length > 1 ? "s" : ""
       }`,
       { listId: String(groceryList._id), type: "new_list" },
+    );
+    await sendTelegram(
+      `🛒 <b>New order</b>\nFrom: ${dbUser.name || dbUser.email || "A customer"}` +
+        `${customerPhone ? ` (📞 ${customerPhone})` : ""}\n` +
+        `${items.length} item${items.length > 1 ? "s" : ""} · #${String(groceryList._id).slice(-8).toUpperCase()}`,
     );
 
     res
