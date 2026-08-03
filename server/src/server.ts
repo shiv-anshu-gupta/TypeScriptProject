@@ -51,39 +51,6 @@ async function mainEntryFunction() {
     res.status(200).json(ok({ message: "Server is healthy/in running state" }));
   });
 
-  // TEMP diagnostic: confirms whether the server runtime sees the Telegram env
-  // vars and returns Telegram's own response to a live send. Remove after debug.
-  app.get("/health/telegram", async (_req, res) => {
-    const token = process.env.TELEGRAM_BOT_TOKEN;
-    const raw = process.env.TELEGRAM_CHAT_ID;
-    const info: Record<string, unknown> = {
-      hasToken: Boolean(token),
-      tokenLen: token ? token.length : 0,
-      hasChatId: Boolean(raw),
-      chatId: raw ?? null,
-    };
-    if (token && raw) {
-      try {
-        const r = await fetch(
-          `https://api.telegram.org/bot${token}/sendMessage`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              chat_id: raw.split(",")[0].trim(),
-              text: "✅ /health/telegram live send from the SERVER",
-            }),
-          },
-        );
-        info.telegramStatus = r.status;
-        info.telegramBody = await r.text();
-      } catch (e) {
-        info.fetchError = String(e);
-      }
-    }
-    res.status(200).json(info);
-  });
-
   // auth routes
   app.use("/auth", authRouter);
 
