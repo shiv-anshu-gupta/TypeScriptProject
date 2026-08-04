@@ -7,6 +7,12 @@
     "icon": "./assets/icon.png",
     "scheme": "skirana",
     "userInterfaceStyle": "light",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/f5c42a74-f6ad-4024-9e80-b8eac51fc36e"
+    },
     "plugins": [
       "expo-secure-store",
       "expo-web-browser",

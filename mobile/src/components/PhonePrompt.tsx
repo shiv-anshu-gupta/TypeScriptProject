@@ -1,5 +1,13 @@
 import { useEffect, useState } from "react";
-import { Modal, Pressable, Text, TextInput, View } from "react-native";
+import {
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import { Feather } from "@expo/vector-icons";
 
 import { Button } from "@/components/ui/Button";
@@ -48,12 +56,17 @@ export function PhonePrompt({
       transparent
       animationType="slide"
       onRequestClose={onClose}
+      statusBarTranslucent
     >
-      <Pressable onPress={onClose} className="flex-1 justify-end bg-black/50">
-        <Pressable
-          onPress={(event) => event.stopPropagation()}
-          className="gap-4 rounded-t-3xl border border-border bg-background px-5 pb-10 pt-4"
-        >
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        className="flex-1"
+      >
+        <Pressable onPress={onClose} className="flex-1 justify-end bg-black/50">
+          <Pressable
+            onPress={(event) => event.stopPropagation()}
+            className="gap-4 rounded-t-3xl border border-border bg-background px-5 pb-10 pt-4"
+          >
           <View className="h-1.5 w-10 self-center rounded-full bg-muted" />
 
           <View className="flex-row items-start justify-between gap-3">
@@ -117,8 +130,9 @@ export function PhonePrompt({
             disabled={!valid}
             onPress={() => onSubmit(normalize(value))}
           />
+          </Pressable>
         </Pressable>
-      </Pressable>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
