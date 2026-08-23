@@ -1,5 +1,5 @@
 import "./global.css";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -14,6 +14,7 @@ import { useDraftListStore } from "@/features/customer/draft-list/store";
 import { usePushNotifications } from "@/features/customer/push/use-push-notifications";
 import { RootNavigator } from "@/navigation/RootNavigator";
 import { Toaster } from "@/components/Toaster";
+import { SplashScreen } from "@/screens/SplashScreen";
 
 function Bootstrap() {
   useBootstrapAuth();
@@ -41,6 +42,32 @@ function Bootstrap() {
 }
 
 export default function App() {
+  const [isSplashVisible, setIsSplashVisible] = useState(true);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+
+  useEffect(() => {
+    if (!isSplashVisible) return;
+
+    const interval = setInterval(() => {
+      setLoadingProgress((current) => {
+        const next = Math.min(current + 4, 100);
+
+        if (next >= 100) {
+          clearInterval(interval);
+          setTimeout(() => setIsSplashVisible(false), 700);
+        }
+
+        return next;
+      });
+    }, 40);
+
+    return () => clearInterval(interval);
+  }, [isSplashVisible]);
+
+  if (isSplashVisible) {
+    return <SplashScreen progress={loadingProgress} />;
+  }
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ClerkProvider

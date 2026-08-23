@@ -10,7 +10,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        background: "#f6f1e8", // warm sand ground
+        background: "#F0F4EC", // warm sand ground
         foreground: "#1f2a2e", // deep ocean ink (never pure black)
         card: "#ffffff",
         "card-foreground": "#1f2a2e",

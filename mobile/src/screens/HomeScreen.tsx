@@ -44,7 +44,11 @@ export function HomeScreen() {
       <View className="flex-row items-center justify-between border-b border-border/60 px-4 pb-3">
         <View className="flex-row items-center gap-2.5">
           <View className="h-10 w-10 items-center justify-center rounded-xl bg-primary">
-            <MaterialCommunityIcons name="storefront" size={20} color="#ffffff" />
+            <MaterialCommunityIcons
+              name="storefront"
+              size={20}
+              color="#ffffff"
+            />
           </View>
           <View>
             <Text className="text-xl font-bold tracking-tight text-foreground">

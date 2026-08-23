@@ -4,7 +4,7 @@
 //
 // Theme: "Ocean Gray on Warm Sand".
 export const colors = {
-  background: "#f6f1e8", // warm sand ground
+  background: "#F2F7F3", // warm sand ground
   foreground: "#1f2a2e", // deep ocean ink
   card: "#ffffff",
   primary: "#3c5a64", // ocean gray
