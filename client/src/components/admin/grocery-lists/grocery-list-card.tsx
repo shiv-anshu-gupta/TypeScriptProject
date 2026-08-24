@@ -1,3 +1,6 @@
+import { useState } from "react";
+import { Check } from "lucide-react";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -8,8 +11,9 @@ import type {
   GroceryListStatus,
   UpdateGroceryListStatusBody,
 } from "@/features/admin/grocery-lists/types";
-import { formatPrice } from "@/lib/utils";
+import { cn, formatPrice } from "@/lib/utils";
 import GroceryListChat from "./grocery-list-chat";
+import PriceCalculator from "./price-calculator";
 
 const cardClass = "border-border bg-card shadow-sm";
 const headerRowClass = "flex flex-wrap items-start justify-between gap-3";
@@ -20,7 +24,6 @@ const itemRowClass = "flex items-center gap-3";
 const itemIndexClass = "w-6 text-xs text-muted-foreground";
 const itemNameClass = "flex-1 text-sm text-foreground";
 const itemQtyClass = "w-24 text-sm text-muted-foreground";
-const priceInputClass = "w-28";
 
 const totalRowClass = "flex items-center justify-between pt-1";
 const totalLabelClass = "text-sm font-medium text-foreground";
@@ -89,6 +92,40 @@ function GroceryListCard({
   const isPriced = list.totalAmount > 0;
   const isPaid = list.paymentStatus === "paid";
 
+  // Packing checklist: the shopkeeper ticks each item as they pack it, so
+  // nothing gets missed. Kept in localStorage (per list) — it's a personal
+  // packing aid on the shop's own device, so it survives page refreshes /
+  // the 15s poll without needing any server change.
+  const storageKey = `grocery-packed:${list._id}`;
+  const [packed, setPacked] = useState<Set<number>>(() => {
+    try {
+      const raw = localStorage.getItem(storageKey);
+      return new Set<number>(raw ? (JSON.parse(raw) as number[]) : []);
+    } catch {
+      return new Set<number>();
+    }
+  });
+
+  function togglePacked(index: number) {
+    setPacked((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      try {
+        localStorage.setItem(storageKey, JSON.stringify([...next]));
+      } catch {
+        // storage full / disabled — the checklist just won't persist
+      }
+      return next;
+    });
+  }
+
+  const packedCount = list.items.reduce(
+    (count, _item, index) => (packed.has(index) ? count + 1 : count),
+    0,
+  );
+  const allPacked = list.items.length > 0 && packedCount === list.items.length;
+
   // How far along the flow this list is. -1 for "received" (not priced yet).
   const currentIndex = STATUS_FLOW.indexOf(list.status as FlowStatus);
 
@@ -137,23 +174,72 @@ function GroceryListCard({
       </CardHeader>
 
       <CardContent className="space-y-4">
+        {/* Packing progress — tick each item as it's packed so none is missed */}
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-medium text-muted-foreground">
+            Items — tick as you pack
+          </span>
+          <span
+            className={
+              allPacked
+                ? "text-xs font-semibold text-green-600"
+                : "text-xs font-medium text-muted-foreground"
+            }
+          >
+            {allPacked
+              ? "✓ All packed"
+              : `${packedCount}/${list.items.length} packed`}
+          </span>
+        </div>
+
         <div className="space-y-2">
-          {list.items.map((item, index) => (
-            <div key={`${list._id}-${index}`} className={itemRowClass}>
-              <span className={itemIndexClass}>{index + 1}.</span>
-              <span className={itemNameClass}>{item.name}</span>
-              <span className={itemQtyClass}>{item.quantity || "—"}</span>
-              <Input
-                type="number"
-                min={0}
-                inputMode="numeric"
-                placeholder="Price"
-                className={priceInputClass}
-                value={draft[index] ?? ""}
-                onChange={(event) => onPriceChange(index, event.target.value)}
-              />
-            </div>
-          ))}
+          {list.items.map((item, index) => {
+            const isPacked = packed.has(index);
+            return (
+              <div key={`${list._id}-${index}`} className={itemRowClass}>
+                <button
+                  type="button"
+                  onClick={() => togglePacked(index)}
+                  aria-label={isPacked ? "Mark not packed" : "Mark packed"}
+                  className={cn(
+                    "flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors",
+                    isPacked
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-input bg-background hover:border-primary/60",
+                  )}
+                >
+                  {isPacked ? <Check className="h-3.5 w-3.5" /> : null}
+                </button>
+                <span className={itemIndexClass}>{index + 1}.</span>
+                <span
+                  className={cn(
+                    itemNameClass,
+                    isPacked && "text-muted-foreground line-through",
+                  )}
+                >
+                  {item.name}
+                </span>
+                <span className={itemQtyClass}>{item.quantity || "—"}</span>
+                <div className="flex items-center gap-1">
+                  <Input
+                    type="number"
+                    min={0}
+                    inputMode="numeric"
+                    placeholder="Price"
+                    className="w-24"
+                    value={draft[index] ?? ""}
+                    onChange={(event) =>
+                      onPriceChange(index, event.target.value)
+                    }
+                  />
+                  <PriceCalculator
+                    quantity={item.quantity}
+                    onResult={(value) => onPriceChange(index, value)}
+                  />
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         <Separator />
