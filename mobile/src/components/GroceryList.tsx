@@ -1,4 +1,5 @@
 import { Dimensions, ScrollView, TextInput, View, Text } from "react-native";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 import { useDraftListStore } from "@/features/customer/draft-list/store";
 import { useSendDraft } from "@/features/customer/draft-list/use-send-draft";
@@ -7,7 +8,7 @@ import { PhonePrompt } from "@/components/PhonePrompt";
 
 // Let the paper take most of the screen but leave a peek of the section
 // below so the user knows the page scrolls further.
-const LIST_MAX_HEIGHT = Math.round(Dimensions.get("window").height * 0.6);
+const LIST_MAX_HEIGHT = Math.round(Dimensions.get("window").height * 0.5);
 
 export function GroceryList() {
   // The paper is a view over the shared draft — the same draft that
@@ -43,56 +44,80 @@ export function GroceryList() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
+          {/* Header row */}
+          <View className="h-12 flex-row items-center border-b-2 border-[#c9d9ea] bg-[#f5f0e8]">
+            <Text className="w-8 text-center text-xs font-bold tracking-wide text-[#8b7a5e]">
+              #
+            </Text>
+            <View className="ml-2 h-6 w-px bg-[#d9a89b]" />
+            <Text style={{ flex: 3 }} className="px-3 text-xs font-bold uppercase tracking-widest text-[#3c5a64]">
+              Item
+            </Text>
+            <View className="h-6 w-px bg-[#c9d9ea]/50" />
+            <Text style={{ flex: 1 }} className="px-3 text-center text-xs font-bold uppercase tracking-widest text-[#3c5a64]">
+              Qty
+            </Text>
+          </View>
           {rows.map((row, index) => (
             // Each line = a ruled row with a red left margin, like a rough copy.
             <View
               key={row.id}
-              className="h-11 flex-row items-center border-b border-[#c9d9ea]"
+              className={`h-11 flex-row items-center border-b border-[#c9d9ea] ${
+                index % 2 === 0 ? "bg-white" : "bg-[#fdfbf7]"
+              }`}
             >
-              <Text className="w-8 text-right text-xs text-[#a89b78]">
+              <Text className="w-8 text-center text-xs font-medium text-[#a89b78]">
                 {index + 1}
               </Text>
               {/* red margin line */}
-              <View className="ml-2 h-full w-px bg-[#e3a89b]" />
+              <View className="ml-2 h-full w-px bg-[#d9a89b]/60" />
 
               {/* Item name — 3/4 of the writing area */}
               <TextInput
                 value={row.name ?? ""}
                 onChangeText={(text) => updateRow(row.id, "name", text)}
-                placeholder=""
+                placeholderTextColor="#b8a89a"
                 style={{ flex: 3 }}
-                className="h-full px-3 text-base text-[#26303a]"
+                className="h-full px-3 text-sm text-[#26303a]"
               />
 
               {/* divider between name and quantity */}
-              <View className="h-full w-px bg-[#c9d9ea]" />
+              <View className="h-full w-px bg-[#c9d9ea]/50" />
 
               {/* Quantity — 1/4 of the writing area */}
               <TextInput
                 value={row.quantity ?? ""}
                 onChangeText={(text) => updateRow(row.id, "quantity", text)}
-                placeholder=""
+                placeholderTextColor="#b8a89a"
                 style={{ flex: 1 }}
-                className="h-full px-3 text-base text-[#26303a]"
+                className="h-full px-3 text-sm text-center text-[#26303a]"
               />
             </View>
           ))}
         </ScrollView>
       </View>
 
-      <View className="mx-3 gap-2">
+      <View className="mx-3 gap-3">
         <Button
           label={
             filledRows.length
               ? `Send ${filledRows.length} item${filledRows.length > 1 ? "s" : ""} to shop`
               : "Send list to shop"
           }
+          size="lg"
           loading={submitting}
           disabled={!filledRows.length}
+          icon={
+            !submitting && (
+              <MaterialCommunityIcons name="send" size={20} color="#ffffff" />
+            )
+          }
           onPress={() => void send()}
+          className="shadow-lg"
+          textClassName="font-bold tracking-wide"
         />
-        <Text className="text-center text-xs text-muted-foreground">
-          The shop will price your list and send it back.
+        <Text className="text-center text-xs font-medium text-muted-foreground">
+          The shop will price your list and send it back
         </Text>
       </View>
 
