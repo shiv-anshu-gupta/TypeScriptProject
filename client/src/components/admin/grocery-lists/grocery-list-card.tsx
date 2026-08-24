@@ -9,6 +9,7 @@ import type {
   UpdateGroceryListStatusBody,
 } from "@/features/admin/grocery-lists/types";
 import { formatPrice } from "@/lib/utils";
+import GroceryListChat from "./grocery-list-chat";
 
 const cardClass = "border-border bg-card shadow-sm";
 const headerRowClass = "flex flex-wrap items-start justify-between gap-3";
@@ -208,6 +209,11 @@ function GroceryListCard({
             </Button>
           ) : null}
         </div>
+
+        <GroceryListChat
+          listId={list._id}
+          customerName={list.customerName}
+        />
       </CardContent>
     </Card>
   );

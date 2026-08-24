@@ -41,6 +41,18 @@ export type AdminGroceryListsResponse = {
   items: AdminGroceryList[];
 };
 
+export type ChatMessage = {
+  _id: string;
+  sender: "customer" | "staff";
+  senderName: string;
+  text: string;
+  createdAt: string;
+};
+
+export type ChatMessagesResponse = {
+  messages: ChatMessage[];
+};
+
 export type SetGroceryListPricesBody = {
   items: Array<{ price: number }>;
 };

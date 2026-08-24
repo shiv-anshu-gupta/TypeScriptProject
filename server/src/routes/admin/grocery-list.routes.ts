@@ -10,6 +10,7 @@ import {
   GroceryListItem,
   GroceryListStatus,
 } from "../../models/GroceryList";
+import { Message, MessageDocument } from "../../models/Message";
 import { notifyUser } from "../../utils/push";
 
 // What the customer's phone shows when the shop moves the list along.
@@ -79,6 +80,16 @@ async function getAllGroceryLists() {
     .populate("user", "name email phone");
 
   return lists.map(mapGroceryList);
+}
+
+function mapMessage(message: MessageDocument) {
+  return {
+    _id: String(message._id),
+    sender: message.sender,
+    senderName: message.senderName,
+    text: message.text,
+    createdAt: message.createdAt,
+  };
 }
 
 export const adminGroceryListRouter = Router();
@@ -277,5 +288,63 @@ adminGroceryListRouter.patch(
         items: await getAllGroceryLists(),
       }),
     );
+  }),
+);
+
+// Chat: the shop reads the conversation for one list.
+adminGroceryListRouter.get(
+  "/grocery-lists/:listId/messages",
+  asyncHandler(async (req: Request, res: Response) => {
+    const listId = String(req.params.listId || "").trim();
+    requireText(listId, "List id is required");
+
+    const list = await GroceryList.findById(listId);
+    requireFound(list, "List not found", 404);
+
+    const messages = await Message.find({ groceryList: listId }).sort({
+      createdAt: 1,
+    });
+
+    res.json(ok({ messages: messages.map(mapMessage) }));
+  }),
+);
+
+// Chat: the shop replies to the customer on one list. Pushes the reply to the
+// customer's phone (they may not have the chat open).
+adminGroceryListRouter.post(
+  "/grocery-lists/:listId/messages",
+  asyncHandler(async (req: Request, res: Response) => {
+    const listId = String(req.params.listId || "").trim();
+    const text = String(req.body.text || "").trim();
+
+    requireText(listId, "List id is required");
+    requireText(text, "Message cannot be empty");
+    if (text.length > 1000) {
+      throw new AppError(400, "Message is too long");
+    }
+
+    const list = await GroceryList.findById(listId);
+    const foundList = requireFound(list, "List not found", 404);
+
+    const senderName = process.env.SHOP_NAME || "Shop";
+    const message = await Message.create({
+      groceryList: foundList._id,
+      user: foundList.user,
+      sender: "staff",
+      senderName,
+      text,
+    });
+
+    const code = String(foundList._id).slice(-8).toUpperCase();
+
+    // Awaited — see the note on the pricing route (Vercel serverless).
+    await notifyUser(
+      foundList.user,
+      `Message from the shop · #${code}`,
+      text,
+      { listId: String(foundList._id), type: "new_message" },
+    );
+
+    res.status(201).json(ok(mapMessage(message)));
   }),
 );

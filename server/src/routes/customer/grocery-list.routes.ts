@@ -10,6 +10,7 @@ import {
   GroceryListDocument,
   GroceryListItem,
 } from "../../models/GroceryList";
+import { Message, MessageDocument } from "../../models/Message";
 import { razorpay, toSubUnits } from "../../utils/razorpay";
 import { notifyAdmins } from "../../utils/webPush";
 import { sendTelegram } from "../../utils/telegram";
@@ -50,6 +51,16 @@ function mapGroceryList(item: GroceryListDocument) {
     completedAt: item.completedAt,
     paidAt: item.paidAt,
     createdAt: item.createdAt,
+  };
+}
+
+function mapMessage(message: MessageDocument) {
+  return {
+    _id: String(message._id),
+    sender: message.sender,
+    senderName: message.senderName,
+    text: message.text,
+    createdAt: message.createdAt,
   };
 }
 
@@ -394,5 +405,67 @@ customerGroceryListRouter.post(
     await foundList.save();
 
     res.json(ok(mapGroceryList(foundList)));
+  }),
+);
+
+// Chat: the customer reads the conversation for one of their lists.
+customerGroceryListRouter.get(
+  "/grocery-lists/:listId/messages",
+  asyncHandler(async (req: Request, res: Response) => {
+    const dbUser = await getDbUserFromReq(req);
+    const listId = String(req.params.listId || "").trim();
+    requireText(listId, "List id is required");
+
+    // Ownership check: a customer can only read their own list's chat.
+    const list = await GroceryList.findOne({ _id: listId, user: dbUser._id });
+    requireFound(list, "List not found", 404);
+
+    const messages = await Message.find({ groceryList: listId }).sort({
+      createdAt: 1,
+    });
+
+    res.json(ok({ messages: messages.map(mapMessage) }));
+  }),
+);
+
+// Chat: the customer sends a message to the shop about one of their lists.
+customerGroceryListRouter.post(
+  "/grocery-lists/:listId/messages",
+  asyncHandler(async (req: Request, res: Response) => {
+    const dbUser = await getDbUserFromReq(req);
+    const listId = String(req.params.listId || "").trim();
+    const text = String(req.body.text || "").trim();
+
+    requireText(listId, "List id is required");
+    requireText(text, "Message cannot be empty");
+    if (text.length > 1000) {
+      throw new AppError(400, "Message is too long");
+    }
+
+    const list = await GroceryList.findOne({ _id: listId, user: dbUser._id });
+    const foundList = requireFound(list, "List not found", 404);
+
+    const senderName = dbUser.name || dbUser.email || "Customer";
+    const message = await Message.create({
+      groceryList: foundList._id,
+      user: dbUser._id,
+      sender: "customer",
+      senderName,
+      text,
+    });
+
+    const code = String(foundList._id).slice(-8).toUpperCase();
+
+    // Alert the shop (browser push + Telegram). Awaited: serverless freezes
+    // after the response; these helpers never throw.
+    await notifyAdmins(`New message · #${code}`, `${senderName}: ${text}`, {
+      listId: String(foundList._id),
+      type: "new_message",
+    });
+    await sendTelegram(
+      `💬 <b>New message</b> · #${code}\nFrom: ${senderName}\n${text}`,
+    );
+
+    res.status(201).json(ok(mapMessage(message)));
   }),
 );

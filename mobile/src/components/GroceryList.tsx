@@ -1,14 +1,10 @@
-import { Dimensions, ScrollView, TextInput, View, Text } from "react-native";
+import { TextInput, View, Text } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 import { useDraftListStore } from "@/features/customer/draft-list/store";
 import { useSendDraft } from "@/features/customer/draft-list/use-send-draft";
 import { Button } from "@/components/ui/Button";
 import { PhonePrompt } from "@/components/PhonePrompt";
-
-// Let the paper take most of the screen but leave a peek of the section
-// below so the user knows the page scrolls further.
-const LIST_MAX_HEIGHT = Math.round(Dimensions.get("window").height * 0.5);
 
 export function GroceryList() {
   // The paper is a view over the shared draft — the same draft that
@@ -38,12 +34,10 @@ export function GroceryList() {
           shadowOffset: { width: 0, height: 2 },
         }}
       >
-        <ScrollView
-          style={{ maxHeight: LIST_MAX_HEIGHT }}
-          nestedScrollEnabled
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
+        {/* Rows render inline — the whole Home page (one FlatList) scrolls, so
+            the paper grows without limit and every row stays reachable. A
+            nested ScrollView here previously capped it at ~13 rows on Android. */}
+        <View>
           {/* Header row */}
           <View className="h-12 flex-row items-center border-b-2 border-[#c9d9ea] bg-[#f5f0e8]">
             <Text className="w-8 text-center text-xs font-bold tracking-wide text-[#8b7a5e]">
@@ -94,7 +88,7 @@ export function GroceryList() {
               />
             </View>
           ))}
-        </ScrollView>
+        </View>
       </View>
 
       <View className="mx-3 gap-3">

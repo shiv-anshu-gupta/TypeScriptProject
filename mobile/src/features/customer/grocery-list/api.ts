@@ -1,5 +1,7 @@
 import { apiGet, apiPatch, apiPost } from "@/lib/api";
 import type {
+  ChatMessage,
+  ChatMessagesResponse,
   CustomerGroceryList,
   CustomerGroceryListsResponse,
   SubmitGroceryListBody,
@@ -34,5 +36,18 @@ export async function removeGroceryListItem(listId: string, index: number) {
   return apiPatch<CustomerGroceryList, { index: number }>(
     `/customer/grocery-lists/${listId}/remove-item`,
     { index },
+  );
+}
+
+export async function getGroceryListMessages(listId: string) {
+  return apiGet<ChatMessagesResponse>(
+    `/customer/grocery-lists/${listId}/messages`,
+  );
+}
+
+export async function sendGroceryListMessage(listId: string, text: string) {
+  return apiPost<ChatMessage, { text: string }>(
+    `/customer/grocery-lists/${listId}/messages`,
+    { text },
   );
 }

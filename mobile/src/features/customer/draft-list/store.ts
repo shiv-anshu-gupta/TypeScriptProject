@@ -7,7 +7,9 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 // Persisted to AsyncStorage so a half-written list survives an app restart.
 
 const STORAGE_KEY = "draft_grocery_list_rows";
-const INITIAL_ROWS = 20;
+// Start compact; the list auto-grows a fresh blank line as each one is filled
+// (see withTrailingBlank), so there is no upper limit on items.
+const INITIAL_ROWS = 8;
 
 export type DraftRow = {
   id: number;

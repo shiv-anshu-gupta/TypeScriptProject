@@ -55,3 +55,16 @@ export type SubmitGroceryListBody = {
   note?: string;
   phone?: string;
 };
+
+// Chat: one message on an order's conversation.
+export type ChatMessage = {
+  _id: string;
+  sender: "customer" | "staff";
+  senderName: string;
+  text: string;
+  createdAt: string;
+};
+
+export type ChatMessagesResponse = {
+  messages: ChatMessage[];
+};

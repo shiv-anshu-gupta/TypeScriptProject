@@ -147,6 +147,8 @@ export function HomeScreen() {
       }}
       contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 32 }}
       showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="on-drag"
       ListHeaderComponent={listHeader}
       renderItem={({ item }) => (
         <View style={{ width: "48%", marginBottom: 16 }}>

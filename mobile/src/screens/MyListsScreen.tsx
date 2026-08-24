@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -25,6 +25,7 @@ import { useSendDraft } from "@/features/customer/draft-list/use-send-draft";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { PhonePrompt } from "@/components/PhonePrompt";
+import { ChatSheet } from "@/components/ChatSheet";
 import { formatPrice } from "@/lib/utils";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -105,6 +106,7 @@ function StatusTimeline({ list }: { list: CustomerGroceryList }) {
 }
 
 function ListCard({ list }: { list: CustomerGroceryList }) {
+  const [chatOpen, setChatOpen] = useState(false);
   const { markSeen, payAtShop, payViaUpi, payingListId, removeItem } =
     useCustomerGroceryListStore((state) => state);
 
@@ -214,6 +216,17 @@ function ListCard({ list }: { list: CustomerGroceryList }) {
 
       <StatusTimeline list={list} />
 
+      {/* Talk to the shop about this order (quantities, packing, price…) */}
+      <Pressable
+        onPress={() => setChatOpen(true)}
+        className="flex-row items-center justify-center gap-2 rounded-xl border border-border bg-secondary py-3"
+      >
+        <Feather name="message-circle" size={16} color="#3c5a64" />
+        <Text className="text-sm font-semibold text-foreground">
+          Message the shop
+        </Text>
+      </Pressable>
+
       {/* Payment — only once priced */}
       {isPriced ? (
         isPaid ? (
@@ -241,6 +254,13 @@ function ListCard({ list }: { list: CustomerGroceryList }) {
           </View>
         )
       ) : null}
+
+      <ChatSheet
+        open={chatOpen}
+        listId={list._id}
+        code={list.code}
+        onClose={() => setChatOpen(false)}
+      />
     </View>
   );
 }
