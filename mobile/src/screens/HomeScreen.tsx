@@ -55,7 +55,7 @@ export function HomeScreen() {
               sKirana
             </Text>
             <Text className="text-[11px] text-muted-foreground">
-              Your local shop, on your phone ·v2
+              Your local shop, on your phone
             </Text>
           </View>
         </View>
