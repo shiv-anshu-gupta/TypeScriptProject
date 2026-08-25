@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import {
   ActivityIndicator,
+  FlatList,
   Pressable,
-  ScrollView,
   Text,
   View,
 } from "react-native";
@@ -55,7 +55,7 @@ export function HomeScreen() {
               sKirana
             </Text>
             <Text className="text-[11px] text-muted-foreground">
-              Your local shop, on your phone
+              Your local shop, on your phone ·v2
             </Text>
           </View>
         </View>
@@ -135,40 +135,38 @@ export function HomeScreen() {
     </View>
   );
 
-  // The whole page is ONE ScrollView (not a virtualized FlatList). The grocery
-  // paper grows a row as the user types; a FlatList caches its header height and
-  // Android clipped the products below, blanking them out. A ScrollView has no
-  // virtualization, so the products always stay laid out correctly. The product
-  // count here is small (recent arrivals), so there's no perf cost.
   return (
-    <ScrollView
+    <FlatList
       className="flex-1 bg-background"
+      data={data.recentProducts}
+      keyExtractor={(item) => item._id}
+      numColumns={2}
+      columnWrapperStyle={{
+        justifyContent: "space-between",
+        paddingHorizontal: 16,
+      }}
       contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 32 }}
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
       keyboardDismissMode="on-drag"
-    >
-      {listHeader}
-
-      <View className="flex-row flex-wrap justify-between px-4">
-        {data.recentProducts.map((item) => (
-          <View key={item._id} style={{ width: "48%", marginBottom: 16 }}>
-            <ProductCard
-              product={{
-                id: item._id,
-                title: item.title,
-                brand: item.brand,
-                image: item.image,
-                unit: item.unit,
-                unitValue: item.unitValue,
-              }}
-              onPress={() =>
-                navigation.navigate("ProductDetails", { productId: item._id })
-              }
-            />
-          </View>
-        ))}
-      </View>
-    </ScrollView>
+      ListHeaderComponent={listHeader}
+      renderItem={({ item }) => (
+        <View style={{ width: "48%", marginBottom: 16 }}>
+          <ProductCard
+            product={{
+              id: item._id,
+              title: item.title,
+              brand: item.brand,
+              image: item.image,
+              unit: item.unit,
+              unitValue: item.unitValue,
+            }}
+            onPress={() =>
+              navigation.navigate("ProductDetails", { productId: item._id })
+            }
+          />
+        </View>
+      )}
+    />
   );
 }
