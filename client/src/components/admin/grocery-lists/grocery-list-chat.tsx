@@ -34,7 +34,7 @@ function GroceryListChat({ listId, customerName }: GroceryListChatProps) {
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
-  const endRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   async function load(silent = false) {
     try {
@@ -57,8 +57,12 @@ function GroceryListChat({ listId, customerName }: GroceryListChatProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, listId]);
 
+  // Keep the newest message in view, but scroll ONLY inside the chat box —
+  // never the page. (The old scrollIntoView scrolled the whole admin page on
+  // every 5s poll, which yanked the scroll position up and down.)
   useEffect(() => {
-    if (open) endRef.current?.scrollIntoView({ behavior: "smooth" });
+    const el = scrollRef.current;
+    if (open && el) el.scrollTop = el.scrollHeight;
   }, [messages, open]);
 
   async function onSend() {
@@ -97,7 +101,10 @@ function GroceryListChat({ listId, customerName }: GroceryListChatProps) {
 
       {open ? (
         <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-3">
-          <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
+          <div
+            ref={scrollRef}
+            className="max-h-64 space-y-2 overflow-y-auto pr-1"
+          >
             {loading && !messages.length ? (
               <p className="py-6 text-center text-xs text-muted-foreground">
                 Loading…
@@ -136,7 +143,6 @@ function GroceryListChat({ listId, customerName }: GroceryListChatProps) {
                 No messages yet with {customerName || "this customer"}.
               </p>
             )}
-            <div ref={endRef} />
           </div>
 
           <div className="flex items-end gap-2">
