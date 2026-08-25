@@ -32,7 +32,11 @@ export function ProductCard({ product, onPress }: ProductCardProps) {
   return (
     <Pressable
       onPress={onPress}
-      className="flex-1 overflow-hidden rounded-2xl border border-border bg-card"
+      // w-full (not flex-1): the card's height comes from its own content
+      // (image aspect-ratio + text). flex-1 collapsed to zero height inside a
+      // plain ScrollView on the Home screen. w-full works in both the Home
+      // ScrollView and the Shop FlatList cells.
+      className="w-full overflow-hidden rounded-2xl border border-border bg-card"
     >
       <View className="relative aspect-[4/5] w-full bg-muted">
         <Image
