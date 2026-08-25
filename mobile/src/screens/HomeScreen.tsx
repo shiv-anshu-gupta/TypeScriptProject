@@ -149,6 +149,13 @@ export function HomeScreen() {
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
       keyboardDismissMode="on-drag"
+      // The grocery paper lives in the header and grows a row as the user types.
+      // FlatList caches header height and Android clips off-screen rows, which
+      // made the products below blank out when a row was added. Disabling
+      // clipping keeps them rendered; the extra props keep the window generous.
+      removeClippedSubviews={false}
+      initialNumToRender={12}
+      windowSize={21}
       ListHeaderComponent={listHeader}
       renderItem={({ item }) => (
         <View style={{ width: "48%", marginBottom: 16 }}>
