@@ -14,6 +14,7 @@ import { useDraftListStore } from "@/features/customer/draft-list/store";
 import { usePushNotifications } from "@/features/customer/push/use-push-notifications";
 import { RootNavigator } from "@/navigation/RootNavigator";
 import { Toaster } from "@/components/Toaster";
+import { UpdatePrompt } from "@/components/UpdatePrompt";
 import { SplashScreen } from "@/screens/SplashScreen";
 
 function Bootstrap() {
@@ -78,6 +79,7 @@ export default function App() {
           <NavigationContainer>
             <Bootstrap />
             <RootNavigator />
+            <UpdatePrompt />
             <Toaster />
             <StatusBar style="dark" />
           </NavigationContainer>
