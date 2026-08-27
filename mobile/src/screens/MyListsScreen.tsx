@@ -30,6 +30,11 @@ import { formatPrice } from "@/lib/utils";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
+// If the shop hasn't priced a list within this many minutes, reassure the
+// customer that the shop is just busy (not ignoring them). Purely time-based —
+// computed from the list's age, no backend or shopkeeper action needed.
+const BUSY_AFTER_MIN = 30;
+
 // The customer-facing journey. "Priced" is its own visible step so the
 // customer sees the quote arrive — its label carries the total.
 const TIMELINE: { key: GroceryListStatus; label: string }[] = [
@@ -113,6 +118,13 @@ function ListCard({ list }: { list: CustomerGroceryList }) {
   const isPriced = list.totalAmount > 0;
   const isPaid = list.paymentStatus === "paid";
   const busy = payingListId === list._id;
+
+  // Still "received" (not priced) after BUSY_AFTER_MIN minutes → show the shop
+  // a friendly "we're busy, hang tight" note instead of a blank wait.
+  const waitedMinutes =
+    (Date.now() - new Date(list.createdAt).getTime()) / 60000;
+  const shopBusy =
+    list.status === "received" && waitedMinutes >= BUSY_AFTER_MIN;
 
   // Over budget after the quote? Items can be removed — but only before the
   // shop starts packing, never after payment, and never the last item.
@@ -207,9 +219,17 @@ function ListCard({ list }: { list: CustomerGroceryList }) {
           </Text>
         </View>
       ) : (
-        <View className="rounded-xl border border-border bg-secondary p-3">
-          <Text className="text-xs text-muted-foreground">
-            Waiting for the shop to price your list.
+        <View
+          className={
+            shopBusy
+              ? "rounded-xl border border-primary/30 bg-secondary p-3"
+              : "rounded-xl border border-border bg-secondary p-3"
+          }
+        >
+          <Text className="text-xs leading-5 text-muted-foreground">
+            {shopBusy
+              ? "🙏 दुकान अभी थोड़ी व्यस्त है — आपकी लिस्ट मिल गई है, हम जल्द ही दाम भेज देंगे।\nThe shop is a bit busy right now — your list is received, we'll price it very soon."
+              : "Waiting for the shop to price your list."}
           </Text>
         </View>
       )}
