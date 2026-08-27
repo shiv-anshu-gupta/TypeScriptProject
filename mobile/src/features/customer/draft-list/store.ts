@@ -64,7 +64,11 @@ export const useDraftListStore = create<DraftListStore>((set, get) => ({
     try {
       const raw = await AsyncStorage.getItem(STORAGE_KEY);
       const parsed = raw ? (JSON.parse(raw) as DraftRow[]) : null;
-      if (Array.isArray(parsed) && parsed.length) {
+      // Only restore the saved draft if it still has unsent items in it. If it's
+      // all blank — e.g. the last list was already sent, or an old grown list
+      // left behind a wall of empty rows — start fresh at the default size
+      // instead of carrying over "how many rows I had last time".
+      if (Array.isArray(parsed) && parsed.some(isRowFilled)) {
         const maxId = parsed.reduce((max, row) => Math.max(max, row.id), 0);
         set({ rows: parsed, nextId: maxId + 1, hydrated: true });
         return;
@@ -72,7 +76,9 @@ export const useDraftListStore = create<DraftListStore>((set, get) => ({
     } catch {
       // fall through to defaults on any storage/parse error
     }
-    set({ hydrated: true });
+    const rows = makeInitialRows();
+    persist(rows);
+    set({ rows, nextId: INITIAL_ROWS + 1, hydrated: true });
   },
 
   updateRow: (id, key, value) => {
