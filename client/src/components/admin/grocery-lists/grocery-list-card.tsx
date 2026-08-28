@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check } from "lucide-react";
+import { Check, Share2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import type {
   UpdateGroceryListStatusBody,
 } from "@/features/admin/grocery-lists/types";
 import { cn, formatPrice } from "@/lib/utils";
+import { shareList } from "@/lib/share-list";
 import GroceryListChat from "./grocery-list-chat";
 import PriceCalculator from "./price-calculator";
 
@@ -170,6 +171,16 @@ function GroceryListCard({
                 : "Payment pending"}
             </Badge>
           ) : null}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="gap-1.5"
+            onClick={() => void shareList(list)}
+          >
+            <Share2 className="h-3.5 w-3.5" />
+            Share
+          </Button>
         </div>
       </CardHeader>
 
