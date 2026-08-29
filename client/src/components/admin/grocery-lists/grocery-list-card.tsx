@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Check, Share2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Check, Languages, Share2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import type {
 } from "@/features/admin/grocery-lists/types";
 import { cn, formatPrice } from "@/lib/utils";
 import { shareList } from "@/lib/share-list";
+import { translateItems, type TranslateTarget } from "@/lib/translate";
 import GroceryListChat from "./grocery-list-chat";
 import PriceCalculator from "./price-calculator";
 
@@ -127,6 +128,31 @@ function GroceryListCard({
   );
   const allPacked = list.items.length > 0 && packedCount === list.items.length;
 
+  // Generic, dictionary-free translation of the customer's item names. The shop
+  // picks a target (Hindi/English) and every item is machine-translated, works
+  // for any word. The original always stays visible (translation shown beside).
+  const [translateTo, setTranslateTo] = useState<TranslateTarget | "">("");
+  const [translated, setTranslated] = useState<string[]>([]);
+  const namesKey = list.items.map((item) => item.name).join("|");
+
+  useEffect(() => {
+    if (!translateTo) {
+      setTranslated([]);
+      return;
+    }
+    let cancelled = false;
+    void translateItems(
+      list.items.map((item) => item.name),
+      translateTo,
+    ).then((result) => {
+      if (!cancelled) setTranslated(result);
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [translateTo, namesKey]);
+
   // How far along the flow this list is. -1 for "received" (not priced yet).
   const currentIndex = STATUS_FLOW.indexOf(list.status as FlowStatus);
 
@@ -203,6 +229,33 @@ function GroceryListCard({
           </span>
         </div>
 
+        {/* Generic translate — machine-translates any item name to the shop's
+            chosen language. Original always stays; translation shown beside. */}
+        <div className="flex items-center gap-1.5 text-xs">
+          <Languages className="h-3.5 w-3.5 text-muted-foreground" />
+          {(
+            [
+              { key: "", label: "Original" },
+              { key: "hi", label: "हिंदी" },
+              { key: "en", label: "English" },
+            ] as const
+          ).map((opt) => (
+            <button
+              key={opt.key}
+              type="button"
+              onClick={() => setTranslateTo(opt.key)}
+              className={cn(
+                "rounded-full border px-2 py-0.5 transition-colors",
+                translateTo === opt.key
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border text-muted-foreground hover:border-primary/50",
+              )}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+
         <div className="space-y-2">
           {list.items.map((item, index) => {
             const isPacked = packed.has(index);
@@ -229,6 +282,14 @@ function GroceryListCard({
                   )}
                 >
                   {item.name}
+                  {translateTo &&
+                  translated[index] &&
+                  translated[index].toLowerCase() !==
+                    item.name.trim().toLowerCase() ? (
+                    <span className="ml-2 font-medium text-primary">
+                      → {translated[index]}
+                    </span>
+                  ) : null}
                 </span>
                 <span className={itemQtyClass}>{item.quantity || "—"}</span>
                 <div className="flex items-center gap-1">
