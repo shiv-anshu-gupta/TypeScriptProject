@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import {
-  KeyboardAvoidingView,
+  Keyboard,
   Modal,
   Platform,
   Pressable,
@@ -8,6 +8,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 
 import { Button } from "@/components/ui/Button";
@@ -38,8 +39,14 @@ export function PhonePrompt({
   onClose,
   onSubmit,
 }: PhonePromptProps) {
+  const insets = useSafeAreaInsets();
   const [value, setValue] = useState("");
   const [touched, setTouched] = useState(false);
+  // Measure the keyboard height directly and lift the sheet by that much. A
+  // KeyboardAvoidingView is unreliable inside a Modal on Android (the Modal is
+  // a separate window that doesn't receive the resize), which is why the input
+  // was getting hidden behind the keypad.
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   useEffect(() => {
     if (open) {
@@ -48,7 +55,29 @@ export function PhonePrompt({
     }
   }, [open]);
 
+  useEffect(() => {
+    const showEvent =
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent =
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+
+    const showSub = Keyboard.addListener(showEvent, (event) => {
+      setKeyboardHeight(event.endCoordinates?.height ?? 0);
+    });
+    const hideSub = Keyboard.addListener(hideEvent, () => setKeyboardHeight(0));
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
   const valid = isValid(value);
+
+  // Push the sheet's content up above the keyboard when it's open; otherwise
+  // just clear the home indicator / gesture bar.
+  const bottomPad =
+    keyboardHeight > 0 ? keyboardHeight + 16 : insets.bottom + 20;
 
   return (
     <Modal
@@ -58,15 +87,12 @@ export function PhonePrompt({
       onRequestClose={onClose}
       statusBarTranslucent
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        className="flex-1"
-      >
-        <Pressable onPress={onClose} className="flex-1 justify-end bg-black/50">
-          <Pressable
-            onPress={(event) => event.stopPropagation()}
-            className="gap-4 rounded-t-3xl border border-border bg-background px-5 pb-10 pt-4"
-          >
+      <Pressable onPress={onClose} className="flex-1 justify-end bg-black/50">
+        <Pressable
+          onPress={(event) => event.stopPropagation()}
+          style={{ paddingBottom: bottomPad }}
+          className="gap-4 rounded-t-3xl border border-border bg-background px-5 pt-3"
+        >
           <View className="h-1.5 w-10 self-center rounded-full bg-muted" />
 
           <View className="flex-row items-start justify-between gap-3">
@@ -130,9 +156,8 @@ export function PhonePrompt({
             disabled={!valid}
             onPress={() => onSubmit(normalize(value))}
           />
-          </Pressable>
         </Pressable>
-      </KeyboardAvoidingView>
+      </Pressable>
     </Modal>
   );
 }
