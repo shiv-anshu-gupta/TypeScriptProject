@@ -13,7 +13,7 @@ import type {
 } from "@/features/admin/grocery-lists/types";
 import { cn, formatPrice } from "@/lib/utils";
 import { shareList } from "@/lib/share-list";
-import { translateItems, type TranslateTarget } from "@/lib/translate";
+import { translateItems } from "@/lib/translate";
 import GroceryListChat from "./grocery-list-chat";
 import PriceCalculator from "./price-calculator";
 
@@ -128,30 +128,37 @@ function GroceryListCard({
   );
   const allPacked = list.items.length > 0 && packedCount === list.items.length;
 
-  // Generic, dictionary-free translation of the customer's item names. The shop
-  // picks a target (Hindi/English) and every item is machine-translated, works
-  // for any word. The original always stays visible (translation shown beside).
-  const [translateTo, setTranslateTo] = useState<TranslateTarget | "">("");
-  const [translated, setTranslated] = useState<string[]>([]);
+  // Generic, dictionary-free translation of the customer's item names. Whatever
+  // language a list comes in (English, Hindi or Hinglish), the worker can show
+  // BOTH the Hindi and the English form of every item at once — auto-detected,
+  // works for any word. The original always stays visible.
+  const [showBoth, setShowBoth] = useState(false);
+  const [hiNames, setHiNames] = useState<string[]>([]);
+  const [enNames, setEnNames] = useState<string[]>([]);
   const namesKey = list.items.map((item) => item.name).join("|");
 
   useEffect(() => {
-    if (!translateTo) {
-      setTranslated([]);
+    if (!showBoth) {
+      setHiNames([]);
+      setEnNames([]);
       return;
     }
     let cancelled = false;
-    void translateItems(
-      list.items.map((item) => item.name),
-      translateTo,
-    ).then((result) => {
-      if (!cancelled) setTranslated(result);
+    const names = list.items.map((item) => item.name);
+    void Promise.all([
+      translateItems(names, "hi"),
+      translateItems(names, "en"),
+    ]).then(([hi, en]) => {
+      if (!cancelled) {
+        setHiNames(hi);
+        setEnNames(en);
+      }
     });
     return () => {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [translateTo, namesKey]);
+  }, [showBoth, namesKey]);
 
   // How far along the flow this list is. -1 for "received" (not priced yet).
   const currentIndex = STATUS_FLOW.indexOf(list.status as FlowStatus);
@@ -229,32 +236,21 @@ function GroceryListCard({
           </span>
         </div>
 
-        {/* Generic translate — machine-translates any item name to the shop's
-            chosen language. Original always stays; translation shown beside. */}
-        <div className="flex items-center gap-1.5 text-xs">
-          <Languages className="h-3.5 w-3.5 text-muted-foreground" />
-          {(
-            [
-              { key: "", label: "Original" },
-              { key: "hi", label: "हिंदी" },
-              { key: "en", label: "English" },
-            ] as const
-          ).map((opt) => (
-            <button
-              key={opt.key}
-              type="button"
-              onClick={() => setTranslateTo(opt.key)}
-              className={cn(
-                "rounded-full border px-2 py-0.5 transition-colors",
-                translateTo === opt.key
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border text-muted-foreground hover:border-primary/50",
-              )}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
+        {/* Show every item in BOTH Hindi and English (auto-detected), so any
+            worker can read it whatever language the customer sent. */}
+        <button
+          type="button"
+          onClick={() => setShowBoth((v) => !v)}
+          className={cn(
+            "flex items-center gap-1.5 self-start rounded-full border px-2.5 py-1 text-xs transition-colors",
+            showBoth
+              ? "border-primary bg-primary text-primary-foreground"
+              : "border-border text-muted-foreground hover:border-primary/50",
+          )}
+        >
+          <Languages className="h-3.5 w-3.5" />
+          {showBoth ? "हिंदी + English ✓" : "Show हिंदी + English"}
+        </button>
 
         <div className="space-y-2">
           {list.items.map((item, index) => {
@@ -282,14 +278,25 @@ function GroceryListCard({
                   )}
                 >
                   {item.name}
-                  {translateTo &&
-                  translated[index] &&
-                  translated[index].toLowerCase() !==
-                    item.name.trim().toLowerCase() ? (
-                    <span className="ml-2 font-medium text-primary">
-                      → {translated[index]}
-                    </span>
-                  ) : null}
+                  {showBoth
+                    ? (() => {
+                        const orig = item.name.trim().toLowerCase();
+                        const forms = [hiNames[index], enNames[index]]
+                          .filter((v): v is string => Boolean(v))
+                          .filter(
+                            (v, i, a) =>
+                              a.findIndex(
+                                (x) => x.toLowerCase() === v.toLowerCase(),
+                              ) === i,
+                          )
+                          .filter((v) => v.trim().toLowerCase() !== orig);
+                        return forms.length ? (
+                          <span className="ml-2 font-medium text-primary">
+                            → {forms.join(" · ")}
+                          </span>
+                        ) : null;
+                      })()
+                    : null}
                 </span>
                 <span className={itemQtyClass}>{item.quantity || "—"}</span>
                 <div className="flex items-center gap-1">
