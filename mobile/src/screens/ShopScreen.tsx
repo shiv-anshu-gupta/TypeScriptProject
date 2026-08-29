@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -14,6 +14,7 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RouteProp } from "@react-navigation/native";
 import { Feather } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 
 import type { RootStackParamList, TabParamList } from "@/navigation/types";
 import { useCustomerProductList } from "@/features/customer/products/use-customer-collections";
@@ -25,8 +26,8 @@ import { ProductCard } from "@/components/ProductCard";
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type ShopRoute = RouteProp<TabParamList, "Shop">;
 
-const sortOptions: { key: ProductSort; label: string }[] = [
-  { key: "recent", label: "Newest" },
+const sortOptions: { key: ProductSort; labelKey: string }[] = [
+  { key: "recent", labelKey: "shop.newest" },
 ];
 
 // One entry in the vertical category rail on the left of the product grid:
@@ -117,6 +118,7 @@ function Chip({
 }
 
 export function ShopScreen() {
+  const { t } = useTranslation();
   const navigation = useNavigation<Nav>();
   const route = useRoute<ShopRoute>();
   const insets = useSafeAreaInsets();
@@ -143,16 +145,13 @@ export function ShopScreen() {
       state.rows.filter((row) => (row.name ?? "").trim().length > 0).length,
   );
 
-  const resultLabel = useMemo(
-    () => `${products.length} item${products.length === 1 ? "" : "s"}`,
-    [products.length],
-  );
-
   return (
     <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
       <View className="border-b border-border px-4 pb-3 pt-2">
         <View className="flex-row items-center justify-between">
-          <Text className="text-2xl font-semibold text-foreground">Shop</Text>
+          <Text className="text-2xl font-semibold text-foreground">
+            {t("shop.title")}
+          </Text>
 
           {/* Search toggle — top right */}
           <Pressable
@@ -180,7 +179,7 @@ export function ShopScreen() {
             <TextInput
               value={search}
               onChangeText={setSearch}
-              placeholder="Search any product…"
+              placeholder={t("shop.searchPlaceholder")}
               autoFocus
               returnKeyType="search"
               className="h-11 flex-1 text-base text-foreground"
@@ -202,7 +201,7 @@ export function ShopScreen() {
           {sortOptions.map((option) => (
             <Chip
               key={option.key}
-              label={option.label}
+              label={t(option.labelKey)}
               active={sort === option.key}
               onPress={() => changeSort(option.key)}
             />
@@ -210,7 +209,9 @@ export function ShopScreen() {
         </ScrollView>
 
         <View className="flex-row items-center justify-between pt-1">
-          <Text className="text-sm text-muted-foreground">{resultLabel}</Text>
+          <Text className="text-sm text-muted-foreground">
+            {t("shop.resultCount", { count: products.length })}
+          </Text>
           {hasActiveFilters ? (
             <Pressable
               onPress={clearFilters}
@@ -218,7 +219,7 @@ export function ShopScreen() {
             >
               <Feather name="x" size={14} color="#6f6857" />
               <Text className="text-sm text-muted-foreground">
-                Clear ({activeFilterBadges.length})
+                {t("shop.clear", { count: activeFilterBadges.length })}
               </Text>
             </Pressable>
           ) : null}
@@ -238,7 +239,7 @@ export function ShopScreen() {
               contentContainerStyle={{ paddingVertical: 4, paddingBottom: 90 }}
             >
               <RailItem
-                label="All"
+                label={t("shop.all")}
                 active={!filters.category}
                 onPress={() => {
                   if (filters.category) {
@@ -268,7 +269,7 @@ export function ShopScreen() {
             <View className="flex-1 items-center justify-center px-8">
               <Feather name="search" size={32} color="#ada291" />
               <Text className="mt-3 text-center text-base text-muted-foreground">
-                No products match your filters.
+                {t("shop.noProducts")}
               </Text>
             </View>
           ) : (
@@ -320,11 +321,11 @@ export function ShopScreen() {
           }}
         >
           <Text className="text-sm font-semibold text-primary-foreground">
-            {draftCount} item{draftCount > 1 ? "s" : ""} in your list
+            {t("shop.inList", { count: draftCount })}
           </Text>
           <View className="flex-row items-center gap-1.5">
             <Text className="text-sm font-semibold text-primary-foreground">
-              View & send
+              {t("shop.viewSend")}
             </Text>
             <Feather name="arrow-right" size={16} color="#ffffff" />
           </View>

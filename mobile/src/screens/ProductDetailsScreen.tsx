@@ -12,6 +12,7 @@ import type { RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useAuth } from "@clerk/clerk-expo";
 import { Feather } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 
 import type { RootStackParamList } from "@/navigation/types";
 import { useCustomerProductDetailsStore } from "@/features/customer/products/details/store";
@@ -37,6 +38,7 @@ type Nav = NativeStackNavigationProp<RootStackParamList>;
 type DetailsRoute = RouteProp<RootStackParamList, "ProductDetails">;
 
 export function ProductDetailsScreen() {
+  const { t } = useTranslation();
   const navigation = useNavigation<Nav>();
   const route = useRoute<DetailsRoute>();
   const { productId } = route.params;
@@ -93,7 +95,7 @@ export function ProductDetailsScreen() {
     return (
       <View className="flex-1 items-center justify-center bg-background px-8">
         <Text className="text-center text-base text-muted-foreground">
-          This product could not be loaded.
+          {t("product.notLoaded")}
         </Text>
       </View>
     );
@@ -149,12 +151,14 @@ export function ProductDetailsScreen() {
             <Badge>{product.category?.name}</Badge>
             {product.stock > 0 ? (
               <Badge className="border-primary/30 bg-secondary">
-                {product.stock <= 5 ? `Only ${product.stock} left` : "In stock"}
+                {product.stock <= 5
+                  ? t("product.onlyLeft", { count: product.stock })
+                  : t("product.inStock")}
               </Badge>
             ) : (
               <Badge className="border-0 bg-destructive">
                 <Text className="text-xs font-medium text-destructive-foreground">
-                  Out of stock
+                  {t("product.outOfStock")}
                 </Text>
               </Badge>
             )}
@@ -171,12 +175,9 @@ export function ProductDetailsScreen() {
 
           <View className="rounded-xl border border-border bg-secondary p-3">
             <Text className="text-sm text-muted-foreground">
-              Sold per{" "}
-              <Text className="font-semibold text-foreground">
-                {formatPack(product.unit, product.unitValue)}
-              </Text>
-              . Price will be confirmed by the shop after they review your
-              order.
+              {t("product.soldPerNote", {
+                pack: formatPack(product.unit, product.unitValue),
+              })}
             </Text>
           </View>
 
@@ -184,7 +185,7 @@ export function ProductDetailsScreen() {
           {product.stock > 0 ? (
             <View className="gap-2">
               <Text className="text-sm font-semibold text-foreground">
-                Quantity
+                {t("product.quantity")}
               </Text>
               <QuantityControl
                 unit={product.unit}
@@ -205,7 +206,7 @@ export function ProductDetailsScreen() {
           {product.colors.length ? (
             <View className="gap-2">
               <Text className="text-sm font-semibold text-foreground">
-                Color
+                {t("product.color")}
               </Text>
               <View className="flex-row flex-wrap gap-2">
                 {product.colors.map((color) => (
@@ -227,7 +228,9 @@ export function ProductDetailsScreen() {
           {/* Sizes */}
           {product.sizes.length ? (
             <View className="gap-2">
-              <Text className="text-sm font-semibold text-foreground">Size</Text>
+              <Text className="text-sm font-semibold text-foreground">
+                {t("product.size")}
+              </Text>
               <View className="flex-row flex-wrap gap-2">
                 {product.sizes.map((size) => (
                   <Pressable
@@ -258,7 +261,7 @@ export function ProductDetailsScreen() {
           {data?.relatedProducts?.length ? (
             <View className="mt-2 gap-3">
               <Text className="text-lg font-semibold text-foreground">
-                You may also like
+                {t("product.related")}
               </Text>
               <ScrollView
                 horizontal
@@ -289,7 +292,9 @@ export function ProductDetailsScreen() {
                       {related.title}
                     </Text>
                     <Text className="text-sm text-muted-foreground">
-                      per {formatPack(related.unit, related.unitValue)}
+                      {t("shop.perPack", {
+                        pack: formatPack(related.unit, related.unitValue),
+                      })}
                     </Text>
                   </Pressable>
                 ))}
@@ -322,8 +327,14 @@ export function ProductDetailsScreen() {
           <Button
             label={
               product.stock < 1
-                ? "Out of stock"
-                : `Add ${buildQuantityString(product.unit, product.unitValue, qty)} to list`
+                ? t("product.outOfStock")
+                : t("product.addToList", {
+                    qty: buildQuantityString(
+                      product.unit,
+                      product.unitValue,
+                      qty,
+                    ),
+                  })
             }
             disabled={product.stock < 1}
             onPress={() => {
@@ -331,7 +342,7 @@ export function ProductDetailsScreen() {
                 product.title,
                 buildQuantityString(product.unit, product.unitValue, qty),
               );
-              toast.success("Added — send it from the Lists tab");
+              toast.success(t("product.added"));
             }}
             icon={<Feather name="plus" size={16} color="#ffffff" />}
           />

@@ -5,6 +5,7 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useAuth } from "@clerk/clerk-expo";
 import { Feather } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 
 import type { RootStackParamList } from "@/navigation/types";
 import { useCustomerWishlistStore } from "@/features/customer/wishlist/store";
@@ -12,6 +13,7 @@ import { useCustomerWishlistStore } from "@/features/customer/wishlist/store";
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 export function WishlistScreen() {
+  const { t } = useTranslation();
   const navigation = useNavigation<Nav>();
   const { isSignedIn } = useAuth();
   const { items, loadWishlist, removeItem } = useCustomerWishlistStore(
@@ -27,7 +29,7 @@ export function WishlistScreen() {
       <View className="flex-1 items-center justify-center bg-background px-8">
         <Feather name="heart" size={32} color="#ada291" />
         <Text className="mt-3 text-center text-base text-muted-foreground">
-          Sign in to view your saved items.
+          {t("wishlist.signedOut")}
         </Text>
       </View>
     );
@@ -38,7 +40,7 @@ export function WishlistScreen() {
       <View className="flex-1 items-center justify-center bg-background px-8">
         <Feather name="heart" size={32} color="#ada291" />
         <Text className="mt-3 text-center text-base text-muted-foreground">
-          Your wishlist is empty.
+          {t("wishlist.empty")}
         </Text>
       </View>
     );

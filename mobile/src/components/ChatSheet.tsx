@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 
 import type { ChatMessage } from "@/features/customer/grocery-list/types";
 import {
@@ -68,6 +69,7 @@ function Bubble({ message }: { message: ChatMessage }) {
 // the customer never leaves the page. Flex-based layout keeps the composer
 // above the keyboard on both platforms.
 export function ChatSheet({ open, listId, code, onClose }: ChatSheetProps) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -124,7 +126,7 @@ export function ChatSheet({ open, listId, code, onClose }: ChatSheetProps) {
       setMessages((prev) => prev.filter((m) => m._id !== optimistic._id));
       setText(body);
       toast.error(
-        error instanceof Error ? error.message : "Couldn't send message",
+        error instanceof Error ? error.message : t("chat.sendFailed"),
       );
     } finally {
       setSending(false);
@@ -166,10 +168,10 @@ export function ChatSheet({ open, listId, code, onClose }: ChatSheetProps) {
           </View>
           <View className="flex-1">
             <Text className="text-base font-semibold text-foreground">
-              Message the shop
+              {t("lists.messageShop")}
             </Text>
             <Text className="text-xs text-muted-foreground">
-              About order #{code}
+              {t("chat.aboutOrder", { code })}
             </Text>
           </View>
           <Pressable
@@ -207,8 +209,7 @@ export function ChatSheet({ open, listId, code, onClose }: ChatSheetProps) {
               <View className="flex-1 items-center justify-center gap-3 py-12">
                 <Feather name="message-circle" size={38} color="#ada291" />
                 <Text className="px-8 text-center text-sm text-muted-foreground">
-                  Ask about your order, quantities, packing or the price — the
-                  shop will reply here.
+                  {t("chat.empty")}
                 </Text>
               </View>
             }
@@ -224,7 +225,7 @@ export function ChatSheet({ open, listId, code, onClose }: ChatSheetProps) {
           <TextInput
             value={text}
             onChangeText={setText}
-            placeholder="Type a message…"
+            placeholder={t("chat.placeholder")}
             placeholderTextColor="#ada291"
             multiline
             className="max-h-28 flex-1 rounded-2xl border border-border bg-card px-4 py-2.5 text-base text-foreground"

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Modal, Pressable, Text, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 
 import {
   buildQuantityString,
@@ -28,6 +29,7 @@ export function QuantitySheet({
   unitValue,
   onConfirm,
 }: QuantitySheetProps) {
+  const { t } = useTranslation();
   const [value, setValue] = useState(defaultQuantityValue(unit, unitValue));
 
   // Reset to the sensible default each time it opens.
@@ -66,7 +68,7 @@ export function QuantitySheet({
               </Text>
               {packLabel ? (
                 <Text className="mt-0.5 text-xs text-muted-foreground">
-                  Sold per {packLabel}
+                  {t("shop.soldPer", { pack: packLabel })}
                 </Text>
               ) : null}
             </View>
@@ -80,7 +82,7 @@ export function QuantitySheet({
           </View>
 
           <Text className="text-sm font-medium text-foreground">
-            How much do you want?
+            {t("shop.howMuch")}
           </Text>
 
           <QuantityControl
@@ -91,7 +93,7 @@ export function QuantitySheet({
           />
 
           <Button
-            label="Add to list"
+            label={t("shop.addToList")}
             icon={<Feather name="plus" size={16} color="#ffffff" />}
             onPress={() => {
               onConfirm(buildQuantityString(unit, unitValue, value));

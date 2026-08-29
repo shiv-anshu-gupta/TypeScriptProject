@@ -68,13 +68,13 @@ function LanguageToggle() {
 
 const formFields: {
   key: keyof Omit<CustomerAddressFormValues, "isDefault">;
-  label: string;
+  labelKey: string;
   placeholder: string;
 }[] = [
-  { key: "fullName", label: "Full name", placeholder: "Jane Doe" },
-  { key: "address", label: "Address", placeholder: "12 Market Street" },
-  { key: "state", label: "State", placeholder: "Maharashtra" },
-  { key: "postalCode", label: "Postal code", placeholder: "400001" },
+  { key: "fullName", labelKey: "account.fullName", placeholder: "Jane Doe" },
+  { key: "address", labelKey: "account.address", placeholder: "12 Market Street" },
+  { key: "state", labelKey: "account.state", placeholder: "Maharashtra" },
+  { key: "postalCode", labelKey: "account.postalCode", placeholder: "400001" },
 ];
 
 function LinkRow({
@@ -101,6 +101,7 @@ function LinkRow({
 }
 
 export function AccountScreen() {
+  const { t } = useTranslation();
   const navigation = useNavigation<Nav>();
   const insets = useSafeAreaInsets();
   const { isSignedIn, signOut } = useAuth();
@@ -131,15 +132,15 @@ export function AccountScreen() {
       >
         <Feather name="user" size={36} color="#ada291" />
         <Text className="text-center text-base text-muted-foreground">
-          Sign in to manage your account, orders and addresses.
+          {t("account.signedOutPrompt")}
         </Text>
         <View className="w-full gap-2">
           <Button
-            label="Sign in"
+            label={t("common.signIn")}
             onPress={() => navigation.navigate("SignIn")}
           />
           <Button
-            label="Create account"
+            label={t("account.createAccount")}
             variant="outline"
             onPress={() => navigation.navigate("SignUp")}
           />
@@ -153,7 +154,7 @@ export function AccountScreen() {
           className="text-xs text-muted-foreground underline"
           onPress={() => navigation.navigate("Legal")}
         >
-          Privacy Policy & Terms
+          {t("auth.privacyTerms")}
         </Text>
       </View>
     );
@@ -177,7 +178,7 @@ export function AccountScreen() {
         </View>
         <View>
           <Text className="text-lg font-semibold text-foreground">
-            {user?.fullName ?? "Customer"}
+            {user?.fullName ?? t("account.customer")}
           </Text>
           <Text className="text-sm text-muted-foreground">
             {user?.primaryEmailAddress?.emailAddress ?? ""}
@@ -192,12 +193,12 @@ export function AccountScreen() {
       <View className="mb-4">
         <LinkRow
           icon="heart"
-          label="Saved products"
+          label={t("account.savedProducts")}
           onPress={() => navigation.navigate("Wishlist")}
         />
         <LinkRow
           icon="shield"
-          label="Privacy & Terms"
+          label={t("account.privacyTerms")}
           onPress={() => navigation.navigate("Legal")}
         />
       </View>
@@ -206,7 +207,7 @@ export function AccountScreen() {
       <View className="mb-4">
         <View className="mb-2 flex-row items-center justify-between">
           <Text className="text-lg font-semibold text-foreground">
-            Addresses
+            {t("account.addresses")}
           </Text>
           {mode === "none" ? (
             <Pressable
@@ -214,7 +215,9 @@ export function AccountScreen() {
               className="flex-row items-center gap-1"
             >
               <Feather name="plus" size={16} color="#1f2a2e" />
-              <Text className="text-sm font-semibold text-foreground">Add</Text>
+              <Text className="text-sm font-semibold text-foreground">
+                {t("account.add")}
+              </Text>
             </Pressable>
           ) : null}
         </View>
@@ -224,7 +227,7 @@ export function AccountScreen() {
             {formFields.map((field) => (
               <View key={field.key} className="gap-1">
                 <Text className="text-xs font-medium text-muted-foreground">
-                  {field.label}
+                  {t(field.labelKey)}
                 </Text>
                 <TextInput
                   value={form[field.key]}
@@ -237,7 +240,7 @@ export function AccountScreen() {
             ))}
             <View className="flex-row items-center justify-between">
               <Text className="text-sm text-foreground">
-                Set as default address
+                {t("account.setDefault")}
               </Text>
               <Switch
                 value={form.isDefault}
@@ -247,19 +250,19 @@ export function AccountScreen() {
             <View className="flex-row gap-2">
               <View className="flex-1">
                 <Button
-                  label="Cancel"
+                  label={t("common.cancel")}
                   variant="outline"
                   onPress={cancelForm}
                 />
               </View>
               <View className="flex-1">
-                <Button label="Save" onPress={() => void saveForm()} />
+                <Button label={t("common.save")} onPress={() => void saveForm()} />
               </View>
             </View>
           </View>
         ) : items.length === 0 ? (
           <Text className="text-sm text-muted-foreground">
-            No addresses saved yet.
+            {t("account.noAddresses")}
           </Text>
         ) : (
           <View className="gap-2">
@@ -274,7 +277,7 @@ export function AccountScreen() {
                   </Text>
                   {address.isDefault ? (
                     <Text className="text-xs font-semibold text-foreground">
-                      Default
+                      {t("account.default")}
                     </Text>
                   ) : null}
                 </View>
@@ -287,14 +290,18 @@ export function AccountScreen() {
                     className="flex-row items-center gap-1"
                   >
                     <Feather name="edit-2" size={14} color="#1f2a2e" />
-                    <Text className="text-sm text-foreground">Edit</Text>
+                    <Text className="text-sm text-foreground">
+                      {t("account.edit")}
+                    </Text>
                   </Pressable>
                   <Pressable
                     onPress={() => void removeAddress(address._id)}
                     className="flex-row items-center gap-1"
                   >
                     <Feather name="trash-2" size={14} color="#c0492f" />
-                    <Text className="text-sm text-destructive">Delete</Text>
+                    <Text className="text-sm text-destructive">
+                      {t("common.delete")}
+                    </Text>
                   </Pressable>
                 </View>
               </View>
@@ -304,7 +311,7 @@ export function AccountScreen() {
       </View>
 
       <Button
-        label="Sign out"
+        label={t("account.signOut")}
         variant="outline"
         onPress={() => void signOut()}
       />

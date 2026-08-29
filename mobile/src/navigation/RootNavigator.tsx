@@ -1,4 +1,5 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { useTranslation } from "react-i18next";
 import type { RootStackParamList } from "./types";
 import { TabNavigator } from "./TabNavigator";
 import { ProductDetailsScreen } from "@/screens/ProductDetailsScreen";
@@ -10,6 +11,7 @@ import { LegalScreen } from "@/screens/LegalScreen";
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export function RootNavigator() {
+  const { t } = useTranslation();
   return (
     <Stack.Navigator
       screenOptions={{
@@ -34,22 +36,22 @@ export function RootNavigator() {
       <Stack.Screen
         name="Wishlist"
         component={WishlistScreen}
-        options={{ title: "Saved products" }}
+        options={{ title: t("account.savedProducts") }}
       />
       <Stack.Screen
         name="SignIn"
         component={SignInScreen}
-        options={{ title: "Sign in", presentation: "modal" }}
+        options={{ title: t("common.signIn"), presentation: "modal" }}
       />
       <Stack.Screen
         name="SignUp"
         component={SignUpScreen}
-        options={{ title: "Create account", presentation: "modal" }}
+        options={{ title: t("account.createAccount"), presentation: "modal" }}
       />
       <Stack.Screen
         name="Legal"
         component={LegalScreen}
-        options={{ title: "Privacy & Terms" }}
+        options={{ title: t("account.privacyTerms") }}
       />
     </Stack.Navigator>
   );

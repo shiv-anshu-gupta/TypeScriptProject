@@ -3,6 +3,7 @@ import { KeyboardAvoidingView, Platform, Text, TextInput, View } from "react-nat
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useSignUp } from "@clerk/clerk-expo";
+import { useTranslation } from "react-i18next";
 
 import type { RootStackParamList } from "@/navigation/types";
 
@@ -12,6 +13,7 @@ import { toast } from "@/lib/toast";
 import { getClerkErrorMessage } from "@/lib/clerk-error";
 
 export function SignUpScreen() {
+  const { t } = useTranslation();
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { signUp, setActive, isLoaded } = useSignUp();
@@ -29,9 +31,9 @@ export function SignUpScreen() {
       await signUp.create({ emailAddress: email.trim(), password });
       await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
       setPendingVerification(true);
-      toast.success("We sent a verification code to your email");
+      toast.success(t("auth.codeSent"));
     } catch (error) {
-      toast.error(getClerkErrorMessage(error, "Unable to sign up"));
+      toast.error(getClerkErrorMessage(error, t("auth.signUpFailed")));
     } finally {
       setSubmitting(false);
     }
@@ -46,10 +48,10 @@ export function SignUpScreen() {
         await setActive({ session: attempt.createdSessionId });
         navigation.goBack();
       } else {
-        toast.error("Invalid code, please try again");
+        toast.error(t("auth.invalidCode"));
       }
     } catch (error) {
-      toast.error(getClerkErrorMessage(error, "Verification failed"));
+      toast.error(getClerkErrorMessage(error, t("auth.verifyFailed")));
     } finally {
       setSubmitting(false);
     }
@@ -65,10 +67,10 @@ export function SignUpScreen() {
           <>
             <View className="mb-2">
               <Text className="text-3xl font-semibold text-foreground">
-                Verify email
+                {t("auth.verifyTitle")}
               </Text>
               <Text className="mt-1 text-sm text-muted-foreground">
-                Enter the code we sent to {email}.
+                {t("auth.verifySubtitle", { email })}
               </Text>
             </View>
             <TextInput
@@ -80,7 +82,7 @@ export function SignUpScreen() {
               className="h-12 rounded-xl border border-border bg-card px-3 text-center text-lg tracking-[6px] text-foreground"
             />
             <Button
-              label="Verify & continue"
+              label={t("auth.verifyContinue")}
               loading={submitting}
               onPress={onVerify}
               className="mt-2"
@@ -90,10 +92,10 @@ export function SignUpScreen() {
           <>
             <View className="mb-3">
               <Text className="text-3xl font-semibold text-foreground">
-                Create account
+                {t("auth.createTitle")}
               </Text>
               <Text className="mt-1 text-sm text-muted-foreground">
-                The fastest way — one tap with Google.
+                {t("auth.createSubtitle")}
               </Text>
             </View>
 
@@ -102,27 +104,27 @@ export function SignUpScreen() {
 
             {/* Passive consent — covers both Google and email sign-up */}
             <Text className="text-center text-xs leading-5 text-muted-foreground">
-              By continuing, you agree to our{" "}
+              {t("auth.consentPrefix")}{" "}
               <Text
                 className="font-semibold text-foreground underline"
                 onPress={() => navigation.navigate("Legal")}
               >
-                Privacy Policy &amp; Terms
+                {t("auth.privacyTerms")}
               </Text>
-              .
+              {t("auth.consentSuffix")}
             </Text>
 
             <View className="my-2 flex-row items-center gap-3">
               <View className="h-px flex-1 bg-border" />
               <Text className="text-xs text-muted-foreground">
-                or sign up with email
+                {t("auth.orEmailSignUp")}
               </Text>
               <View className="h-px flex-1 bg-border" />
             </View>
 
             <View className="gap-1">
               <Text className="text-xs font-medium text-muted-foreground">
-                Email
+                {t("auth.email")}
               </Text>
               <TextInput
                 value={email}
@@ -137,27 +139,27 @@ export function SignUpScreen() {
 
             <View className="gap-1">
               <Text className="text-xs font-medium text-muted-foreground">
-                Password
+                {t("auth.password")}
               </Text>
               <TextInput
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
-                placeholder="At least 8 characters"
+                placeholder={t("auth.passwordHint")}
                 placeholderTextColor="#ada291"
                 className="h-12 rounded-xl border border-border bg-card px-3 text-foreground"
               />
             </View>
 
             <Button
-              label="Sign up with email"
+              label={t("auth.signUpEmail")}
               variant="outline"
               loading={submitting}
               onPress={onSignUp}
             />
 
             <Button
-              label="I already have an account"
+              label={t("auth.haveAccount")}
               variant="ghost"
               onPress={() => navigation.goBack()}
             />

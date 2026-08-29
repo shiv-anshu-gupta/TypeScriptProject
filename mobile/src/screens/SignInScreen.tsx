@@ -2,6 +2,7 @@ import { useState } from "react";
 import { KeyboardAvoidingView, Platform, Text, TextInput, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useSignIn } from "@clerk/clerk-expo";
+import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/Button";
 import { GoogleAuthButton } from "@/components/GoogleAuthButton";
@@ -9,6 +10,7 @@ import { toast } from "@/lib/toast";
 import { getClerkErrorMessage } from "@/lib/clerk-error";
 
 export function SignInScreen() {
+  const { t } = useTranslation();
   const navigation = useNavigation();
   const { signIn, setActive, isLoaded } = useSignIn();
 
@@ -25,10 +27,10 @@ export function SignInScreen() {
         await setActive({ session: attempt.createdSessionId });
         navigation.goBack();
       } else {
-        toast.error("Additional verification required");
+        toast.error(t("auth.moreVerification"));
       }
     } catch (error) {
-      toast.error(getClerkErrorMessage(error, "Unable to sign in"));
+      toast.error(getClerkErrorMessage(error, t("auth.signInFailed")));
     } finally {
       setSubmitting(false);
     }
@@ -42,10 +44,10 @@ export function SignInScreen() {
       <View className="flex-1 justify-center gap-4 px-6">
         <View className="mb-3">
           <Text className="text-3xl font-semibold text-foreground">
-            Welcome back
+            {t("auth.welcomeBack")}
           </Text>
           <Text className="mt-1 text-sm text-muted-foreground">
-            Sign in with one tap using Google.
+            {t("auth.signInSubtitle")}
           </Text>
         </View>
 
@@ -55,14 +57,14 @@ export function SignInScreen() {
         <View className="my-2 flex-row items-center gap-3">
           <View className="h-px flex-1 bg-border" />
           <Text className="text-xs text-muted-foreground">
-            or sign in with email
+            {t("auth.orEmail")}
           </Text>
           <View className="h-px flex-1 bg-border" />
         </View>
 
         <View className="gap-1">
           <Text className="text-xs font-medium text-muted-foreground">
-            Email
+            {t("auth.email")}
           </Text>
           <TextInput
             value={email}
@@ -77,7 +79,7 @@ export function SignInScreen() {
 
         <View className="gap-1">
           <Text className="text-xs font-medium text-muted-foreground">
-            Password
+            {t("auth.password")}
           </Text>
           <TextInput
             value={password}
@@ -90,14 +92,14 @@ export function SignInScreen() {
         </View>
 
         <Button
-          label="Sign in with email"
+          label={t("auth.signInEmail")}
           variant="outline"
           loading={submitting}
           onPress={onSubmit}
         />
 
         <Button
-          label="Create an account"
+          label={t("auth.createAccount")}
           variant="ghost"
           onPress={() => navigation.navigate("SignUp" as never)}
         />

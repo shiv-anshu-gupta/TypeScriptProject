@@ -3,6 +3,7 @@ import { ActivityIndicator, Image, Pressable, Text } from "react-native";
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
 import { useSSO } from "@clerk/clerk-expo";
+import { useTranslation } from "react-i18next";
 
 import { useWarmUpBrowser } from "@/lib/use-warm-up-browser";
 import { toast } from "@/lib/toast";
@@ -18,6 +19,7 @@ type GoogleAuthButtonProps = {
 };
 
 export function GoogleAuthButton({ onDone }: GoogleAuthButtonProps) {
+  const { t } = useTranslation();
   useWarmUpBrowser();
   const { startSSOFlow } = useSSO();
   const [loading, setLoading] = useState(false);
@@ -36,10 +38,10 @@ export function GoogleAuthButton({ onDone }: GoogleAuthButtonProps) {
         onDone();
       } else {
         // Additional steps (e.g. MFA) are not handled in this demo flow.
-        toast.error("Additional verification required");
+        toast.error(t("auth.moreVerification"));
       }
     } catch (error) {
-      toast.error(getClerkErrorMessage(error, "Google sign-in failed"));
+      toast.error(getClerkErrorMessage(error, t("auth.googleFailed")));
     } finally {
       setLoading(false);
     }
@@ -65,7 +67,7 @@ export function GoogleAuthButton({ onDone }: GoogleAuthButtonProps) {
         <>
           <Image source={googleG} style={{ width: 22, height: 22 }} />
           <Text className="text-base font-bold text-foreground">
-            Continue with Google
+            {t("auth.continueGoogle")}
           </Text>
         </>
       )}

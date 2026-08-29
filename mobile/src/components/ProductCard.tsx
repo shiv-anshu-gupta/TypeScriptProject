@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { Image } from "expo-image";
 import { Feather } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 
 import { useDraftListStore } from "@/features/customer/draft-list/store";
 import { toast } from "@/lib/toast";
@@ -23,6 +24,7 @@ type ProductCardProps = {
 };
 
 export function ProductCard({ product, onPress }: ProductCardProps) {
+  const { t } = useTranslation();
   const addProductWithQuantity = useDraftListStore(
     (state) => state.addProductWithQuantity,
   );
@@ -72,7 +74,7 @@ export function ProductCard({ product, onPress }: ProductCardProps) {
         unitValue={product.unitValue}
         onConfirm={(quantity) => {
           addProductWithQuantity(product.title, quantity);
-          toast.success("Added — send it from the Lists tab");
+          toast.success(t("product.added"));
         }}
       />
 
@@ -85,7 +87,7 @@ export function ProductCard({ product, onPress }: ProductCardProps) {
         </Text>
         {packLabel ? (
           <Text className="mt-1 text-xs text-muted-foreground">
-            per {packLabel}
+            {t("shop.perPack", { pack: packLabel })}
           </Text>
         ) : null}
       </View>
