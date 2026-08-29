@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/Button";
 
@@ -39,6 +40,7 @@ export function PhonePrompt({
   onClose,
   onSubmit,
 }: PhonePromptProps) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [value, setValue] = useState("");
   const [touched, setTouched] = useState(false);
@@ -98,10 +100,7 @@ export function PhonePrompt({
           <View className="flex-row items-start justify-between gap-3">
             <View className="flex-1">
               <Text className="text-lg font-semibold text-foreground">
-                अपना मोबाइल नंबर डालें
-              </Text>
-              <Text className="mt-0.5 text-sm text-muted-foreground">
-                Enter your mobile number
+                {t("phone.title")}
               </Text>
             </View>
             <Pressable
@@ -125,7 +124,7 @@ export function PhonePrompt({
               keyboardType="phone-pad"
               maxLength={14}
               autoFocus
-              placeholder="10-digit number"
+              placeholder={t("phone.placeholder")}
               placeholderTextColor="#ada291"
               className="h-12 flex-1 text-base text-foreground"
             />
@@ -136,7 +135,7 @@ export function PhonePrompt({
 
           {touched && value.length > 0 && !valid ? (
             <Text className="text-xs text-destructive">
-              सही 10 अंकों का नंबर डालें · Enter a valid 10-digit number
+              {t("phone.invalid")}
             </Text>
           ) : null}
 
@@ -144,14 +143,12 @@ export function PhonePrompt({
           <View className="flex-row items-start gap-2 rounded-xl bg-secondary p-3">
             <Feather name="shield" size={15} color="#6f6857" />
             <Text className="flex-1 text-xs leading-5 text-muted-foreground">
-              ये नंबर हम सिर्फ़ ज़रूरत पड़ने पर आपको कॉल करने के लिए ले रहे हैं।
-              {"\n"}
-              We'll only use this to call you about your order if needed.
+              {t("phone.trust")}
             </Text>
           </View>
 
           <Button
-            label="Save & send list"
+            label={t("phone.save")}
             loading={submitting}
             disabled={!valid}
             onPress={() => onSubmit(normalize(value))}

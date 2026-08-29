@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { AppState, Modal, Pressable, Text, View } from "react-native";
 import * as Updates from "expo-updates";
+import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/Button";
 
@@ -14,6 +15,7 @@ import { Button } from "@/components/ui/Button";
 // update is picked up without a full cold start. No-op in Expo Go / dev
 // (Updates.isEnabled is false there).
 export function UpdatePrompt() {
+  const { t } = useTranslation();
   const { isUpdatePending } = Updates.useUpdates();
   const [dismissed, setDismissed] = useState(false);
 
@@ -49,14 +51,13 @@ export function UpdatePrompt() {
       <View className="flex-1 items-center justify-center bg-black/50 px-8">
         <View className="w-full gap-3 rounded-2xl border border-border bg-background p-5">
           <Text className="text-lg font-semibold text-foreground">
-            नया अपडेट तैयार है ✨
+            {t("update.title")}
           </Text>
           <Text className="text-sm leading-5 text-muted-foreground">
-            ऐप का नया वर्शन आ गया है। अभी अपडेट करें।{"\n"}
-            A new version is ready — update now to get the latest.
+            {t("update.body")}
           </Text>
           <Button
-            label="अभी अपडेट करें · Update now"
+            label={t("common.updateNow")}
             onPress={() => void Updates.reloadAsync()}
           />
           <Pressable
@@ -64,7 +65,7 @@ export function UpdatePrompt() {
             className="items-center py-1"
           >
             <Text className="text-sm font-medium text-muted-foreground">
-              बाद में · Later
+              {t("common.later")}
             </Text>
           </Pressable>
         </View>

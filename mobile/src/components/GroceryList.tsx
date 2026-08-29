@@ -1,5 +1,6 @@
 import { TextInput, View, Text } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 
 import { useDraftListStore } from "@/features/customer/draft-list/store";
 import { useSendDraft } from "@/features/customer/draft-list/use-send-draft";
@@ -7,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { PhonePrompt } from "@/components/PhonePrompt";
 
 export function GroceryList() {
+  const { t } = useTranslation();
   // The paper is a view over the shared draft — the same draft that
   // "Add to list" on catalog products writes into.
   const rows = useDraftListStore((state) => state.rows);
@@ -45,11 +47,11 @@ export function GroceryList() {
             </Text>
             <View className="ml-2 h-6 w-px bg-[#d9a89b]" />
             <Text style={{ flex: 3 }} className="px-3 text-xs font-bold uppercase tracking-widest text-[#3c5a64]">
-              Item
+              {t("home.item")}
             </Text>
             <View className="h-6 w-px bg-[#c9d9ea]/50" />
             <Text style={{ flex: 1 }} className="px-3 text-center text-xs font-bold uppercase tracking-widest text-[#3c5a64]">
-              Qty
+              {t("home.qty")}
             </Text>
           </View>
           {rows.map((row, index) => (
@@ -95,8 +97,8 @@ export function GroceryList() {
         <Button
           label={
             filledRows.length
-              ? `Send ${filledRows.length} item${filledRows.length > 1 ? "s" : ""} to shop`
-              : "Send list to shop"
+              ? t("home.sendItems", { count: filledRows.length })
+              : t("home.sendList")
           }
           size="lg"
           loading={submitting}
@@ -111,7 +113,7 @@ export function GroceryList() {
           textClassName="font-bold tracking-wide"
         />
         <Text className="text-center text-xs font-medium text-muted-foreground">
-          The shop will price your list and send it back
+          {t("home.priceNote")}
         </Text>
       </View>
 

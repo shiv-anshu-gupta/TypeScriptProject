@@ -3,6 +3,7 @@ import { Animated } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 import type { TabParamList } from "./types";
 import { HomeScreen } from "@/screens/HomeScreen";
 import { ShopScreen } from "@/screens/ShopScreen";
@@ -74,6 +75,7 @@ function PulsingIcon({
 }
 
 export function TabNavigator() {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const unseenLists = useCustomerGroceryListStore(
     (state) => state.unseenCount,
@@ -92,6 +94,7 @@ export function TabNavigator() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
+        tabBarLabel: t(`tabs.${route.name.toLowerCase()}`),
         tabBarActiveTintColor: "#3c5a64",
         tabBarInactiveTintColor: "#ada291",
         // Reserve the bottom safe-area inset so the bar stays above the

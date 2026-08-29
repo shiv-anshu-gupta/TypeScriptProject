@@ -16,6 +16,8 @@ import { RootNavigator } from "@/navigation/RootNavigator";
 import { Toaster } from "@/components/Toaster";
 import { UpdatePrompt } from "@/components/UpdatePrompt";
 import { SplashScreen } from "@/screens/SplashScreen";
+import { LanguagePicker } from "@/screens/LanguagePicker";
+import i18n, { getStoredLanguage } from "@/lib/i18n";
 
 function Bootstrap() {
   useBootstrapAuth();
@@ -45,6 +47,17 @@ function Bootstrap() {
 export default function App() {
   const [isSplashVisible, setIsSplashVisible] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(0);
+  // Language gate: apply the saved language, or show the picker on first launch.
+  const [languageChecked, setLanguageChecked] = useState(false);
+  const [showLanguagePicker, setShowLanguagePicker] = useState(false);
+
+  useEffect(() => {
+    void getStoredLanguage().then((lang) => {
+      if (lang) void i18n.changeLanguage(lang);
+      else setShowLanguagePicker(true);
+      setLanguageChecked(true);
+    });
+  }, []);
 
   useEffect(() => {
     if (!isSplashVisible) return;
@@ -64,6 +77,14 @@ export default function App() {
 
     return () => clearInterval(interval);
   }, [isSplashVisible]);
+
+  if (!languageChecked) {
+    return <SplashScreen progress={loadingProgress} />;
+  }
+
+  if (showLanguagePicker) {
+    return <LanguagePicker onSelect={() => setShowLanguagePicker(false)} />;
+  }
 
   if (isSplashVisible) {
     return <SplashScreen progress={loadingProgress} />;

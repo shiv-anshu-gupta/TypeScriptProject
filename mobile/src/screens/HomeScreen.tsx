@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 
 import type { RootStackParamList } from "@/navigation/types";
 import { useCustomerHomeStore } from "@/features/customer/home/store";
@@ -20,6 +21,7 @@ import { GroceryList } from "@/components/GroceryList";
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 export function HomeScreen() {
+  const { t } = useTranslation();
   const navigation = useNavigation<Nav>();
   const insets = useSafeAreaInsets();
   const { data, loading, loadHome } = useCustomerHomeStore((state) => state);
@@ -55,7 +57,7 @@ export function HomeScreen() {
               sKirana
             </Text>
             <Text className="text-[11px] text-muted-foreground">
-              Your local shop, on your phone
+              {t("home.tagline")}
             </Text>
           </View>
         </View>
@@ -78,7 +80,7 @@ export function HomeScreen() {
       {data.categories.length ? (
         <View className="mt-8 px-4">
           <Text className="mb-3 text-lg font-semibold text-foreground">
-            Browse by collection
+            {t("home.browse")}
           </Text>
           <View className="flex-row flex-wrap">
             {data.categories.slice(0, 8).map((category) => (
@@ -121,13 +123,13 @@ export function HomeScreen() {
       {data.recentProducts.length ? (
         <View className="mb-3 mt-8 flex-row items-center justify-between px-4">
           <Text className="text-lg font-semibold text-foreground">
-            New arrivals
+            {t("home.newArrivals")}
           </Text>
           <Pressable
             onPress={() => navigation.navigate("Tabs", { screen: "Shop" })}
           >
             <Text className="text-sm font-semibold text-foreground">
-              View all
+              {t("home.viewAll")}
             </Text>
           </Pressable>
         </View>

@@ -13,6 +13,7 @@ import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useAuth } from "@clerk/clerk-expo";
+import { useTranslation } from "react-i18next";
 
 import type { RootStackParamList } from "@/navigation/types";
 import { useCustomerGroceryListStore } from "@/features/customer/grocery-list/store";
@@ -36,13 +37,14 @@ type Nav = NativeStackNavigationProp<RootStackParamList>;
 const BUSY_AFTER_MIN = 30;
 
 // The customer-facing journey. "Priced" is its own visible step so the
-// customer sees the quote arrive — its label carries the total.
-const TIMELINE: { key: GroceryListStatus; label: string }[] = [
-  { key: "received", label: "Received item list" },
-  { key: "priced", label: "Priced by shop" },
-  { key: "packing", label: "Packing" },
-  { key: "packed", label: "Packed" },
-  { key: "ready", label: "Come to receive" },
+// customer sees the quote arrive — its label carries the total. Labels are
+// translated at render via lists.timeline.<key>.
+const TIMELINE_KEYS: GroceryListStatus[] = [
+  "received",
+  "priced",
+  "packing",
+  "packed",
+  "ready",
 ];
 
 const STEP_INDEX: Record<GroceryListStatus, number> = {
@@ -56,6 +58,7 @@ const STEP_INDEX: Record<GroceryListStatus, number> = {
 };
 
 function StatusTimeline({ list }: { list: CustomerGroceryList }) {
+  const { t } = useTranslation();
   const status = list.status;
   const current = STEP_INDEX[status] ?? 0;
 
@@ -63,7 +66,7 @@ function StatusTimeline({ list }: { list: CustomerGroceryList }) {
     return (
       <Badge className="border-0 bg-destructive">
         <Text className="text-xs font-medium text-destructive-foreground">
-          Cancelled
+          {t("lists.cancelled")}
         </Text>
       </Badge>
     );
@@ -71,16 +74,17 @@ function StatusTimeline({ list }: { list: CustomerGroceryList }) {
 
   return (
     <View className="gap-2">
-      {TIMELINE.map((step, index) => {
+      {TIMELINE_KEYS.map((key, index) => {
         const done = index <= current;
+        const base = t(`lists.timeline.${key}`);
         // The "Priced" step shows the quoted total right on the timeline.
         const label =
-          step.key === "priced" && list.totalAmount > 0
-            ? `Priced by shop — ${formatPrice(list.totalAmount)}`
-            : step.label;
+          key === "priced" && list.totalAmount > 0
+            ? `${base} — ${formatPrice(list.totalAmount)}`
+            : base;
 
         return (
-          <View key={step.key} className="flex-row items-center gap-3">
+          <View key={key} className="flex-row items-center gap-3">
             <View
               className={
                 done
@@ -111,6 +115,7 @@ function StatusTimeline({ list }: { list: CustomerGroceryList }) {
 }
 
 function ListCard({ list }: { list: CustomerGroceryList }) {
+  const { t } = useTranslation();
   const [chatOpen, setChatOpen] = useState(false);
   const { markSeen, payAtShop, payViaUpi, payingListId, removeItem } =
     useCustomerGroceryListStore((state) => state);
@@ -134,10 +139,10 @@ function ListCard({ list }: { list: CustomerGroceryList }) {
     list.items.length > 1;
 
   const confirmRemove = (index: number, name: string) => {
-    Alert.alert("Remove item", `Remove "${name}" from this list?`, [
-      { text: "Cancel", style: "cancel" },
+    Alert.alert(t("lists.removeTitle"), t("lists.removeConfirm", { name }), [
+      { text: t("common.cancel"), style: "cancel" },
       {
-        text: "Remove",
+        text: t("common.remove"),
         style: "destructive",
         onPress: () => void removeItem(list._id, index),
       },
@@ -155,16 +160,16 @@ function ListCard({ list }: { list: CustomerGroceryList }) {
       <View className="flex-row items-start justify-between">
         <View>
           <Text className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            List #{list.code}
+            {t("lists.listNo", { code: list.code })}
           </Text>
           <Text className="mt-0.5 text-xs text-muted-foreground">
-            {list.totalItems} item{list.totalItems > 1 ? "s" : ""}
+            {t("lists.itemsCount", { count: list.totalItems })}
           </Text>
         </View>
         {!list.seenByCustomer ? (
           <Badge className="border-0 bg-primary">
             <Text className="text-xs font-medium text-primary-foreground">
-              New update
+              {t("lists.newUpdate")}
             </Text>
           </Badge>
         ) : null}
@@ -195,7 +200,7 @@ function ListCard({ list }: { list: CustomerGroceryList }) {
                 className="ml-3 rounded-md border border-destructive/40 px-2 py-0.5"
               >
                 <Text className="text-xs font-semibold text-destructive">
-                  Delete
+                  {t("common.delete")}
                 </Text>
               </Pressable>
             ) : null}
@@ -207,7 +212,7 @@ function ListCard({ list }: { list: CustomerGroceryList }) {
         <View className="gap-1.5">
           <View className="flex-row items-center justify-between rounded-xl bg-secondary px-4 py-3">
             <Text className="text-base font-semibold text-foreground">
-              Total
+              {t("lists.total")}
             </Text>
             <Text className="text-xl font-bold text-foreground">
               {formatPrice(list.totalAmount)}
@@ -215,7 +220,7 @@ function ListCard({ list }: { list: CustomerGroceryList }) {
           </View>
           {/* Passive legal note — an estimate; final bill is at the counter */}
           <Text className="text-center text-[11px] text-muted-foreground">
-            Estimated total — your final bill is issued at the shop counter.
+            {t("lists.estimate")}
           </Text>
         </View>
       ) : (
@@ -227,9 +232,7 @@ function ListCard({ list }: { list: CustomerGroceryList }) {
           }
         >
           <Text className="text-xs leading-5 text-muted-foreground">
-            {shopBusy
-              ? "🙏 दुकान अभी थोड़ी व्यस्त है — आपकी लिस्ट मिल गई है, हम जल्द ही दाम भेज देंगे।\nThe shop is a bit busy right now — your list is received, we'll price it very soon."
-              : "Waiting for the shop to price your list."}
+            {shopBusy ? t("lists.busy") : t("lists.waiting")}
           </Text>
         </View>
       )}
@@ -243,7 +246,7 @@ function ListCard({ list }: { list: CustomerGroceryList }) {
       >
         <Feather name="message-circle" size={16} color="#3c5a64" />
         <Text className="text-sm font-semibold text-foreground">
-          Message the shop
+          {t("lists.messageShop")}
         </Text>
       </Pressable>
 
@@ -252,24 +255,26 @@ function ListCard({ list }: { list: CustomerGroceryList }) {
         isPaid ? (
           <Badge className="border-0 bg-success">
             <Text className="text-xs font-medium text-primary-foreground">
-              Payment received
+              {t("lists.paymentReceived")}
             </Text>
           </Badge>
         ) : (
           <View className="gap-2">
             <Button
-              label={`Pay ${formatPrice(list.totalAmount)} via UPI`}
+              label={t("lists.payUpi", {
+                amount: formatPrice(list.totalAmount),
+              })}
               loading={busy}
               onPress={() => void payViaUpi(list)}
             />
             <Button
-              label="Pay at the shop"
+              label={t("lists.payAtShop")}
               variant="outline"
               loading={busy}
               onPress={() => void payAtShop(list._id)}
             />
             <Text className="text-center text-[11px] text-muted-foreground">
-              After paying, the shop confirms once the money arrives.
+              {t("lists.payNote")}
             </Text>
           </View>
         )
@@ -289,6 +294,7 @@ function ListCard({ list }: { list: CustomerGroceryList }) {
 // "Add to list" on products). Shown here too, because after adding products
 // from the Shop this is where people naturally come to send.
 function DraftCard() {
+  const { t } = useTranslation();
   const {
     filledRows,
     submitting,
@@ -304,10 +310,12 @@ function DraftCard() {
     <View className="gap-3 rounded-2xl border border-dashed border-primary/40 bg-card p-4">
       <View className="flex-row items-center justify-between">
         <Text className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Your new list
+          {t("lists.newListLabel")}
         </Text>
         <Badge className="border-0 bg-secondary">
-          <Text className="text-xs font-medium text-foreground">Not sent</Text>
+          <Text className="text-xs font-medium text-foreground">
+            {t("lists.notSent")}
+          </Text>
         </Badge>
       </View>
 
@@ -326,12 +334,12 @@ function DraftCard() {
       </View>
 
       <Button
-        label={`Send ${filledRows.length} item${filledRows.length > 1 ? "s" : ""} to shop`}
+        label={t("home.sendItems", { count: filledRows.length })}
         loading={submitting}
         onPress={() => void send()}
       />
       <Text className="text-center text-[11px] text-muted-foreground">
-        Add more from the Shop tab, or edit it on the Home paper.
+        {t("lists.addMore")}
       </Text>
 
       <PhonePrompt
@@ -345,6 +353,7 @@ function DraftCard() {
 }
 
 export function MyListsScreen() {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Nav>();
   const { isSignedIn } = useAuth();
@@ -374,10 +383,10 @@ export function MyListsScreen() {
       >
         <MaterialCommunityIcons name="notebook" size={44} color="#ada291" />
         <Text className="text-center text-sm text-muted-foreground">
-          Sign in to see the lists you've sent to the shop.
+          {t("lists.emptySignedOut")}
         </Text>
         <Button
-          label="Sign in"
+          label={t("common.signIn")}
           onPress={() => navigation.navigate("SignIn")}
           className="w-full"
         />
@@ -411,7 +420,7 @@ export function MyListsScreen() {
       ListHeaderComponent={
         <View className="gap-3">
           <Text className="text-2xl font-semibold text-foreground">
-            My lists
+            {t("lists.title")}
           </Text>
           <DraftCard />
         </View>
@@ -421,13 +430,13 @@ export function MyListsScreen() {
           <View className="mt-16 items-center gap-4">
             <MaterialCommunityIcons name="notebook" size={44} color="#ada291" />
             <Text className="text-center text-sm text-muted-foreground">
-              You haven't sent any list yet. Write one on the home page.
+              {t("lists.emptyNoLists")}
             </Text>
             <Pressable
               onPress={() => navigation.navigate("Tabs", { screen: "Home" })}
             >
               <Text className="text-sm font-semibold text-foreground">
-                Go to home
+                {t("lists.goHome")}
               </Text>
             </Pressable>
           </View>

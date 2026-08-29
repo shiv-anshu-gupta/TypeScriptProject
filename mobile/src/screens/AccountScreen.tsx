@@ -12,13 +12,59 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { Feather } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 
 import type { RootStackParamList } from "@/navigation/types";
 import { useCustomerProfileStore } from "@/features/customer/profile/store";
 import type { CustomerAddressFormValues } from "@/features/customer/profile/types";
 import { Button } from "@/components/ui/Button";
+import { setAppLanguage, type AppLanguage } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
+
+// The language switch — used on the Account screen and offered to signed-out
+// users too, so anyone can flip हिंदी/English at any time.
+function LanguageToggle() {
+  const { t, i18n } = useTranslation();
+  const options: { code: AppLanguage; label: string }[] = [
+    { code: "hi", label: "हिंदी" },
+    { code: "en", label: "English" },
+  ];
+  return (
+    <View>
+      <Text className="mb-2 text-lg font-semibold text-foreground">
+        {t("common.language")}
+      </Text>
+      <View className="flex-row gap-2">
+        {options.map((option) => {
+          const active = i18n.language === option.code;
+          return (
+            <Pressable
+              key={option.code}
+              onPress={() => void setAppLanguage(option.code)}
+              className={cn(
+                "flex-1 items-center rounded-xl border py-3",
+                active
+                  ? "border-primary bg-primary"
+                  : "border-border bg-card",
+              )}
+            >
+              <Text
+                className={cn(
+                  "text-base font-semibold",
+                  active ? "text-primary-foreground" : "text-foreground",
+                )}
+              >
+                {option.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
 
 const formFields: {
   key: keyof Omit<CustomerAddressFormValues, "isDefault">;
@@ -98,6 +144,11 @@ export function AccountScreen() {
             onPress={() => navigation.navigate("SignUp")}
           />
         </View>
+
+        <View className="w-full">
+          <LanguageToggle />
+        </View>
+
         <Text
           className="text-xs text-muted-foreground underline"
           onPress={() => navigation.navigate("Legal")}
@@ -132,6 +183,10 @@ export function AccountScreen() {
             {user?.primaryEmailAddress?.emailAddress ?? ""}
           </Text>
         </View>
+      </View>
+
+      <View className="mb-4">
+        <LanguageToggle />
       </View>
 
       <View className="mb-4">
