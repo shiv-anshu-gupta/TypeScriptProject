@@ -1,7 +1,11 @@
 import GroceryListCard from "@/components/admin/grocery-lists/grocery-list-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { useAdminGroceryLists } from "@/features/admin/grocery-lists/use-admin-grocery-lists";
+import {
+  useAdminGroceryLists,
+  type StatusTab,
+} from "@/features/admin/grocery-lists/use-admin-grocery-lists";
+import { cn } from "@/lib/utils";
 
 const pageWrapClass = "space-y-6 p-6";
 const cardClass = "border-border bg-card shadow-sm";
@@ -28,13 +32,51 @@ function AdminGroceryLists() {
     changeStatus,
     markPaid,
     setItemAvailability,
+    statusTab,
+    setStatusTab,
+    statusCounts,
   } = useAdminGroceryLists();
+
+  const tabs: { key: StatusTab; label: string; count: number }[] = [
+    { key: "active", label: "Active", count: statusCounts.active },
+    { key: "completed", label: "Completed", count: statusCounts.completed },
+    { key: "cancelled", label: "Cancelled", count: statusCounts.cancelled },
+  ];
 
   return (
     <div className={pageWrapClass}>
       <Card className={cardClass}>
         <CardHeader className={cardHeaderClass}>
           <CardTitle className={cardTitleClass}>Grocery lists</CardTitle>
+
+          {/* Status tabs — keep cancelled / completed out of the active view */}
+          <div className="flex flex-wrap gap-2">
+            {tabs.map((tab) => (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setStatusTab(tab.key)}
+                className={cn(
+                  "rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
+                  statusTab === tab.key
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border text-muted-foreground hover:border-primary/50",
+                )}
+              >
+                {tab.label}
+                <span
+                  className={cn(
+                    "ml-1.5 rounded-full px-1.5 text-xs",
+                    statusTab === tab.key
+                      ? "bg-primary-foreground/20"
+                      : "bg-muted",
+                  )}
+                >
+                  {tab.count}
+                </span>
+              </button>
+            ))}
+          </div>
 
           {/* Money-received matcher — got a UPI payment? Type the amount to
               find the order to mark paid. */}
@@ -83,7 +125,7 @@ function AdminGroceryLists() {
           {loading ? (
             <p className={emptyStateClass}>Loading lists…</p>
           ) : !lists.length ? (
-            <p className={emptyStateClass}>No grocery lists yet.</p>
+            <p className={emptyStateClass}>No {statusTab} orders.</p>
           ) : (
             <div className={listStackClass}>
               {lists.map((list) => (

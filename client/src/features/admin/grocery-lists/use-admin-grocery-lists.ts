@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type {
   AdminGroceryList,
+  GroceryListStatus,
   UpdateGroceryListStatusBody,
 } from "./types";
 import {
@@ -15,6 +16,15 @@ import { notifyNewOrders } from "@/lib/order-alert";
 // How often to check for new customer lists while the page is open.
 const POLL_MS = 15000;
 
+// Status tabs so cancelled / completed orders don't clutter the active ones.
+export type StatusTab = "active" | "completed" | "cancelled";
+
+const STATUS_GROUPS: Record<StatusTab, GroceryListStatus[]> = {
+  active: ["received", "priced", "packing", "packed", "ready"],
+  completed: ["completed"],
+  cancelled: ["cancelled"],
+};
+
 // priceDrafts: listId -> array of price strings, one per item line.
 type PriceDrafts = Record<string, string[]>;
 
@@ -23,6 +33,7 @@ export function useAdminGroceryLists() {
   // "Money received" matcher: the shopkeeper types the amount they got on UPI
   // and instantly sees the still-unpaid orders of exactly that amount.
   const [amountReceived, setAmountReceived] = useState("");
+  const [statusTab, setStatusTab] = useState<StatusTab>("active");
   const [lists, setLists] = useState<AdminGroceryList[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingListId, setSavingListId] = useState("");
@@ -65,7 +76,10 @@ export function useAdminGroceryLists() {
   }, []);
 
   const filteredLists = useMemo(() => {
-    let result = lists;
+    // Status tab first — keep cancelled / completed out of the active view.
+    let result = lists.filter((list) =>
+      STATUS_GROUPS[statusTab].includes(list.status),
+    );
 
     // Money-received matcher takes priority: narrow to UNPAID orders whose
     // total equals the amount the shopkeeper just received.
@@ -90,7 +104,20 @@ export function useAdminGroceryLists() {
     }
 
     return result;
-  }, [lists, search, amountReceived]);
+  }, [lists, search, amountReceived, statusTab]);
+
+  // Counts per tab, so each tab shows how many orders it holds.
+  const statusCounts = useMemo(
+    () => ({
+      active: lists.filter((l) => STATUS_GROUPS.active.includes(l.status))
+        .length,
+      completed: lists.filter((l) => STATUS_GROUPS.completed.includes(l.status))
+        .length,
+      cancelled: lists.filter((l) => STATUS_GROUPS.cancelled.includes(l.status))
+        .length,
+    }),
+    [lists],
+  );
 
   // How many unpaid orders match the entered amount (drives the helper text).
   const amountMatchCount = useMemo(() => {
@@ -200,6 +227,9 @@ export function useAdminGroceryLists() {
     amountReceived,
     setAmountReceived,
     amountMatchCount,
+    statusTab,
+    setStatusTab,
+    statusCounts,
     lists: filteredLists,
     loading,
     savingListId,
