@@ -371,7 +371,9 @@ function GroceryListCard({
               })
             : null}
 
-          {isPriced && !isClosed ? (
+          {/* Cancel is allowed at any stage before it's closed — including a
+              still-unpriced "received" list (the server permits it). */}
+          {!isClosed ? (
             <Button
               variant="destructive"
               disabled={saving}
