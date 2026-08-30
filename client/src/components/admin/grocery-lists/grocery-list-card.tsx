@@ -22,10 +22,7 @@ const headerRowClass = "flex flex-wrap items-start justify-between gap-3";
 const codeClass = "text-sm font-semibold text-foreground";
 const metaClass = "text-xs text-muted-foreground";
 
-const itemRowClass = "flex items-center gap-3";
 const itemIndexClass = "w-6 text-xs text-muted-foreground";
-const itemNameClass = "flex-1 text-sm text-foreground";
-const itemQtyClass = "w-24 text-sm text-muted-foreground";
 
 const totalRowClass = "flex items-center justify-between pt-1";
 const totalLabelClass = "text-sm font-medium text-foreground";
@@ -266,91 +263,105 @@ function GroceryListCard({
             const isPacked = packed.has(index);
             const isUnavailable = item.available === false;
             return (
-              <div key={`${list._id}-${index}`} className={itemRowClass}>
-                <button
-                  type="button"
-                  onClick={() => togglePacked(index)}
-                  aria-label={isPacked ? "Mark not packed" : "Mark packed"}
-                  className={cn(
-                    "flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors",
-                    isPacked
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-input bg-background hover:border-primary/60",
-                  )}
-                >
-                  {isPacked ? <Check className="h-3.5 w-3.5" /> : null}
-                </button>
-                <span className={itemIndexClass}>{index + 1}.</span>
-                <span
-                  className={cn(
-                    itemNameClass,
-                    (isPacked || isUnavailable) &&
-                      "text-muted-foreground line-through",
-                  )}
-                >
-                  {item.name}
-                  {showBoth
-                    ? (() => {
-                        const orig = item.name.trim().toLowerCase();
-                        const forms = [hiNames[index], enNames[index]]
-                          .filter((v): v is string => Boolean(v))
-                          .filter(
-                            (v, i, a) =>
-                              a.findIndex(
-                                (x) => x.toLowerCase() === v.toLowerCase(),
-                              ) === i,
-                          )
-                          .filter((v) => v.trim().toLowerCase() !== orig);
-                        return forms.length ? (
-                          <span className="ml-2 font-medium text-primary">
-                            → {forms.join(" · ")}
-                          </span>
-                        ) : null;
-                      })()
-                    : null}
-                </span>
-                <span className={itemQtyClass}>{item.quantity || "—"}</span>
-                {isUnavailable ? (
-                  <span className="w-24 text-center text-xs font-semibold text-destructive">
-                    Out of stock
+              <div
+                key={`${list._id}-${index}`}
+                className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-border/40 pb-2 last:border-0 last:pb-0"
+              >
+                {/* Name group — full width on mobile so controls wrap below */}
+                <div className="flex min-w-0 basis-full items-start gap-2 sm:flex-1 sm:basis-auto">
+                  <button
+                    type="button"
+                    onClick={() => togglePacked(index)}
+                    aria-label={isPacked ? "Mark not packed" : "Mark packed"}
+                    className={cn(
+                      "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors",
+                      isPacked
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-input bg-background hover:border-primary/60",
+                    )}
+                  >
+                    {isPacked ? <Check className="h-3.5 w-3.5" /> : null}
+                  </button>
+                  <span className={cn(itemIndexClass, "mt-0.5")}>
+                    {index + 1}.
                   </span>
-                ) : (
-                  <div className="flex items-center gap-1">
-                    <Input
-                      type="number"
-                      min={0}
-                      inputMode="numeric"
-                      placeholder="Price"
-                      className="w-24"
-                      value={draft[index] ?? ""}
-                      onChange={(event) =>
-                        onPriceChange(index, event.target.value)
-                      }
-                    />
-                    <PriceCalculator
-                      quantity={item.quantity}
-                      onResult={(value) => onPriceChange(index, value)}
-                    />
-                  </div>
-                )}
-                <button
-                  type="button"
-                  disabled={saving}
-                  onClick={() => onToggleAvailable(index, isUnavailable)}
-                  title={
-                    isUnavailable
-                      ? "Mark back in stock"
-                      : "Mark out of stock (customer is notified)"
-                  }
-                  className={cn(
-                    "shrink-0 rounded-md border px-2 py-1 text-xs transition-colors disabled:opacity-50",
-                    isUnavailable
-                      ? "border-border text-muted-foreground hover:border-primary/50"
-                      : "border-destructive/40 text-destructive hover:bg-destructive/5",
+                  <span
+                    className={cn(
+                      "min-w-0 flex-1 break-words text-sm text-foreground",
+                      (isPacked || isUnavailable) &&
+                        "text-muted-foreground line-through",
+                    )}
+                  >
+                    {item.name}
+                    {showBoth
+                      ? (() => {
+                          const orig = item.name.trim().toLowerCase();
+                          const forms = [hiNames[index], enNames[index]]
+                            .filter((v): v is string => Boolean(v))
+                            .filter(
+                              (v, i, a) =>
+                                a.findIndex(
+                                  (x) => x.toLowerCase() === v.toLowerCase(),
+                                ) === i,
+                            )
+                            .filter((v) => v.trim().toLowerCase() !== orig);
+                          return forms.length ? (
+                            <span className="ml-2 font-medium text-primary">
+                              → {forms.join(" · ")}
+                            </span>
+                          ) : null;
+                        })()
+                      : null}
+                  </span>
+                </div>
+
+                {/* Controls group — qty, price, out-of-stock */}
+                <div className="ml-7 flex flex-shrink-0 items-center gap-2 sm:ml-0">
+                  <span className="w-12 shrink-0 text-sm text-muted-foreground sm:w-20">
+                    {item.quantity || "—"}
+                  </span>
+                  {isUnavailable ? (
+                    <span className="text-xs font-semibold text-destructive">
+                      Out of stock
+                    </span>
+                  ) : (
+                    <div className="flex items-center gap-1">
+                      <Input
+                        type="number"
+                        min={0}
+                        inputMode="numeric"
+                        placeholder="Price"
+                        className="w-20 sm:w-24"
+                        value={draft[index] ?? ""}
+                        onChange={(event) =>
+                          onPriceChange(index, event.target.value)
+                        }
+                      />
+                      <PriceCalculator
+                        quantity={item.quantity}
+                        onResult={(value) => onPriceChange(index, value)}
+                      />
+                    </div>
                   )}
-                >
-                  {isUnavailable ? "Restore" : "Out of stock"}
-                </button>
+                  <button
+                    type="button"
+                    disabled={saving}
+                    onClick={() => onToggleAvailable(index, isUnavailable)}
+                    title={
+                      isUnavailable
+                        ? "Mark back in stock"
+                        : "Mark out of stock (customer is notified)"
+                    }
+                    className={cn(
+                      "shrink-0 rounded-md border px-2 py-1 text-xs transition-colors disabled:opacity-50",
+                      isUnavailable
+                        ? "border-border text-muted-foreground hover:border-primary/50"
+                        : "border-destructive/40 text-destructive hover:bg-destructive/5",
+                    )}
+                  >
+                    {isUnavailable ? "Restore" : "Out of stock"}
+                  </button>
+                </div>
               </div>
             );
           })}
