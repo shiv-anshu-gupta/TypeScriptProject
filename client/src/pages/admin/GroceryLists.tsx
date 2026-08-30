@@ -27,6 +27,7 @@ function AdminGroceryLists() {
     savePrices,
     changeStatus,
     markPaid,
+    setItemAvailability,
   } = useAdminGroceryLists();
 
   return (
@@ -100,6 +101,9 @@ function AdminGroceryLists() {
                     void changeStatus(list._id, status)
                   }
                   onMarkPaid={() => void markPaid(list._id)}
+                  onToggleAvailable={(index, available) =>
+                    void setItemAvailability(list._id, index, available)
+                  }
                 />
               ))}
             </div>

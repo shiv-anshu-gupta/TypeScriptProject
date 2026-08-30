@@ -58,6 +58,7 @@ function mapGroceryList(item: GroceryListDocument) {
       name: listItem.name,
       quantity: listItem.quantity,
       price: listItem.price,
+      available: listItem.available !== false,
     })),
     totalItems: item.totalItems,
     totalAmount: item.totalAmount,
@@ -146,10 +147,13 @@ adminGroceryListRouter.patch(
           throw new AppError(400, "Each item price must be 0 or more");
         }
 
+        const isAvailable = existingItem.available !== false;
         return {
           name: existingItem.name,
           quantity: existingItem.quantity,
-          price: Math.round(price),
+          // Out-of-stock items are never charged.
+          price: isAvailable ? Math.round(price) : 0,
+          available: isAvailable,
         };
       },
     );
@@ -293,6 +297,60 @@ adminGroceryListRouter.patch(
         items: await getAllGroceryLists(),
       }),
     );
+  }),
+);
+
+// Mark one item out-of-stock / back-in-stock. An out-of-stock item stays on
+// the list (so the customer sees it was requested) but is never charged, and
+// the customer is notified.
+adminGroceryListRouter.patch(
+  "/grocery-lists/:listId/items/:index/availability",
+  asyncHandler(async (req: Request, res: Response) => {
+    const listId = String(req.params.listId || "").trim();
+    const index = Number(req.params.index);
+    const available = Boolean(req.body.available);
+
+    requireText(listId, "List id is required");
+    if (!Number.isInteger(index) || index < 0) {
+      throw new AppError(400, "Valid item index is required");
+    }
+
+    const list = await GroceryList.findById(listId);
+    const foundList = requireFound(list, "List not found", 404);
+
+    if (index >= foundList.items.length) {
+      throw new AppError(404, "Item not found in this list");
+    }
+
+    const items: GroceryListItem[] = foundList.items.map(
+      (item: GroceryListItem, i: number) => ({
+        name: item.name,
+        quantity: item.quantity,
+        // Out-of-stock → not charged; back-in-stock keeps its (re-priceable) 0.
+        price: i === index && !available ? 0 : item.price,
+        available: i === index ? available : item.available !== false,
+      }),
+    );
+
+    foundList.set("items", items);
+    foundList.totalAmount = items.reduce(
+      (sum, item) => sum + (item.available ? item.price : 0),
+      0,
+    );
+    foundList.seenByCustomer = false;
+    await foundList.save();
+
+    if (!available) {
+      const code = String(foundList._id).slice(-8).toUpperCase();
+      await notifyUser(
+        foundList.user,
+        `Item not available · #${code}`,
+        `"${foundList.items[index].name}" is out of stock. The rest of your order is unaffected.`,
+        { listId: String(foundList._id), type: "item_unavailable" },
+      );
+    }
+
+    res.json(ok({ items: await getAllGroceryLists() }));
   }),
 );
 

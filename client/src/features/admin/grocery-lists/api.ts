@@ -37,6 +37,17 @@ export async function markAdminGroceryListPaid(listId: string) {
   );
 }
 
+export async function setAdminGroceryListItemAvailability(
+  listId: string,
+  index: number,
+  available: boolean,
+) {
+  return apiPatch<AdminGroceryListsResponse, { available: boolean }>(
+    `/admin/grocery-lists/${listId}/items/${index}/availability`,
+    { available },
+  );
+}
+
 export async function getAdminGroceryListMessages(listId: string) {
   return apiGet<ChatMessagesResponse>(
     `/admin/grocery-lists/${listId}/messages`,

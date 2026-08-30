@@ -79,6 +79,7 @@ type GroceryListCardProps = {
   onSavePrices: () => void;
   onChangeStatus: (status: UpdateGroceryListStatusBody["status"]) => void;
   onMarkPaid: () => void;
+  onToggleAvailable: (index: number, available: boolean) => void;
 };
 
 function GroceryListCard({
@@ -90,6 +91,7 @@ function GroceryListCard({
   onSavePrices,
   onChangeStatus,
   onMarkPaid,
+  onToggleAvailable,
 }: GroceryListCardProps) {
   const isPriced = list.totalAmount > 0;
   const isPaid = list.paymentStatus === "paid";
@@ -262,6 +264,7 @@ function GroceryListCard({
         <div className="space-y-2">
           {list.items.map((item, index) => {
             const isPacked = packed.has(index);
+            const isUnavailable = item.available === false;
             return (
               <div key={`${list._id}-${index}`} className={itemRowClass}>
                 <button
@@ -281,7 +284,8 @@ function GroceryListCard({
                 <span
                   className={cn(
                     itemNameClass,
-                    isPacked && "text-muted-foreground line-through",
+                    (isPacked || isUnavailable) &&
+                      "text-muted-foreground line-through",
                   )}
                 >
                   {item.name}
@@ -306,23 +310,47 @@ function GroceryListCard({
                     : null}
                 </span>
                 <span className={itemQtyClass}>{item.quantity || "—"}</span>
-                <div className="flex items-center gap-1">
-                  <Input
-                    type="number"
-                    min={0}
-                    inputMode="numeric"
-                    placeholder="Price"
-                    className="w-24"
-                    value={draft[index] ?? ""}
-                    onChange={(event) =>
-                      onPriceChange(index, event.target.value)
-                    }
-                  />
-                  <PriceCalculator
-                    quantity={item.quantity}
-                    onResult={(value) => onPriceChange(index, value)}
-                  />
-                </div>
+                {isUnavailable ? (
+                  <span className="w-24 text-center text-xs font-semibold text-destructive">
+                    Out of stock
+                  </span>
+                ) : (
+                  <div className="flex items-center gap-1">
+                    <Input
+                      type="number"
+                      min={0}
+                      inputMode="numeric"
+                      placeholder="Price"
+                      className="w-24"
+                      value={draft[index] ?? ""}
+                      onChange={(event) =>
+                        onPriceChange(index, event.target.value)
+                      }
+                    />
+                    <PriceCalculator
+                      quantity={item.quantity}
+                      onResult={(value) => onPriceChange(index, value)}
+                    />
+                  </div>
+                )}
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={() => onToggleAvailable(index, isUnavailable)}
+                  title={
+                    isUnavailable
+                      ? "Mark back in stock"
+                      : "Mark out of stock (customer is notified)"
+                  }
+                  className={cn(
+                    "shrink-0 rounded-md border px-2 py-1 text-xs transition-colors disabled:opacity-50",
+                    isUnavailable
+                      ? "border-border text-muted-foreground hover:border-primary/50"
+                      : "border-destructive/40 text-destructive hover:bg-destructive/5",
+                  )}
+                >
+                  {isUnavailable ? "Restore" : "Out of stock"}
+                </button>
               </div>
             );
           })}

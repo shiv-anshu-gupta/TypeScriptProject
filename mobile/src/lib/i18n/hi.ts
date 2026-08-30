@@ -64,6 +64,7 @@ export const hi: Translations = {
     payAtShop: "दुकान पर भुगतान करें",
     payNote: "भुगतान के बाद, पैसे आने पर दुकान पुष्टि करेगी।",
     messageShop: "दुकान को मैसेज करें",
+    notAvailable: "उपलब्ध नहीं",
     removeTitle: "आइटम हटाएँ",
     removeConfirm: '"{{name}}" को इस लिस्ट से हटाएँ?',
     cancelled: "रद्द किया गया",

@@ -19,6 +19,7 @@ export type GroceryListItem = {
   name: string;
   quantity: string; // free text, e.g. "2 kg", "1 packet"
   price: number; // 0 until the shopkeeper prices it
+  available: boolean; // false = shop marked it out of stock
 };
 
 export type GroceryList = {
@@ -63,6 +64,10 @@ const GroceryListItemSchema = new Schema<GroceryListItem>(
       type: Number,
       default: 0,
       min: 0,
+    },
+    available: {
+      type: Boolean,
+      default: true,
     },
   },
   { _id: false },

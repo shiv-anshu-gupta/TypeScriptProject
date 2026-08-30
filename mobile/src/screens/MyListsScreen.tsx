@@ -182,13 +182,23 @@ function ListCard({ list }: { list: CustomerGroceryList }) {
             key={`${list._id}-${index}`}
             className="flex-row items-center justify-between"
           >
-            <Text className="flex-1 text-sm text-foreground">
+            <Text
+              className={
+                item.available === false
+                  ? "flex-1 text-sm text-muted-foreground line-through"
+                  : "flex-1 text-sm text-foreground"
+              }
+            >
               {index + 1}. {item.name}
               {item.quantity ? (
                 <Text className="text-muted-foreground"> · {item.quantity}</Text>
               ) : null}
             </Text>
-            {isPriced ? (
+            {item.available === false ? (
+              <Text className="text-xs font-semibold text-destructive">
+                {t("lists.notAvailable")}
+              </Text>
+            ) : isPriced ? (
               <Text className="text-sm font-medium text-foreground">
                 {formatPrice(item.price)}
               </Text>

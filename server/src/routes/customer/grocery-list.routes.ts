@@ -37,6 +37,7 @@ function mapGroceryList(item: GroceryListDocument) {
       name: listItem.name,
       quantity: listItem.quantity,
       price: listItem.price,
+      available: listItem.available !== false,
     })),
     totalItems: item.totalItems,
     totalAmount: item.totalAmount,
@@ -95,6 +96,7 @@ customerGroceryListRouter.post(
         name: String(item.name || "").trim(),
         quantity: String(item.quantity || "").trim(),
         price: 0,
+        available: true,
       }))
       .filter((item) => item.name.length > 0);
 
@@ -121,6 +123,7 @@ customerGroceryListRouter.post(
           name: item.name,
           quantity: item.quantity,
           price: item.price,
+          available: item.available !== false,
         })),
         ...items,
       ];

@@ -14,6 +14,7 @@ export type AdminGroceryListItem = {
   name: string;
   quantity: string;
   price: number;
+  available?: boolean;
 };
 
 export type AdminGroceryList = {

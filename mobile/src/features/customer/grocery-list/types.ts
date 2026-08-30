@@ -14,6 +14,7 @@ export type GroceryListItem = {
   name: string;
   quantity: string;
   price: number;
+  available?: boolean;
 };
 
 export type CustomerGroceryList = {

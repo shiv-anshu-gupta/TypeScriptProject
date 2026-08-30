@@ -6,6 +6,7 @@ import type {
 import {
   getAdminGroceryLists,
   markAdminGroceryListPaid,
+  setAdminGroceryListItemAvailability,
   setAdminGroceryListPrices,
   updateAdminGroceryListStatus,
 } from "./api";
@@ -174,6 +175,25 @@ export function useAdminGroceryLists() {
     }
   }
 
+  async function setItemAvailability(
+    listId: string,
+    index: number,
+    available: boolean,
+  ) {
+    try {
+      setSavingListId(listId);
+
+      const response = await setAdminGroceryListItemAvailability(
+        listId,
+        index,
+        available,
+      );
+      setLists((response ?? { items: [] }).items);
+    } finally {
+      setSavingListId("");
+    }
+  }
+
   return {
     search,
     setSearch,
@@ -190,5 +210,6 @@ export function useAdminGroceryLists() {
     savePrices,
     changeStatus,
     markPaid,
+    setItemAvailability,
   };
 }

@@ -60,6 +60,7 @@ export const en = {
     payAtShop: "Pay at the shop",
     payNote: "After paying, the shop confirms once the money arrives.",
     messageShop: "Message the shop",
+    notAvailable: "Not available",
     removeTitle: "Remove item",
     removeConfirm: 'Remove "{{name}}" from this list?',
     cancelled: "Cancelled",
