@@ -36,6 +36,15 @@ type Nav = NativeStackNavigationProp<RootStackParamList>;
 // computed from the list's age, no backend or shopkeeper action needed.
 const BUSY_AFTER_MIN = 30;
 
+// Status tabs so cancelled / completed lists don't clutter the active ones.
+const STATUS_TABS = ["active", "completed", "cancelled"] as const;
+type StatusTab = (typeof STATUS_TABS)[number];
+const STATUS_GROUPS: Record<StatusTab, GroceryListStatus[]> = {
+  active: ["received", "priced", "packing", "packed", "ready"],
+  completed: ["completed"],
+  cancelled: ["cancelled"],
+};
+
 // The customer-facing journey. "Priced" is its own visible step so the
 // customer sees the quote arrive — its label carries the total. Labels are
 // translated at render via lists.timeline.<key>.
@@ -377,6 +386,11 @@ export function MyListsScreen() {
       state.rows.filter((row) => (row.name ?? "").trim().length > 0).length > 0,
   );
 
+  const [statusTab, setStatusTab] = useState<StatusTab>("active");
+  const visibleItems = items.filter((list) =>
+    STATUS_GROUPS[statusTab].includes(list.status),
+  );
+
   useFocusEffect(
     useCallback(() => {
       if (isSignedIn) {
@@ -415,7 +429,7 @@ export function MyListsScreen() {
   return (
     <FlatList
       className="flex-1 bg-background"
-      data={items}
+      data={visibleItems}
       keyExtractor={(list) => list._id}
       contentContainerStyle={{
         paddingTop: insets.top + 12,
@@ -432,11 +446,51 @@ export function MyListsScreen() {
           <Text className="text-2xl font-semibold text-foreground">
             {t("lists.title")}
           </Text>
-          <DraftCard />
+
+          {/* Status tabs — keep cancelled / completed out of the active view */}
+          <View className="flex-row gap-2">
+            {STATUS_TABS.map((tab) => {
+              const active = statusTab === tab;
+              const count = items.filter((l) =>
+                STATUS_GROUPS[tab].includes(l.status),
+              ).length;
+              return (
+                <Pressable
+                  key={tab}
+                  onPress={() => setStatusTab(tab)}
+                  className={
+                    active
+                      ? "rounded-full bg-primary px-3 py-1.5"
+                      : "rounded-full border border-border bg-card px-3 py-1.5"
+                  }
+                >
+                  <Text
+                    className={
+                      active
+                        ? "text-xs font-semibold text-primary-foreground"
+                        : "text-xs font-medium text-muted-foreground"
+                    }
+                  >
+                    {t(`lists.tabs.${tab}`)}
+                    {count ? ` ${count}` : ""}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          {statusTab === "active" ? <DraftCard /> : null}
         </View>
       }
       ListEmptyComponent={
-        !hasDraft ? (
+        statusTab !== "active" ? (
+          <View className="mt-16 items-center gap-3">
+            <MaterialCommunityIcons name="notebook" size={44} color="#ada291" />
+            <Text className="text-center text-sm text-muted-foreground">
+              {t("lists.emptyTab", { tab: t(`lists.tabs.${statusTab}`) })}
+            </Text>
+          </View>
+        ) : !hasDraft ? (
           <View className="mt-16 items-center gap-4">
             <MaterialCommunityIcons name="notebook" size={44} color="#ada291" />
             <Text className="text-center text-sm text-muted-foreground">

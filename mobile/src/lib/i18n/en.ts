@@ -71,6 +71,12 @@ export const en = {
     newListLabel: "Your new list",
     notSent: "Not sent",
     addMore: "Add more from the Shop tab, or edit it on the Home paper.",
+    tabs: {
+      active: "Active",
+      completed: "Completed",
+      cancelled: "Cancelled",
+    },
+    emptyTab: "No {{tab}} lists.",
     timeline: {
       received: "Received item list",
       priced: "Priced by shop",

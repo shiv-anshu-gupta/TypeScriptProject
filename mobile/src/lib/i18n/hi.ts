@@ -75,6 +75,12 @@ export const hi: Translations = {
     newListLabel: "आपकी नई लिस्ट",
     notSent: "अभी भेजी नहीं",
     addMore: "दुकान टैब से और जोड़ें, या होम पेज पर बदलें।",
+    tabs: {
+      active: "चालू",
+      completed: "पूरे हुए",
+      cancelled: "रद्द",
+    },
+    emptyTab: "कोई {{tab}} लिस्ट नहीं।",
     timeline: {
       received: "लिस्ट मिल गई",
       priced: "दुकान ने दाम लगाया",
