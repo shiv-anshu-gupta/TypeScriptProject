@@ -71,12 +71,17 @@ function mapGroceryList(item: GroceryListDocument) {
     completedAt: item.completedAt,
     paidAt: item.paidAt,
     createdAt: item.createdAt,
+    updatedAt: item.updatedAt,
   };
 }
 
 async function getAllGroceryLists() {
+  // Sort by last activity, not creation. When a customer sends a new list that
+  // merges into an existing unpriced one, its items/updatedAt change but its
+  // createdAt stays — so sorting by createdAt would bury a freshly re-sent
+  // order at its old position. updatedAt bubbles active orders to the top.
   const lists = await GroceryList.find()
-    .sort({ createdAt: -1 })
+    .sort({ updatedAt: -1 })
     .populate("user", "name email phone");
 
   return lists.map(mapGroceryList);

@@ -189,8 +189,15 @@ function GroceryListCard({
           ) : null}
           <p className={metaClass}>
             {list.totalItems} item{list.totalItems > 1 ? "s" : ""} ·{" "}
-            {new Date(list.createdAt).toLocaleString()}
+            {new Date(list.updatedAt ?? list.createdAt).toLocaleString()}
           </p>
+          {list.updatedAt &&
+          new Date(list.updatedAt).toDateString() !==
+            new Date(list.createdAt).toDateString() ? (
+            <p className={metaClass}>
+              first sent {new Date(list.createdAt).toLocaleDateString()}
+            </p>
+          ) : null}
         </div>
 
         <div className="flex flex-col items-end gap-2">

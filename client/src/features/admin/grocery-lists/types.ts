@@ -35,6 +35,7 @@ export type AdminGroceryList = {
   completedAt?: string | null;
   paidAt?: string | null;
   createdAt: string;
+  updatedAt?: string | null;
 };
 
 export type AdminGroceryListsResponse = {
