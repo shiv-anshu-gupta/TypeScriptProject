@@ -102,14 +102,17 @@ customerGroceryListRouter.post(
       throw new AppError(400, "Add at least one item to your list");
     }
 
-    // If the customer already has a list the shop hasn't touched yet
-    // (status "received" — same stage a new submission starts in), merge the
-    // new items into it instead of opening a parallel order. Lists that were
-    // already priced/packed are never merged: their quote would go stale.
+    // If the customer already has a not-yet-priced list from the SAME shopping
+    // session (last touched within MERGE_WINDOW), merge the new items into it
+    // instead of opening a parallel order. A new send after that window starts
+    // a fresh order with today's date — so a week-old "received" list no longer
+    // keeps absorbing every future send. Priced/packed lists are never merged.
+    const MERGE_WINDOW_MS = 6 * 60 * 60 * 1000; // 6 hours
     const mergeTarget = await GroceryList.findOne({
       user: dbUser._id,
       status: "received",
       paymentStatus: "pending",
+      updatedAt: { $gte: new Date(Date.now() - MERGE_WINDOW_MS) },
     }).sort({ createdAt: -1 });
 
     if (mergeTarget) {
