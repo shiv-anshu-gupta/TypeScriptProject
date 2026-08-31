@@ -26,10 +26,15 @@ function formatTime(iso: string) {
 type GroceryListChatProps = {
   listId: string;
   customerName: string;
+  startOpen?: boolean;
 };
 
-function GroceryListChat({ listId, customerName }: GroceryListChatProps) {
-  const [open, setOpen] = useState(false);
+function GroceryListChat({
+  listId,
+  customerName,
+  startOpen = false,
+}: GroceryListChatProps) {
+  const [open, setOpen] = useState(startOpen);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);

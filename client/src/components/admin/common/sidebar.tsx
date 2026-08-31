@@ -3,6 +3,7 @@ import {
   BarChart3,
   ClipboardList,
   LayoutDashboard,
+  MessagesSquare,
   Package,
   Settings2,
   Store,
@@ -21,6 +22,7 @@ type AdminNavItem = {
 export const adminNavItems: AdminNavItem[] = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { label: "Grocery lists", href: "/admin/grocery-lists", icon: ClipboardList },
+  { label: "Messages", href: "/admin/messages", icon: MessagesSquare },
   { label: "Orders", href: "/admin/orders", icon: BarChart3 },
   { label: "Products", href: "/admin/products", icon: Package },
   { label: "Coupons", href: "/admin/coupons", icon: BadgePercent },

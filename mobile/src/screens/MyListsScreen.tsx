@@ -208,9 +208,16 @@ function ListCard({ list }: { list: CustomerGroceryList }) {
                 {t("lists.notAvailable")}
               </Text>
             ) : isPriced ? (
-              <Text className="text-sm font-medium text-foreground">
-                {formatPrice(item.price)}
-              </Text>
+              <View className="flex-row items-center gap-1.5">
+                {item.rate ? (
+                  <Text className="text-[11px] text-muted-foreground">
+                    @{formatPrice(item.rate)}
+                  </Text>
+                ) : null}
+                <Text className="text-sm font-medium text-foreground">
+                  {formatPrice(item.price)}
+                </Text>
+              </View>
             ) : null}
             {canRemoveItems ? (
               <Pressable

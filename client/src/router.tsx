@@ -10,6 +10,7 @@ import AdminProducts from "./pages/admin/Products";
 import AdminCoupons from "./pages/admin/Promos";
 import AdminOrders from "./pages/admin/Orders";
 import AdminGroceryLists from "./pages/admin/GroceryLists";
+import AdminMessages from "./pages/admin/Messages";
 import AdminSettings from "./pages/admin/Settings";
 import PrivacyPage from "./pages/legal/Privacy";
 import DeleteAccountPage from "./pages/legal/DeleteAccount";
@@ -77,6 +78,10 @@ export const router = createBrowserRouter([
               {
                 path: "grocery-lists",
                 element: <AdminGroceryLists />,
+              },
+              {
+                path: "messages",
+                element: <AdminMessages />,
               },
               {
                 path: "settings",

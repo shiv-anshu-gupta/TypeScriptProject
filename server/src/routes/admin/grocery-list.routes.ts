@@ -36,6 +36,7 @@ type AdminGroceryListStatus = (typeof ALLOWED_STATUSES)[number];
 type IncomingPricedItem = {
   name?: string;
   quantity?: string;
+  rate?: number;
   price?: number;
 };
 
@@ -57,6 +58,7 @@ function mapGroceryList(item: GroceryListDocument) {
     items: item.items.map((listItem) => ({
       name: listItem.name,
       quantity: listItem.quantity,
+      rate: listItem.rate ?? 0,
       price: listItem.price,
       available: listItem.available !== false,
     })),
@@ -148,9 +150,13 @@ adminGroceryListRouter.patch(
         }
 
         const isAvailable = existingItem.available !== false;
+        const rate = Number(
+          incomingItems[index]?.rate ?? existingItem.rate ?? 0,
+        );
         return {
           name: existingItem.name,
           quantity: existingItem.quantity,
+          rate: Number.isFinite(rate) && rate > 0 ? rate : 0,
           // Out-of-stock items are never charged.
           price: isAvailable ? Math.round(price) : 0,
           available: isAvailable,
@@ -326,6 +332,7 @@ adminGroceryListRouter.patch(
       (item: GroceryListItem, i: number) => ({
         name: item.name,
         quantity: item.quantity,
+        rate: item.rate ?? 0,
         // Out-of-stock → not charged; back-in-stock keeps its (re-priceable) 0.
         price: i === index && !available ? 0 : item.price,
         available: i === index ? available : item.available !== false,
@@ -351,6 +358,106 @@ adminGroceryListRouter.patch(
     }
 
     res.json(ok({ items: await getAllGroceryLists() }));
+  }),
+);
+
+// Shop adds an item the customer mentioned in person / on the phone / later.
+adminGroceryListRouter.post(
+  "/grocery-lists/:listId/items",
+  asyncHandler(async (req: Request, res: Response) => {
+    const listId = String(req.params.listId || "").trim();
+    const name = String(req.body.name || "").trim();
+    const quantity = String(req.body.quantity || "").trim();
+
+    requireText(listId, "List id is required");
+    requireText(name, "Item name is required");
+
+    const list = await GroceryList.findById(listId);
+    const foundList = requireFound(list, "List not found", 404);
+
+    if (foundList.status === "cancelled" || foundList.status === "completed") {
+      throw new AppError(400, "This order is already closed");
+    }
+
+    const items: GroceryListItem[] = [
+      ...foundList.items.map((it: GroceryListItem) => ({
+        name: it.name,
+        quantity: it.quantity,
+        rate: it.rate ?? 0,
+        price: it.price,
+        available: it.available !== false,
+      })),
+      { name, quantity, rate: 0, price: 0, available: true },
+    ];
+
+    foundList.set("items", items);
+    foundList.totalItems = items.length;
+    foundList.seenByCustomer = false;
+    await foundList.save();
+
+    const code = String(foundList._id).slice(-8).toUpperCase();
+    await notifyUser(
+      foundList.user,
+      `Item added · #${code}`,
+      `The shop added "${name}" to your order.`,
+      { listId: String(foundList._id), type: "item_added" },
+    );
+
+    res.json(ok({ items: await getAllGroceryLists() }));
+  }),
+);
+
+// All customer conversations (newest activity first) — for the admin Messages
+// page, so the shop sees every chat in one place instead of order by order.
+adminGroceryListRouter.get(
+  "/grocery-lists/conversations",
+  asyncHandler(async (_req: Request, res: Response) => {
+    const grouped = await Message.aggregate([
+      { $sort: { createdAt: -1 } },
+      {
+        $group: {
+          _id: "$groceryList",
+          last: { $first: "$$ROOT" },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { "last.createdAt": -1 } },
+      { $limit: 100 },
+    ]);
+
+    const lists = await GroceryList.find({
+      _id: { $in: grouped.map((g) => g._id) },
+    }).populate("user", "name email phone");
+
+    const listById = new Map(lists.map((l) => [String(l._id), l]));
+
+    const conversations = grouped
+      .map((g) => {
+        const l = listById.get(String(g._id));
+        if (!l) return null;
+        const listUser = l.user as unknown as {
+          name?: string;
+          email?: string;
+          phone?: string;
+        } | null;
+        return {
+          listId: String(l._id),
+          code: String(l._id).slice(-8).toUpperCase(),
+          customerName:
+            l.customerName || listUser?.name || listUser?.email || "",
+          customerPhone: l.customerPhone || listUser?.phone || "",
+          status: l.status,
+          messageCount: g.count,
+          lastMessage: {
+            text: g.last.text as string,
+            sender: g.last.sender as "customer" | "staff",
+            createdAt: g.last.createdAt as Date,
+          },
+        };
+      })
+      .filter((c) => c !== null);
+
+    res.json(ok({ conversations }));
   }),
 );
 

@@ -13,8 +13,27 @@ export type GroceryListPaymentStatus = "pending" | "paid";
 export type AdminGroceryListItem = {
   name: string;
   quantity: string;
+  rate?: number;
   price: number;
   available?: boolean;
+};
+
+export type AdminConversation = {
+  listId: string;
+  code: string;
+  customerName: string;
+  customerPhone: string;
+  status: GroceryListStatus;
+  messageCount: number;
+  lastMessage: {
+    text: string;
+    sender: "customer" | "staff";
+    createdAt: string;
+  };
+};
+
+export type AdminConversationsResponse = {
+  conversations: AdminConversation[];
 };
 
 export type AdminGroceryList = {
@@ -56,7 +75,12 @@ export type ChatMessagesResponse = {
 };
 
 export type SetGroceryListPricesBody = {
-  items: Array<{ price: number }>;
+  items: Array<{ price: number; rate?: number }>;
+};
+
+export type AddGroceryListItemBody = {
+  name: string;
+  quantity: string;
 };
 
 export type UpdateGroceryListStatusBody = {

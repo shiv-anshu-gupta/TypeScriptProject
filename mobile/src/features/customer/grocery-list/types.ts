@@ -13,6 +13,7 @@ export type GroceryListPaymentStatus = "pending" | "paid";
 export type GroceryListItem = {
   name: string;
   quantity: string;
+  rate?: number;
   price: number;
   available?: boolean;
 };

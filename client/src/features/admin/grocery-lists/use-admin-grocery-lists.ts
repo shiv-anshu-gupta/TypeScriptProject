@@ -5,6 +5,7 @@ import type {
   UpdateGroceryListStatusBody,
 } from "./types";
 import {
+  addAdminGroceryListItem,
   getAdminGroceryLists,
   markAdminGroceryListPaid,
   setAdminGroceryListItemAvailability,
@@ -38,6 +39,8 @@ export function useAdminGroceryLists() {
   const [loading, setLoading] = useState(true);
   const [savingListId, setSavingListId] = useState("");
   const [priceDrafts, setPriceDrafts] = useState<PriceDrafts>({});
+  // Optional per-unit rate the shopkeeper types; auto-fills the line price.
+  const [rateDrafts, setRateDrafts] = useState<PriceDrafts>({});
 
   // Track which list IDs we've already seen so a background poll can detect a
   // genuinely new customer list and alert (sound + toast + tab-title flash).
@@ -149,6 +152,29 @@ export function useAdminGroceryLists() {
     setPriceDrafts((prev) => ({ ...prev, [list._id]: next }));
   }
 
+  // Seed the rate drafts from whatever the list already has.
+  function getRate(list: AdminGroceryList) {
+    return (
+      rateDrafts[list._id] ??
+      list.items.map((item) => (item.rate ? String(item.rate) : ""))
+    );
+  }
+
+  // Typing a per-unit rate auto-fills the line price = rate × quantity number
+  // (parsed from the free-text quantity; falls back to ×1 if it has no number).
+  function updateRate(list: AdminGroceryList, index: number, value: string) {
+    const current = getRate(list);
+    const next = current.map((item, i) => (i === index ? value : item));
+    setRateDrafts((prev) => ({ ...prev, [list._id]: next }));
+
+    const qtyNum = parseFloat(list.items[index]?.quantity ?? "");
+    const qty = Number.isFinite(qtyNum) && qtyNum > 0 ? qtyNum : 1;
+    const rate = Number(value);
+    const computed =
+      Number.isFinite(rate) && rate > 0 ? String(Math.round(rate * qty)) : "";
+    updateDraftPrice(list, index, computed);
+  }
+
   function getDraftTotal(list: AdminGroceryList) {
     return getDraft(list).reduce((sum, value) => {
       const price = Number(value);
@@ -158,18 +184,53 @@ export function useAdminGroceryLists() {
 
   async function savePrices(list: AdminGroceryList) {
     const draft = getDraft(list);
+    const rate = getRate(list);
 
     try {
       setSavingListId(list._id);
 
       const response = await setAdminGroceryListPrices(list._id, {
-        items: draft.map((value) => ({ price: Number(value) || 0 })),
+        items: draft.map((value, i) => ({
+          price: Number(value) || 0,
+          rate: Number(rate[i]) || 0,
+        })),
       });
 
       setLists((response ?? { items: [] }).items);
       setPriceDrafts((prev) => {
         const next = { ...prev };
         delete next[list._id];
+        return next;
+      });
+      setRateDrafts((prev) => {
+        const next = { ...prev };
+        delete next[list._id];
+        return next;
+      });
+    } finally {
+      setSavingListId("");
+    }
+  }
+
+  async function addItem(listId: string, name: string, quantity: string) {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    try {
+      setSavingListId(listId);
+      const response = await addAdminGroceryListItem(listId, {
+        name: trimmed,
+        quantity: quantity.trim(),
+      });
+      setLists((response ?? { items: [] }).items);
+      // drop stale drafts so the new item's inputs seed fresh
+      setPriceDrafts((prev) => {
+        const next = { ...prev };
+        delete next[listId];
+        return next;
+      });
+      setRateDrafts((prev) => {
+        const next = { ...prev };
+        delete next[listId];
         return next;
       });
     } finally {
@@ -236,10 +297,13 @@ export function useAdminGroceryLists() {
     refreshAll,
     getDraft,
     updateDraftPrice,
+    getRate,
+    updateRate,
     getDraftTotal,
     savePrices,
     changeStatus,
     markPaid,
     setItemAvailability,
+    addItem,
   };
 }

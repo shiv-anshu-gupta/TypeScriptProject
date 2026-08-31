@@ -1,5 +1,7 @@
 import { apiGet, apiPatch, apiPost } from "@/lib/api";
 import type {
+  AddGroceryListItemBody,
+  AdminConversationsResponse,
   AdminGroceryListsResponse,
   ChatMessage,
   ChatMessagesResponse,
@@ -45,6 +47,22 @@ export async function setAdminGroceryListItemAvailability(
   return apiPatch<AdminGroceryListsResponse, { available: boolean }>(
     `/admin/grocery-lists/${listId}/items/${index}/availability`,
     { available },
+  );
+}
+
+export async function addAdminGroceryListItem(
+  listId: string,
+  body: AddGroceryListItemBody,
+) {
+  return apiPost<AdminGroceryListsResponse, AddGroceryListItemBody>(
+    `/admin/grocery-lists/${listId}/items`,
+    body,
+  );
+}
+
+export async function getAdminConversations() {
+  return apiGet<AdminConversationsResponse>(
+    "/admin/grocery-lists/conversations",
   );
 }
 

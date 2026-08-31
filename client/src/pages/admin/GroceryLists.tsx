@@ -27,11 +27,14 @@ function AdminGroceryLists() {
     savingListId,
     getDraft,
     updateDraftPrice,
+    getRate,
+    updateRate,
     getDraftTotal,
     savePrices,
     changeStatus,
     markPaid,
     setItemAvailability,
+    addItem,
     statusTab,
     setStatusTab,
     statusCounts,
@@ -133,10 +136,14 @@ function AdminGroceryLists() {
                   key={list._id}
                   list={list}
                   draft={getDraft(list)}
+                  rate={getRate(list)}
                   draftTotal={getDraftTotal(list)}
                   saving={savingListId === list._id}
                   onPriceChange={(index, value) =>
                     updateDraftPrice(list, index, value)
+                  }
+                  onRateChange={(index, value) =>
+                    updateRate(list, index, value)
                   }
                   onSavePrices={() => void savePrices(list)}
                   onChangeStatus={(status) =>
@@ -145,6 +152,9 @@ function AdminGroceryLists() {
                   onMarkPaid={() => void markPaid(list._id)}
                   onToggleAvailable={(index, available) =>
                     void setItemAvailability(list._id, index, available)
+                  }
+                  onAddItem={(name, quantity) =>
+                    void addItem(list._id, name, quantity)
                   }
                 />
               ))}

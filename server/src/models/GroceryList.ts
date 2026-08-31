@@ -18,7 +18,8 @@ export type GroceryListPaymentStatus = "pending" | "paid";
 export type GroceryListItem = {
   name: string;
   quantity: string; // free text, e.g. "2 kg", "1 packet"
-  price: number; // 0 until the shopkeeper prices it
+  rate?: number; // optional per-unit price (₹ per piece/kg/box)
+  price: number; // line total (0 until the shopkeeper prices it)
   available: boolean; // false = shop marked it out of stock
 };
 
@@ -59,6 +60,11 @@ const GroceryListItemSchema = new Schema<GroceryListItem>(
       type: String,
       default: "",
       trim: true,
+    },
+    rate: {
+      type: Number,
+      default: 0,
+      min: 0,
     },
     price: {
       type: Number,

@@ -36,6 +36,7 @@ function mapGroceryList(item: GroceryListDocument) {
     items: item.items.map((listItem) => ({
       name: listItem.name,
       quantity: listItem.quantity,
+      rate: listItem.rate ?? 0,
       price: listItem.price,
       available: listItem.available !== false,
     })),
@@ -122,6 +123,7 @@ customerGroceryListRouter.post(
         ...mergeTarget.items.map((item: GroceryListItem) => ({
           name: item.name,
           quantity: item.quantity,
+          rate: item.rate ?? 0,
           price: item.price,
           available: item.available !== false,
         })),

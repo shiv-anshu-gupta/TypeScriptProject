@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Check, Languages, Share2 } from "lucide-react";
+import { Check, Languages, Plus, Share2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -70,26 +70,41 @@ const actionLabel: Record<Exclude<FlowStatus, "priced">, string> = {
 type GroceryListCardProps = {
   list: AdminGroceryList;
   draft: string[];
+  rate: string[];
   draftTotal: number;
   saving: boolean;
   onPriceChange: (index: number, value: string) => void;
+  onRateChange: (index: number, value: string) => void;
   onSavePrices: () => void;
   onChangeStatus: (status: UpdateGroceryListStatusBody["status"]) => void;
   onMarkPaid: () => void;
   onToggleAvailable: (index: number, available: boolean) => void;
+  onAddItem: (name: string, quantity: string) => void;
 };
 
 function GroceryListCard({
   list,
   draft,
+  rate,
   draftTotal,
   saving,
   onPriceChange,
+  onRateChange,
   onSavePrices,
   onChangeStatus,
   onMarkPaid,
   onToggleAvailable,
+  onAddItem,
 }: GroceryListCardProps) {
+  const [newName, setNewName] = useState("");
+  const [newQty, setNewQty] = useState("");
+
+  const submitNewItem = () => {
+    if (!newName.trim()) return;
+    onAddItem(newName, newQty);
+    setNewName("");
+    setNewQty("");
+  };
   const isPriced = list.totalAmount > 0;
   const isPaid = list.paymentStatus === "paid";
 
@@ -316,8 +331,8 @@ function GroceryListCard({
                 </div>
 
                 {/* Controls group — qty, price, out-of-stock */}
-                <div className="ml-7 flex flex-shrink-0 items-center gap-2 sm:ml-0">
-                  <span className="w-12 shrink-0 text-sm text-muted-foreground sm:w-20">
+                <div className="ml-7 flex flex-shrink-0 flex-wrap items-center gap-2 sm:ml-0">
+                  <span className="w-12 shrink-0 text-sm text-muted-foreground sm:w-14">
                     {item.quantity || "—"}
                   </span>
                   {isUnavailable ? (
@@ -330,8 +345,22 @@ function GroceryListCard({
                         type="number"
                         min={0}
                         inputMode="numeric"
-                        placeholder="Price"
-                        className="w-20 sm:w-24"
+                        placeholder="Rate"
+                        title="Price per unit — auto-fills the total (rate × qty)"
+                        className="w-16"
+                        value={rate[index] ?? ""}
+                        onChange={(event) =>
+                          onRateChange(index, event.target.value)
+                        }
+                      />
+                      <span className="text-xs text-muted-foreground">=</span>
+                      <Input
+                        type="number"
+                        min={0}
+                        inputMode="numeric"
+                        placeholder="Total"
+                        title="Line total"
+                        className="w-20"
                         value={draft[index] ?? ""}
                         onChange={(event) =>
                           onPriceChange(index, event.target.value)
@@ -366,6 +395,46 @@ function GroceryListCard({
             );
           })}
         </div>
+
+        {/* Shop adds an item the customer told them later / in person */}
+        {list.status !== "cancelled" && list.status !== "completed" ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <Input
+              placeholder="Add an item (e.g. Aata)"
+              className="min-w-0 flex-1"
+              value={newName}
+              onChange={(event) => setNewName(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  submitNewItem();
+                }
+              }}
+            />
+            <Input
+              placeholder="Qty"
+              className="w-20"
+              value={newQty}
+              onChange={(event) => setNewQty(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  submitNewItem();
+                }
+              }}
+            />
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              disabled={saving || !newName.trim()}
+              onClick={submitNewItem}
+            >
+              <Plus className="mr-1 h-4 w-4" />
+              Add
+            </Button>
+          </div>
+        ) : null}
 
         <Separator />
 
