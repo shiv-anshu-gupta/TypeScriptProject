@@ -6,3 +6,14 @@ export type AdminDashboardLite = {
   pendingOrders: number;
   completedOrders: number;
 };
+
+export type DashboardDailyPoint = {
+  date: string;
+  label: string;
+  orders: number;
+  sales: number;
+};
+
+export type AdminDashboardDaily = {
+  days: DashboardDailyPoint[];
+};

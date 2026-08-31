@@ -1,5 +1,6 @@
 import { Commonloader } from "@/components/common/Loader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DashboardCharts } from "@/components/admin/dashboard/dashboard-charts";
 import { useAdminDashboardLiteStore } from "@/features/admin/dashboard/store";
 import { formatPrice } from "@/lib/utils";
 import {
@@ -82,27 +83,33 @@ function AdminDashboard() {
         {loading ? (
           <Commonloader />
         ) : (
-          <div className={gridClass}>
-            {statsItems.map((item) => {
-              const Icon = item.icon;
-              const value = stats[item.key];
-              return (
-                <Card key={item.key} className={statCardClass}>
-                  <CardContent className={statContentClass}>
-                    <div className={iconWrapClass}>
-                      <Icon className={iconClass} />
-                    </div>
-                    <div>
-                      <p className={statLabelClass}>{item.label}</p>
-                      <p className={statValueClass}>
-                        {item.key === "totalSales" ? formatPrice(value) : value}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+          <>
+            <div className={gridClass}>
+              {statsItems.map((item) => {
+                const Icon = item.icon;
+                const value = stats[item.key];
+                return (
+                  <Card key={item.key} className={statCardClass}>
+                    <CardContent className={statContentClass}>
+                      <div className={iconWrapClass}>
+                        <Icon className={iconClass} />
+                      </div>
+                      <div>
+                        <p className={statLabelClass}>{item.label}</p>
+                        <p className={statValueClass}>
+                          {item.key === "totalSales"
+                            ? formatPrice(value)
+                            : value}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+
+            <DashboardCharts />
+          </>
         )}
       </div>
     </div>
