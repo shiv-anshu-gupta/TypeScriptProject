@@ -16,20 +16,20 @@ import { getAdminDashboardDaily } from "@/features/admin/dashboard/api";
 import type { DashboardDailyPoint } from "@/features/admin/dashboard/types";
 import { formatPrice } from "@/lib/utils";
 
-// One accent hue (the brand primary) — single-series charts, so no categorical
-// palette to validate. Text/grid use recessive ink tokens; everything reads
-// from CSS vars so light/dark both work.
-const ACCENT = "var(--primary, #3c5a64)";
-const GRID = "var(--border, #e5e7eb)";
-const AXIS = "var(--muted-foreground, #6b7280)";
+// One accent hue (matches the admin's brand primary). Concrete hex values, not
+// CSS vars — recharts renders these as SVG attributes, where var() does not
+// resolve, so vars would leave marks uncolored/invisible.
+const ACCENT = "#c026d3";
+const GRID = "#e5e7eb";
+const AXIS = "#6b7280";
 
 const tooltipStyle: React.CSSProperties = {
-  background: "var(--card, #fff)",
+  background: "#ffffff",
   border: `1px solid ${GRID}`,
   borderRadius: 8,
   fontSize: 12,
   padding: "6px 10px",
-  color: "var(--foreground, #111)",
+  color: "#111827",
   boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
 };
 
@@ -50,7 +50,7 @@ function ChartCard({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-[200px] w-full">{children}</div>
+        <div style={{ width: "100%", height: 220 }}>{children}</div>
       </CardContent>
     </Card>
   );
@@ -88,7 +88,7 @@ export function DashboardCharts() {
     <div className="mt-4 grid gap-4 lg:grid-cols-2">
       {/* Orders per day — magnitude over time → bars */}
       <ChartCard title="Orders per day (last 7 days)">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height={220}>
           <BarChart
             data={days}
             margin={{ top: 8, right: 8, left: -18, bottom: 0 }}
@@ -125,7 +125,7 @@ export function DashboardCharts() {
 
       {/* Sales per day — change over time → area line */}
       <ChartCard title="Sales per day (₹, last 7 days)">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height={220}>
           <AreaChart data={days} margin={{ top: 8, right: 8, left: -6, bottom: 0 }}>
             <defs>
               <linearGradient id="salesFill" x1="0" y1="0" x2="0" y2="1">
