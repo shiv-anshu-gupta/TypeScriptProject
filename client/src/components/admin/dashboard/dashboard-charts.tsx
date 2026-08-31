@@ -109,9 +109,9 @@ export function DashboardCharts() {
               width={28}
             />
             <Tooltip
-              cursor={{ fill: "var(--muted, #f3f4f6)", opacity: 0.4 }}
+              cursor={{ fill: "#f3f4f6", opacity: 0.4 }}
               contentStyle={tooltipStyle}
-              formatter={(value: number) => [value, "Orders"]}
+              formatter={(value) => [value, "Orders"]}
             />
             <Bar
               dataKey="orders"
@@ -149,7 +149,7 @@ export function DashboardCharts() {
             />
             <Tooltip
               contentStyle={tooltipStyle}
-              formatter={(value: number) => [formatPrice(value), "Sales"]}
+              formatter={(value) => [formatPrice(Number(value) || 0), "Sales"]}
             />
             <Area
               type="monotone"
