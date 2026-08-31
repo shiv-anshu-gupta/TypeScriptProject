@@ -8,7 +8,6 @@ import { AdminLayout } from "./components/layout/AdminLayout";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminProducts from "./pages/admin/Products";
 import AdminCoupons from "./pages/admin/Promos";
-import AdminOrders from "./pages/admin/Orders";
 import AdminGroceryLists from "./pages/admin/GroceryLists";
 import AdminMessages from "./pages/admin/Messages";
 import AdminSettings from "./pages/admin/Settings";
@@ -70,10 +69,6 @@ export const router = createBrowserRouter([
               {
                 path: "coupons",
                 element: <AdminCoupons />,
-              },
-              {
-                path: "orders",
-                element: <AdminOrders />,
               },
               {
                 path: "grocery-lists",

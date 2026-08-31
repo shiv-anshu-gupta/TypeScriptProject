@@ -7,7 +7,8 @@ const fallbackStats: AdminDashboardLite = {
   totalCategories: 0,
   totalSales: 0,
   totalOrders: 0,
-  totalReturnedOrders: 0,
+  pendingOrders: 0,
+  completedOrders: 0,
 };
 
 type AdminDashboardStore = {

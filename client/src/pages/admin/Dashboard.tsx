@@ -4,14 +4,35 @@ import { useAdminDashboardLiteStore } from "@/features/admin/dashboard/store";
 import { formatPrice } from "@/lib/utils";
 import {
   Boxes,
+  CheckCircle2,
+  Clock,
   IndianRupee,
   Layers3,
-  PackageCheck,
-  RotateCcw,
+  ClipboardList,
 } from "lucide-react";
 import { useEffect } from "react";
 
 const statsItems = [
+  {
+    key: "totalOrders",
+    label: "Total orders",
+    icon: ClipboardList,
+  },
+  {
+    key: "pendingOrders",
+    label: "Pending (to price)",
+    icon: Clock,
+  },
+  {
+    key: "completedOrders",
+    label: "Completed orders",
+    icon: CheckCircle2,
+  },
+  {
+    key: "totalSales",
+    label: "Total sales",
+    icon: IndianRupee,
+  },
   {
     key: "totalProducts",
     label: "Total products",
@@ -21,21 +42,6 @@ const statsItems = [
     key: "totalCategories",
     label: "Total categories",
     icon: Layers3,
-  },
-  {
-    key: "totalSales",
-    label: "Total sales",
-    icon: IndianRupee,
-  },
-  {
-    key: "totalOrders",
-    label: "Total orders",
-    icon: PackageCheck,
-  },
-  {
-    key: "totalReturnedOrders",
-    label: "Returned orders",
-    icon: RotateCcw,
   },
 ] as const;
 
