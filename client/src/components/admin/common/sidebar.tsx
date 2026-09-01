@@ -19,8 +19,8 @@ type AdminNavItem = {
 // Ordered by how often the shopkeeper needs them: their daily job is pricing
 // and fulfilling grocery lists + orders, so those sit right under Dashboard.
 export const adminNavItems: AdminNavItem[] = [
-  { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { label: "Grocery lists", href: "/admin/grocery-lists", icon: ClipboardList },
+  { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   { label: "Messages", href: "/admin/messages", icon: MessagesSquare },
   { label: "Products", href: "/admin/products", icon: Package },
   { label: "Coupons", href: "/admin/coupons", icon: BadgePercent },

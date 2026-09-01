@@ -59,7 +59,13 @@ export const router = createBrowserRouter([
             element: <AdminLayout />,
             children: [
               {
+                // Grocery lists is the shop's most-used page — land there by
+                // default so the owner doesn't click through the dashboard.
                 index: true,
+                element: <Navigate to="/admin/grocery-lists" replace />,
+              },
+              {
+                path: "dashboard",
                 element: <AdminDashboard />,
               },
               {
