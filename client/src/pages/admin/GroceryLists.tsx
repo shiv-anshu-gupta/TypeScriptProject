@@ -35,6 +35,7 @@ function AdminGroceryLists() {
     markPaid,
     setItemAvailability,
     addItem,
+    editItem,
     statusTab,
     setStatusTab,
     statusCounts,
@@ -155,6 +156,9 @@ function AdminGroceryLists() {
                   }
                   onAddItem={(name, quantity) =>
                     void addItem(list._id, name, quantity)
+                  }
+                  onEditItem={(index, name, quantity) =>
+                    void editItem(list._id, index, name, quantity)
                   }
                 />
               ))}

@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Check, Languages, Plus, Share2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Check, Languages, Pencil, Plus, Share2, X } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -80,6 +80,7 @@ type GroceryListCardProps = {
   onMarkPaid: () => void;
   onToggleAvailable: (index: number, available: boolean) => void;
   onAddItem: (name: string, quantity: string) => void;
+  onEditItem: (index: number, name: string, quantity: string) => void;
 };
 
 function GroceryListCard({
@@ -95,9 +96,27 @@ function GroceryListCard({
   onMarkPaid,
   onToggleAvailable,
   onAddItem,
+  onEditItem,
 }: GroceryListCardProps) {
   const [newName, setNewName] = useState("");
   const [newQty, setNewQty] = useState("");
+
+  // Inline edit of an existing item's name / quantity.
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editQty, setEditQty] = useState("");
+
+  const startEdit = (index: number, name: string, quantity: string) => {
+    setEditingIndex(index);
+    setEditName(name);
+    setEditQty(quantity);
+  };
+  const cancelEdit = () => setEditingIndex(null);
+  const submitEdit = () => {
+    if (editingIndex === null || !editName.trim()) return;
+    onEditItem(editingIndex, editName, editQty);
+    setEditingIndex(null);
+  };
 
   const submitNewItem = () => {
     if (!newName.trim()) return;
@@ -174,6 +193,23 @@ function GroceryListCard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showBoth, namesKey]);
 
+  // When the worker has the Hindi+English view on, share the translated names
+  // too (so a shared/WhatsApp'd order isn't stuck in the original language).
+  const shareNames = useMemo(() => {
+    if (!showBoth) return undefined;
+    return list.items.map((item, index) => {
+      const orig = item.name.trim().toLowerCase();
+      const forms = [hiNames[index], enNames[index]]
+        .filter((v): v is string => Boolean(v))
+        .filter(
+          (v, i, a) =>
+            a.findIndex((x) => x.toLowerCase() === v.toLowerCase()) === i,
+        )
+        .filter((v) => v.trim().toLowerCase() !== orig);
+      return forms.length ? `${item.name} (${forms.join(" · ")})` : item.name;
+    });
+  }, [showBoth, hiNames, enNames, list.items]);
+
   // How far along the flow this list is. -1 for "received" (not priced yet).
   const currentIndex = STATUS_FLOW.indexOf(list.status as FlowStatus);
 
@@ -230,7 +266,7 @@ function GroceryListCard({
             variant="outline"
             size="sm"
             className="gap-1.5"
-            onClick={() => void shareList(list)}
+            onClick={() => void shareList(list, shareNames)}
           >
             <Share2 className="h-3.5 w-3.5" />
             Share
@@ -277,6 +313,60 @@ function GroceryListCard({
           {list.items.map((item, index) => {
             const isPacked = packed.has(index);
             const isUnavailable = item.available === false;
+
+            // Inline edit form for this row's name / quantity.
+            if (editingIndex === index) {
+              return (
+                <div
+                  key={`${list._id}-${index}`}
+                  className="flex flex-wrap items-center gap-2 border-b border-border/40 pb-2 last:border-0 last:pb-0"
+                >
+                  <span className={itemIndexClass}>{index + 1}.</span>
+                  <Input
+                    autoFocus
+                    placeholder="Item name"
+                    className="min-w-0 flex-1"
+                    value={editName}
+                    onChange={(event) => setEditName(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        submitEdit();
+                      }
+                    }}
+                  />
+                  <Input
+                    placeholder="Qty"
+                    className="w-20"
+                    value={editQty}
+                    onChange={(event) => setEditQty(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        submitEdit();
+                      }
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={saving || !editName.trim()}
+                    onClick={submitEdit}
+                  >
+                    Save
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={cancelEdit}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              );
+            }
+
             return (
               <div
                 key={`${list._id}-${index}`}
@@ -372,6 +462,20 @@ function GroceryListCard({
                       />
                     </div>
                   )}
+                  {!isClosed ? (
+                    <button
+                      type="button"
+                      disabled={saving}
+                      onClick={() =>
+                        startEdit(index, item.name, item.quantity)
+                      }
+                      title="Edit item name / quantity"
+                      className="flex shrink-0 items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground transition-colors hover:border-primary/50 disabled:opacity-50"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                      Edit
+                    </button>
+                  ) : null}
                   <button
                     type="button"
                     disabled={saving}

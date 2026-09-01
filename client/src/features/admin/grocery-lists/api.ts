@@ -50,6 +50,17 @@ export async function setAdminGroceryListItemAvailability(
   );
 }
 
+export async function updateAdminGroceryListItem(
+  listId: string,
+  index: number,
+  body: AddGroceryListItemBody,
+) {
+  return apiPatch<AdminGroceryListsResponse, AddGroceryListItemBody>(
+    `/admin/grocery-lists/${listId}/items/${index}`,
+    body,
+  );
+}
+
 export async function addAdminGroceryListItem(
   listId: string,
   body: AddGroceryListItemBody,

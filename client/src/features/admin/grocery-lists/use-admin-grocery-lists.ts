@@ -10,6 +10,7 @@ import {
   markAdminGroceryListPaid,
   setAdminGroceryListItemAvailability,
   setAdminGroceryListPrices,
+  updateAdminGroceryListItem,
   updateAdminGroceryListStatus,
 } from "./api";
 import { notifyNewOrders } from "@/lib/order-alert";
@@ -238,6 +239,27 @@ export function useAdminGroceryLists() {
     }
   }
 
+  // Edit an existing item's name / quantity (price drafts kept — same count).
+  async function editItem(
+    listId: string,
+    index: number,
+    name: string,
+    quantity: string,
+  ) {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    try {
+      setSavingListId(listId);
+      const response = await updateAdminGroceryListItem(listId, index, {
+        name: trimmed,
+        quantity: quantity.trim(),
+      });
+      setLists((response ?? { items: [] }).items);
+    } finally {
+      setSavingListId("");
+    }
+  }
+
   async function changeStatus(
     listId: string,
     status: UpdateGroceryListStatusBody["status"],
@@ -305,5 +327,6 @@ export function useAdminGroceryLists() {
     markPaid,
     setItemAvailability,
     addItem,
+    editItem,
   };
 }

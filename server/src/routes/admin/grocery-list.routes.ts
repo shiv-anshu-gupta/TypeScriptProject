@@ -361,6 +361,53 @@ adminGroceryListRouter.patch(
   }),
 );
 
+// Shop edits an item's name / quantity — fix a typo, clarify a vague quantity,
+// or correct what the customer sent. Price / rate / stock are preserved; the
+// customer's badge re-lights so they see the change next time they open it.
+adminGroceryListRouter.patch(
+  "/grocery-lists/:listId/items/:index",
+  asyncHandler(async (req: Request, res: Response) => {
+    const listId = String(req.params.listId || "").trim();
+    const index = Number(req.params.index);
+
+    requireText(listId, "List id is required");
+    if (!Number.isInteger(index) || index < 0) {
+      throw new AppError(400, "Valid item index is required");
+    }
+
+    const list = await GroceryList.findById(listId);
+    const foundList = requireFound(list, "List not found", 404);
+
+    if (foundList.status === "cancelled" || foundList.status === "completed") {
+      throw new AppError(400, "This order is already closed");
+    }
+    if (index >= foundList.items.length) {
+      throw new AppError(404, "Item not found in this list");
+    }
+
+    const existing = foundList.items[index];
+    const name = String(req.body.name ?? existing.name).trim();
+    const quantity = String(req.body.quantity ?? existing.quantity).trim();
+    requireText(name, "Item name is required");
+
+    const items: GroceryListItem[] = foundList.items.map(
+      (item: GroceryListItem, i: number) => ({
+        name: i === index ? name : item.name,
+        quantity: i === index ? quantity : item.quantity,
+        rate: item.rate ?? 0,
+        price: item.price,
+        available: item.available !== false,
+      }),
+    );
+
+    foundList.set("items", items);
+    foundList.seenByCustomer = false;
+    await foundList.save();
+
+    res.json(ok({ items: await getAllGroceryLists() }));
+  }),
+);
+
 // Shop adds an item the customer mentioned in person / on the phone / later.
 adminGroceryListRouter.post(
   "/grocery-lists/:listId/items",
