@@ -11,6 +11,10 @@ import {
   stepFor,
 } from "@/features/customer/draft-list/quantity";
 
+// Hard ceiling on any single line's quantity — a grocery order line never
+// needs more than this, and it stops a stray "1000" from a fat-finger.
+const MAX = 100;
+
 type QuantityControlProps = {
   unit?: string;
   unitValue?: number;
@@ -32,13 +36,17 @@ export function QuantityControl({
   const [text, setText] = useState(String(value));
 
   const commit = (next: number) => {
-    const clamped = roundValue(Math.max(min, next));
+    const clamped = roundValue(Math.min(MAX, Math.max(min, next)));
     setText(String(clamped));
     onChange(clamped);
   };
 
   const dec = () => commit(value - step);
   const inc = () => commit(value + step);
+
+  // Bounds — disable the stepper button that would go past the limit.
+  const atMin = roundValue(value) <= min;
+  const atMax = roundValue(value) >= MAX;
 
   const chips = countable ? [] : quickChips(unit);
 
@@ -78,8 +86,13 @@ export function QuantityControl({
       <View className="flex-row items-center justify-between rounded-xl border border-border bg-card p-2">
         <Pressable
           onPress={dec}
+          disabled={atMin}
           hitSlop={6}
-          className="h-11 w-11 items-center justify-center rounded-lg bg-secondary active:opacity-70"
+          className={
+            atMin
+              ? "h-11 w-11 items-center justify-center rounded-lg bg-secondary opacity-40"
+              : "h-11 w-11 items-center justify-center rounded-lg bg-secondary active:opacity-70"
+          }
         >
           <Feather name="minus" size={20} color="#1f2a2e" />
         </Pressable>
@@ -93,10 +106,12 @@ export function QuantityControl({
             <TextInput
               value={text}
               onChangeText={(t) => {
-                // Allow free typing; commit a valid number as it goes.
+                // Allow free typing; commit a valid number (capped at MAX).
                 setText(t);
                 const parsed = Number(t);
-                if (!Number.isNaN(parsed) && parsed > 0) onChange(parsed);
+                if (!Number.isNaN(parsed) && parsed > 0) {
+                  onChange(Math.min(MAX, parsed));
+                }
               }}
               onBlur={() => {
                 const parsed = Number(text);
@@ -119,8 +134,13 @@ export function QuantityControl({
 
         <Pressable
           onPress={inc}
+          disabled={atMax}
           hitSlop={6}
-          className="h-11 w-11 items-center justify-center rounded-lg bg-secondary active:opacity-70"
+          className={
+            atMax
+              ? "h-11 w-11 items-center justify-center rounded-lg bg-secondary opacity-40"
+              : "h-11 w-11 items-center justify-center rounded-lg bg-secondary active:opacity-70"
+          }
         >
           <Feather name="plus" size={20} color="#1f2a2e" />
         </Pressable>
