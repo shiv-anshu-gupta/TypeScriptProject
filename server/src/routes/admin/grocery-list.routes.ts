@@ -392,10 +392,11 @@ adminGroceryListRouter.patch(
     }
 
     const existing = foundList.items[index];
-    const name = cleanField(req.body.name ?? existing.name, MAX_NAME_LEN);
+    const name = cleanField(req.body.name ?? existing.name, MAX_NAME_LEN, true);
     const quantity = cleanField(
       req.body.quantity ?? existing.quantity,
       MAX_QTY_LEN,
+      true,
     );
     requireText(name, "Item name is required");
 
@@ -422,8 +423,8 @@ adminGroceryListRouter.post(
   "/grocery-lists/:listId/items",
   asyncHandler(async (req: Request, res: Response) => {
     const listId = String(req.params.listId || "").trim();
-    const name = cleanField(req.body.name, MAX_NAME_LEN);
-    const quantity = cleanField(req.body.quantity, MAX_QTY_LEN);
+    const name = cleanField(req.body.name, MAX_NAME_LEN, true);
+    const quantity = cleanField(req.body.quantity, MAX_QTY_LEN, true);
 
     requireText(listId, "List id is required");
     requireText(name, "Item name is required");

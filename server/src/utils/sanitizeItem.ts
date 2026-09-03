@@ -28,20 +28,41 @@ function stripDangerousChars(s: string): string {
   return out;
 }
 
+// Allowlist for item name / quantity: keep only letters (ANY language, so
+// English AND Hindi/Devanagari both work), digits, spaces, and the small set of
+// punctuation real product names / quantities use: . , & ' - / ( ) %. Every
+// other "special character" ($ { } < > " ; | = * \ ! @ # ? etc.) is removed.
+// \p{M} (combining marks) is essential: Hindi vowel signs / matras are marks,
+// not letters — dropping them would mangle Devanagari words (चावल -> चवल).
+const DISALLOWED_SPECIALS = /[^\p{L}\p{M}\p{N}\s.,&'\-/()%]/gu;
+
+function stripSpecialChars(s: string): string {
+  return s.replace(DISALLOWED_SPECIALS, "");
+}
+
 // Coerce ANY value to a safe, bounded plain string.
 //   - Only real primitives become text; objects / arrays (e.g. a `{ $gt: "" }`
 //     injection payload) collapse to "" so they can never reach a query as an
 //     operator, and never get stored as `[object Object]`.
 //   - Strips control / zero-width / bidi characters.
+//   - With `specialsOnly` on (item name / quantity), also removes every
+//     special character outside the grocery allowlist.
 //   - Collapses whitespace, trims, and hard-caps the length.
-export function cleanField(value: unknown, maxLen: number): string {
+export function cleanField(
+  value: unknown,
+  maxLen: number,
+  blockSpecials = false,
+): string {
   let s: string;
   if (typeof value === "string") s = value;
   else if (typeof value === "number" || typeof value === "boolean")
     s = String(value);
   else s = ""; // object / array / null / undefined -> drop it
 
-  return stripDangerousChars(s).replace(/\s+/g, " ").trim().slice(0, maxLen);
+  s = stripDangerousChars(s);
+  if (blockSpecials) s = stripSpecialChars(s);
+
+  return s.replace(/\s+/g, " ").trim().slice(0, maxLen);
 }
 
 // Clean + bound a whole incoming items array. Drops empty-name rows and rejects
@@ -60,8 +81,8 @@ export function cleanItems(
     .map((entry) => {
       const obj = (entry ?? {}) as Record<string, unknown>;
       return {
-        name: cleanField(obj.name, MAX_NAME_LEN),
-        quantity: cleanField(obj.quantity, MAX_QTY_LEN),
+        name: cleanField(obj.name, MAX_NAME_LEN, true),
+        quantity: cleanField(obj.quantity, MAX_QTY_LEN, true),
       };
     })
     .filter((item) => item.name.length > 0);

@@ -17,6 +17,14 @@ import { translateItems } from "@/lib/translate";
 import GroceryListChat from "./grocery-list-chat";
 import PriceCalculator from "./price-calculator";
 
+// Strip "special characters" from item name / quantity — keep letters (English
+// AND Hindi), digits, spaces and the punctuation real names use. Mirrors the
+// server allowlist so what the shopkeeper types matches what's stored.
+// \p{M} keeps Hindi vowel signs (matras) — they're marks, not letters, so
+// omitting them would corrupt Devanagari words.
+const stripSpecials = (value: string) =>
+  value.replace(/[^\p{L}\p{M}\p{N}\s.,&'\-/()%]/gu, "");
+
 const cardClass = "border-border bg-card shadow-sm";
 const headerRowClass = "flex flex-wrap items-start justify-between gap-3";
 const codeClass = "text-sm font-semibold text-foreground";
@@ -328,7 +336,7 @@ function GroceryListCard({
                     maxLength={60}
                     className="min-w-0 flex-1"
                     value={editName}
-                    onChange={(event) => setEditName(event.target.value)}
+                    onChange={(event) => setEditName(stripSpecials(event.target.value))}
                     onKeyDown={(event) => {
                       if (event.key === "Enter") {
                         event.preventDefault();
@@ -341,7 +349,7 @@ function GroceryListCard({
                     maxLength={20}
                     className="w-20"
                     value={editQty}
-                    onChange={(event) => setEditQty(event.target.value)}
+                    onChange={(event) => setEditQty(stripSpecials(event.target.value))}
                     onKeyDown={(event) => {
                       if (event.key === "Enter") {
                         event.preventDefault();
@@ -510,7 +518,7 @@ function GroceryListCard({
               maxLength={60}
               className="min-w-0 flex-1"
               value={newName}
-              onChange={(event) => setNewName(event.target.value)}
+              onChange={(event) => setNewName(stripSpecials(event.target.value))}
               onKeyDown={(event) => {
                 if (event.key === "Enter") {
                   event.preventDefault();
@@ -523,7 +531,7 @@ function GroceryListCard({
               maxLength={20}
               className="w-20"
               value={newQty}
-              onChange={(event) => setNewQty(event.target.value)}
+              onChange={(event) => setNewQty(stripSpecials(event.target.value))}
               onKeyDown={(event) => {
                 if (event.key === "Enter") {
                   event.preventDefault();

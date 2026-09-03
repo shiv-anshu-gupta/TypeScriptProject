@@ -7,6 +7,15 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 // Persisted to AsyncStorage so a half-written list survives an app restart.
 
 const STORAGE_KEY = "draft_grocery_list_rows";
+
+// Block "special characters" as the customer types. Letters (English AND
+// Hindi), digits, spaces and the punctuation real names use (. , & ' - / ( ) %)
+// stay; the dangerous ASCII specials are removed. A blocklist (not a \p{L}
+// allowlist) so it's safe on Hermes; the server enforces the strict allowlist.
+const DISALLOWED_SPECIALS = /[!"#$*+:;<=>?@^_`{|}~[\]\\]/g;
+function stripSpecials(value: string): string {
+  return value.replace(DISALLOWED_SPECIALS, "");
+}
 // Start compact; the list auto-grows a fresh blank line as each one is filled
 // (see withTrailingBlank), so there is no upper limit on items.
 const INITIAL_ROWS = 8;
@@ -82,13 +91,14 @@ export const useDraftListStore = create<DraftListStore>((set, get) => ({
   },
 
   updateRow: (id, key, value) => {
+    const clean = stripSpecials(value);
     set((state) => {
       let counter = state.nextId;
       const takeId = () => counter++;
 
       const next = withTrailingBlank(
         state.rows.map((row) =>
-          row.id === id ? { ...row, [key]: value } : row,
+          row.id === id ? { ...row, [key]: clean } : row,
         ),
         takeId,
       );
