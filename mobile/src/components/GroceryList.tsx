@@ -73,6 +73,7 @@ export function GroceryList() {
                 value={row.name ?? ""}
                 onChangeText={(text) => updateRow(row.id, "name", text)}
                 placeholderTextColor="#b8a89a"
+                maxLength={60}
                 style={{ flex: 3 }}
                 className="h-full px-3 text-sm text-[#26303a]"
               />
@@ -85,6 +86,7 @@ export function GroceryList() {
                 value={row.quantity ?? ""}
                 onChangeText={(text) => updateRow(row.id, "quantity", text)}
                 placeholderTextColor="#b8a89a"
+                maxLength={20}
                 style={{ flex: 1 }}
                 className="h-full px-3 text-sm text-center text-[#26303a]"
               />

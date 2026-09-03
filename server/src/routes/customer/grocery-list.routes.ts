@@ -11,14 +11,15 @@ import {
   GroceryListItem,
 } from "../../models/GroceryList";
 import { Message, MessageDocument } from "../../models/Message";
+import {
+  cleanField,
+  cleanItems,
+  MAX_ITEMS_PER_LIST,
+  MAX_NOTE_LEN,
+} from "../../utils/sanitizeItem";
 import { razorpay, toSubUnits } from "../../utils/razorpay";
 import { notifyAdmins } from "../../utils/webPush";
 import { sendTelegram } from "../../utils/telegram";
-
-type IncomingItem = {
-  name?: string;
-  quantity?: string;
-};
 
 // Normalise an Indian mobile number to 10 digits (strips +91 / leading 0 /
 // spaces). Returns "" if it isn't a valid mobile.
@@ -85,21 +86,18 @@ customerGroceryListRouter.post(
     }
     const customerPhone = dbUser.phone || phoneInput || "";
 
-    const incomingItems = Array.isArray(req.body.items)
-      ? (req.body.items as IncomingItem[])
-      : [];
+    // Sanitize + hard-cap every field the customer typed. cleanItems drops
+    // empty rows, strips control / injection characters, and rejects an
+    // over-long name / quantity / an absurd number of items.
+    const cleaned = cleanItems(req.body.items);
+    const note = cleanField(req.body.note, MAX_NOTE_LEN);
 
-    const note = String(req.body.note || "").trim();
-
-    // Keep only rows the customer actually filled in.
-    const items = incomingItems
-      .map((item) => ({
-        name: String(item.name || "").trim(),
-        quantity: String(item.quantity || "").trim(),
-        price: 0,
-        available: true,
-      }))
-      .filter((item) => item.name.length > 0);
+    const items = cleaned.map((item) => ({
+      name: item.name,
+      quantity: item.quantity,
+      price: 0,
+      available: true,
+    }));
 
     if (!items.length) {
       throw new AppError(400, "Add at least one item to your list");
@@ -129,6 +127,15 @@ customerGroceryListRouter.post(
         })),
         ...items,
       ];
+
+      // Never let a list grow without bound (repeated sends into the same
+      // 6h window). Beyond the cap, ask them to start a fresh order.
+      if (mergedItems.length > MAX_ITEMS_PER_LIST) {
+        throw new AppError(
+          400,
+          `This list already has too many items (max ${MAX_ITEMS_PER_LIST}).`,
+        );
+      }
 
       mergeTarget.set("items", mergedItems);
       mergeTarget.totalItems = mergedItems.length;

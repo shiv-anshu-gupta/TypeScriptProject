@@ -43,7 +43,9 @@ async function mainEntryFunction() {
     }),
   );
 
-  app.use(express.json());
+  // Cap request bodies — a grocery list / chat message is tiny, so 100kb is
+  // plenty and stops a multi-MB payload from ever reaching the DB layer.
+  app.use(express.json({ limit: "100kb" }));
   app.use(morgan("dev"));
   app.use(clerkMiddleware());
 

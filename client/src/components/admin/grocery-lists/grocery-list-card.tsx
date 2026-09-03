@@ -325,6 +325,7 @@ function GroceryListCard({
                   <Input
                     autoFocus
                     placeholder="Item name"
+                    maxLength={60}
                     className="min-w-0 flex-1"
                     value={editName}
                     onChange={(event) => setEditName(event.target.value)}
@@ -337,6 +338,7 @@ function GroceryListCard({
                   />
                   <Input
                     placeholder="Qty"
+                    maxLength={20}
                     className="w-20"
                     value={editQty}
                     onChange={(event) => setEditQty(event.target.value)}
@@ -505,6 +507,7 @@ function GroceryListCard({
           <div className="flex flex-wrap items-center gap-2">
             <Input
               placeholder="Add an item (e.g. Aata)"
+              maxLength={60}
               className="min-w-0 flex-1"
               value={newName}
               onChange={(event) => setNewName(event.target.value)}
@@ -517,6 +520,7 @@ function GroceryListCard({
             />
             <Input
               placeholder="Qty"
+              maxLength={20}
               className="w-20"
               value={newQty}
               onChange={(event) => setNewQty(event.target.value)}

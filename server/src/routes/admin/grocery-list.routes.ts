@@ -11,6 +11,12 @@ import {
   GroceryListStatus,
 } from "../../models/GroceryList";
 import { Message, MessageDocument } from "../../models/Message";
+import {
+  cleanField,
+  MAX_ITEMS_PER_LIST,
+  MAX_NAME_LEN,
+  MAX_QTY_LEN,
+} from "../../utils/sanitizeItem";
 import { notifyUser } from "../../utils/push";
 
 // What the customer's phone shows when the shop moves the list along.
@@ -386,8 +392,11 @@ adminGroceryListRouter.patch(
     }
 
     const existing = foundList.items[index];
-    const name = String(req.body.name ?? existing.name).trim();
-    const quantity = String(req.body.quantity ?? existing.quantity).trim();
+    const name = cleanField(req.body.name ?? existing.name, MAX_NAME_LEN);
+    const quantity = cleanField(
+      req.body.quantity ?? existing.quantity,
+      MAX_QTY_LEN,
+    );
     requireText(name, "Item name is required");
 
     const items: GroceryListItem[] = foundList.items.map(
@@ -413,8 +422,8 @@ adminGroceryListRouter.post(
   "/grocery-lists/:listId/items",
   asyncHandler(async (req: Request, res: Response) => {
     const listId = String(req.params.listId || "").trim();
-    const name = String(req.body.name || "").trim();
-    const quantity = String(req.body.quantity || "").trim();
+    const name = cleanField(req.body.name, MAX_NAME_LEN);
+    const quantity = cleanField(req.body.quantity, MAX_QTY_LEN);
 
     requireText(listId, "List id is required");
     requireText(name, "Item name is required");
@@ -424,6 +433,13 @@ adminGroceryListRouter.post(
 
     if (foundList.status === "cancelled" || foundList.status === "completed") {
       throw new AppError(400, "This order is already closed");
+    }
+
+    if (foundList.items.length >= MAX_ITEMS_PER_LIST) {
+      throw new AppError(
+        400,
+        `This list already has the maximum ${MAX_ITEMS_PER_LIST} items.`,
+      );
     }
 
     const items: GroceryListItem[] = [
