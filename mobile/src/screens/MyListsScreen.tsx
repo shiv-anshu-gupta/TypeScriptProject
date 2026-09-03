@@ -22,10 +22,9 @@ import type {
   GroceryListStatus,
 } from "@/features/customer/grocery-list/types";
 import { useDraftListStore } from "@/features/customer/draft-list/store";
-import { useSendDraft } from "@/features/customer/draft-list/use-send-draft";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { PhonePrompt } from "@/components/PhonePrompt";
+import { GroceryList } from "@/components/GroceryList";
 import { ChatSheet } from "@/components/ChatSheet";
 import { formatPrice } from "@/lib/utils";
 
@@ -317,24 +316,20 @@ function ListCard({ list }: { list: CustomerGroceryList }) {
 }
 
 // The customer's not-yet-sent draft (built on the Home paper and/or via
-// "Add to list" on products). Shown here too, because after adding products
-// from the Shop this is where people naturally come to send.
+// "Add to list" on products). Shown here as the SAME editable paper as Home,
+// so items can be edited / added / removed and sent without going back Home.
 function DraftCard() {
   const { t } = useTranslation();
-  const {
-    filledRows,
-    submitting,
-    send,
-    phonePromptOpen,
-    closePhonePrompt,
-    submitWithPhone,
-  } = useSendDraft();
+  const filledCount = useDraftListStore(
+    (state) =>
+      state.rows.filter((row) => (row.name ?? "").trim().length > 0).length,
+  );
 
-  if (!filledRows.length) return null;
+  if (!filledCount) return null;
 
   return (
-    <View className="gap-3 rounded-2xl border border-dashed border-primary/40 bg-card p-4">
-      <View className="flex-row items-center justify-between">
+    <View className="gap-2 rounded-2xl border border-dashed border-primary/40 bg-card py-3">
+      <View className="flex-row items-center justify-between px-3">
         <Text className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           {t("lists.newListLabel")}
         </Text>
@@ -345,35 +340,9 @@ function DraftCard() {
         </Badge>
       </View>
 
-      <View className="gap-1.5">
-        {filledRows.map((row, index) => (
-          <Text key={row.id} className="text-sm text-foreground">
-            {index + 1}. {row.name.trim()}
-            {(row.quantity ?? "").trim() ? (
-              <Text className="text-muted-foreground">
-                {" "}
-                · {row.quantity.trim()}
-              </Text>
-            ) : null}
-          </Text>
-        ))}
-      </View>
-
-      <Button
-        label={t("home.sendItems", { count: filledRows.length })}
-        loading={submitting}
-        onPress={() => void send()}
-      />
-      <Text className="text-center text-[11px] text-muted-foreground">
-        {t("lists.addMore")}
-      </Text>
-
-      <PhonePrompt
-        open={phonePromptOpen}
-        submitting={submitting}
-        onClose={closePhonePrompt}
-        onSubmit={submitWithPhone}
-      />
+      {/* Same editable draft "paper" used on Home — edit names/quantities,
+          add more lines, and send, all from the Lists screen. */}
+      <GroceryList />
     </View>
   );
 }
@@ -448,6 +417,8 @@ export function MyListsScreen() {
         <RefreshControl refreshing={loading} onRefresh={() => void loadLists()} />
       }
       showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="on-drag"
       ListHeaderComponent={
         <View className="gap-3">
           <Text className="text-2xl font-semibold text-foreground">
