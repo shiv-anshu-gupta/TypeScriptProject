@@ -2,9 +2,11 @@ import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { Image } from "expo-image";
 import { Feather } from "@expo/vector-icons";
+import { useAuth } from "@clerk/clerk-expo";
 import { useTranslation } from "react-i18next";
 
 import { useDraftListStore } from "@/features/customer/draft-list/store";
+import { useCustomerWishlistStore } from "@/features/customer/wishlist/store";
 import { toast } from "@/lib/toast";
 import { formatPack } from "@/lib/utils";
 import { QuantitySheet } from "@/components/QuantitySheet";
@@ -25,11 +27,39 @@ type ProductCardProps = {
 
 export function ProductCard({ product, onPress }: ProductCardProps) {
   const { t } = useTranslation();
+  const { isSignedIn } = useAuth();
   const addProductWithQuantity = useDraftListStore(
     (state) => state.addProductWithQuantity,
   );
   const packLabel = formatPack(product.unit, product.unitValue);
   const [sheetOpen, setSheetOpen] = useState(false);
+
+  // Wishlist heart. Subscribing to `items` (not a derived selector) keeps the
+  // card in sync when the product is saved/removed from anywhere else.
+  const wishlistItems = useCustomerWishlistStore((state) => state.items);
+  const toggleItem = useCustomerWishlistStore((state) => state.toggleItem);
+  const [savingWishlist, setSavingWishlist] = useState(false);
+  const saved = wishlistItems.some((item) => item.productId === product.id);
+
+  const onToggleWishlist = async () => {
+    if (!isSignedIn) {
+      toast.error(t("product.signInToSave"));
+      return;
+    }
+    if (savingWishlist) return;
+
+    try {
+      setSavingWishlist(true);
+      const result = await toggleItem(product.id);
+      toast.success(
+        result === "added" ? t("product.saved") : t("product.removed"),
+      );
+    } catch {
+      toast.error(t("product.wishlistFailed"));
+    } finally {
+      setSavingWishlist(false);
+    }
+  };
 
   return (
     <Pressable
@@ -47,6 +77,30 @@ export function ProductCard({ product, onPress }: ProductCardProps) {
           contentFit="cover"
           transition={200}
         />
+
+        {/* Wishlist heart — same action as the one on the details screen.
+            Top-right so it never collides with the "+" at bottom-right. */}
+        <Pressable
+          onPress={() => void onToggleWishlist()}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={t(saved ? "product.removed" : "product.saved")}
+          className="absolute right-2 top-2 h-9 w-9 items-center justify-center rounded-full bg-card/95 active:opacity-80"
+          style={{
+            elevation: 3,
+            shadowColor: "#000",
+            shadowOpacity: 0.2,
+            shadowRadius: 3,
+            shadowOffset: { width: 0, height: 1 },
+            opacity: savingWishlist ? 0.6 : 1,
+          }}
+        >
+          <Feather
+            name="heart"
+            size={17}
+            color={saved ? "#c0492f" : "#1f2a2e"}
+          />
+        </Pressable>
 
         {/* Quick "add to list" — opens the quantity picker. Nested Pressable
             takes the touch, so tapping it doesn't open the details page. */}

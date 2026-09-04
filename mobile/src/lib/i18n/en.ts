@@ -104,6 +104,10 @@ export const en = {
     addToList: "Add to list",
   },
   product: {
+    saved: "Saved",
+    removed: "Removed",
+    signInToSave: "Sign in to save",
+    wishlistFailed: "Could not update. Please try again.",
     notLoaded: "This product could not be loaded.",
     onlyLeft: "Only {{count}} left",
     inStock: "In stock",

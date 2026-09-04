@@ -108,6 +108,10 @@ export const hi: Translations = {
     addToList: "लिस्ट में जोड़ें",
   },
   product: {
+    saved: "सेव हो गया",
+    removed: "हटा दिया",
+    signInToSave: "सेव करने के लिए साइन इन करें",
+    wishlistFailed: "अपडेट नहीं हो सका। कृपया फिर कोशिश करें।",
     notLoaded: "यह सामान लोड नहीं हो सका।",
     onlyLeft: "सिर्फ़ {{count}} बचे",
     inStock: "उपलब्ध है",

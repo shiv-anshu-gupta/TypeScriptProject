@@ -1,6 +1,10 @@
 import { create } from "zustand";
 import type { CustomerWishlistItem } from "./types";
-import { getCustomerWishlist, removeCustomerWishlistItem } from "./api";
+import {
+  addCustomerWishlist,
+  getCustomerWishlist,
+  removeCustomerWishlistItem,
+} from "./api";
 import { toast } from "@/lib/toast";
 
 type CustomerWishlistStore = {
@@ -10,11 +14,16 @@ type CustomerWishlistStore = {
   setItems: (items: CustomerWishlistItem[]) => void;
   loadWishlist: () => Promise<void>;
   removeItem: (productId: string) => Promise<void>;
+  // Save / unsave any product by id — used by the heart on a product card.
+  // Returns what it did so the caller can show a translated toast; throws on
+  // failure so the caller can revert its optimistic state.
+  toggleItem: (productId: string) => Promise<"added" | "removed">;
+  isSaved: (productId: string) => boolean;
   clear: () => void;
 };
 
 export const useCustomerWishlistStore = create<CustomerWishlistStore>(
-  (set) => ({
+  (set, get) => ({
     items: [],
     isOpen: false,
     setOpen: (value) => set({ isOpen: value }),
@@ -36,6 +45,16 @@ export const useCustomerWishlistStore = create<CustomerWishlistStore>(
       } catch {
         toast.error("Failed to add items to wishlist");
       }
+    },
+    isSaved: (productId) =>
+      get().items.some((item) => item.productId === productId),
+    toggleItem: async (productId) => {
+      const active = get().isSaved(productId);
+      const response = active
+        ? await removeCustomerWishlistItem(productId)
+        : await addCustomerWishlist({ productId });
+      set({ items: response?.items ?? [] });
+      return active ? "removed" : "added";
     },
   }),
 );
