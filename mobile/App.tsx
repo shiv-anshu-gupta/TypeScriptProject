@@ -15,6 +15,7 @@ import { usePushNotifications } from "@/features/customer/push/use-push-notifica
 import { RootNavigator } from "@/navigation/RootNavigator";
 import { Toaster } from "@/components/Toaster";
 import { UpdatePrompt } from "@/components/UpdatePrompt";
+import { StoreUpdatePrompt } from "@/components/StoreUpdatePrompt";
 import { SplashScreen } from "@/screens/SplashScreen";
 import { LanguagePicker } from "@/screens/LanguagePicker";
 import i18n, { getStoredLanguage } from "@/lib/i18n";
@@ -101,6 +102,8 @@ export default function App() {
             <Bootstrap />
             <RootNavigator />
             <UpdatePrompt />
+            {/* Play Store (native release) update prompt — on top of the OTA one */}
+            <StoreUpdatePrompt />
             <Toaster />
             <StatusBar style="dark" />
           </NavigationContainer>

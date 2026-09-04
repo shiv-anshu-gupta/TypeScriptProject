@@ -178,6 +178,12 @@ export const en = {
     title: "A new version is ready ✨",
     body: "A new version is ready — update now to get the latest.",
   },
+  storeUpdate: {
+    title: "Update available 🎉",
+    body: "A new version of sKirana is on the Play Store. Update to get the latest features.",
+    forced: "Please update to continue using sKirana.",
+    cta: "Update from Play Store",
+  },
 };
 
 export type Translations = typeof en;

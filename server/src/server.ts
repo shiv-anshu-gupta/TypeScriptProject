@@ -53,6 +53,21 @@ async function mainEntryFunction() {
     res.status(200).json(ok({ message: "Server is healthy/in running state" }));
   });
 
+  // Public: the app asks "is there a newer Play Store build than the one I'm
+  // running?". Driven by env vars so publishing a new Play release only needs
+  // an env change here — no code deploy:
+  //   APP_LATEST_VERSION -> the version now live on Play, e.g. "1.0.1"
+  //   APP_MIN_VERSION    -> optional; below this the update is MANDATORY
+  app.get("/app-version", (_req, res) => {
+    res.status(200).json(
+      ok({
+        latestVersion: process.env.APP_LATEST_VERSION || "",
+        minVersion: process.env.APP_MIN_VERSION || "",
+        androidPackage: process.env.ANDROID_PACKAGE || "com.skirana.app",
+      }),
+    );
+  });
+
   // auth routes
   app.use("/auth", authRouter);
 
