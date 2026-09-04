@@ -9,6 +9,7 @@ export const en = {
     changeLater: "You can change this anytime in Account.",
   },
   common: {
+    somethingWrong: "Something went wrong. Please try again.",
     save: "Save",
     cancel: "Cancel",
     close: "Close",
@@ -157,6 +158,11 @@ export const en = {
     empty: "Your wishlist is empty.",
   },
   account: {
+    editProfile: "Edit",
+    editTitle: "Edit your details",
+    namePlaceholder: "Your name",
+    nameRequired: "Please enter your name",
+    profileSaved: "Details updated",
     myDetails: "My details",
     mobile: "Mobile",
     email: "Email",

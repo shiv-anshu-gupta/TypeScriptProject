@@ -9,9 +9,16 @@ import { useTranslation } from "react-i18next";
 
 import type { RootStackParamList } from "@/navigation/types";
 import { useCustomerGroceryListStore } from "@/features/customer/grocery-list/store";
+import {
+  getCustomerProfile,
+  updateCustomerProfile,
+  type CustomerProfile,
+} from "@/features/customer/account/api";
 import { Button } from "@/components/ui/Button";
+import { ProfileEditSheet } from "@/components/ProfileEditSheet";
 import { env } from "@/lib/env";
 import { setAppLanguage, type AppLanguage } from "@/lib/i18n";
+import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -148,17 +155,44 @@ export function AccountScreen() {
   const { isSignedIn, signOut } = useAuth();
   const { user } = useUser();
   const [langOpen, setLangOpen] = useState(false);
+  const [profile, setProfile] = useState<CustomerProfile | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const { items, customerPhone, loadLists } = useCustomerGroceryListStore(
     (state) => state,
   );
 
-  // Keep the counters fresh whenever the tab is opened.
+  // Keep the counters and the saved details fresh whenever the tab is opened.
   useFocusEffect(
     useCallback(() => {
-      if (isSignedIn) void loadLists();
+      if (!isSignedIn) return;
+      void loadLists();
+      getCustomerProfile()
+        .then(setProfile)
+        .catch(() => {
+          // offline — fall back to the Clerk / store values below
+        });
     }, [isSignedIn, loadLists]),
   );
+
+  const saveProfile = async (values: { name: string; phone: string }) => {
+    try {
+      setSaving(true);
+      const updated = await updateCustomerProfile(values);
+      setProfile(updated);
+      setEditOpen(false);
+      toast.success(t("account.profileSaved"));
+      // Lists carry the customer's phone, so refresh what the screen shows.
+      void loadLists();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : t("common.somethingWrong"),
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
 
   if (!isSignedIn) {
     return (
@@ -196,8 +230,13 @@ export function AccountScreen() {
     );
   }
 
-  const name = user?.fullName ?? t("account.customer");
-  const emailAddress = user?.primaryEmailAddress?.emailAddress ?? "";
+  // Prefer the saved profile (what the shop actually sees on an order) and
+  // fall back to Clerk / the lists store until it loads.
+  const name =
+    profile?.name || user?.fullName || (t("account.customer") as string);
+  const emailAddress =
+    profile?.email || user?.primaryEmailAddress?.emailAddress || "";
+  const phone = profile?.phone || customerPhone || "";
   const initial = (name || "U").charAt(0).toUpperCase();
 
   // Counters. Cancelled lists are not counted as orders placed.
@@ -265,6 +304,16 @@ export function AccountScreen() {
             </Text>
           ) : null}
         </View>
+        <Pressable
+          onPress={() => setEditOpen(true)}
+          hitSlop={8}
+          className="flex-row items-center gap-1.5 rounded-full bg-card px-3 py-2"
+        >
+          <Feather name="edit-2" size={13} color={PRIMARY} />
+          <Text className="text-xs font-bold text-primary">
+            {t("account.editProfile")}
+          </Text>
+        </Pressable>
       </View>
 
       {/* My details */}
@@ -275,7 +324,7 @@ export function AccountScreen() {
         <InfoRow
           icon={<Feather name="smartphone" size={16} color={PRIMARY} />}
           label={t("account.mobile")}
-          value={customerPhone || t("account.notAdded")}
+          value={phone || t("account.notAdded")}
         />
         <View className="h-px bg-border/60" />
         <InfoRow
@@ -366,6 +415,15 @@ export function AccountScreen() {
           {t("account.signOut")}
         </Text>
       </Pressable>
+
+      <ProfileEditSheet
+        open={editOpen}
+        submitting={saving}
+        initialName={profile?.name || user?.fullName || ""}
+        initialPhone={phone}
+        onClose={() => setEditOpen(false)}
+        onSubmit={(values) => void saveProfile(values)}
+      />
     </ScrollView>
   );
 }

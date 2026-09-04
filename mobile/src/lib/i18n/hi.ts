@@ -12,6 +12,7 @@ export const hi: Translations = {
     changeLater: "इसे आप कभी भी Account में बदल सकते हैं।",
   },
   common: {
+    somethingWrong: "कुछ गड़बड़ हो गई। कृपया फिर कोशिश करें।",
     save: "सेव करें",
     cancel: "रद्द करें",
     close: "बंद करें",
@@ -161,6 +162,11 @@ export const hi: Translations = {
     empty: "आपकी विशलिस्ट खाली है।",
   },
   account: {
+    editProfile: "बदलें",
+    editTitle: "अपनी जानकारी बदलें",
+    namePlaceholder: "आपका नाम",
+    nameRequired: "कृपया अपना नाम लिखें",
+    profileSaved: "जानकारी अपडेट हो गई",
     myDetails: "मेरी जानकारी",
     mobile: "मोबाइल",
     email: "ईमेल",
