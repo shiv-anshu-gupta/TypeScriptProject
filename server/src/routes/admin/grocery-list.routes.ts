@@ -16,6 +16,7 @@ import {
   MAX_ITEMS_PER_LIST,
   MAX_NAME_LEN,
   MAX_QTY_LEN,
+  MIN_NAME_LEN,
 } from "../../utils/sanitizeItem";
 import { notifyUser } from "../../utils/push";
 
@@ -399,6 +400,9 @@ adminGroceryListRouter.patch(
       true,
     );
     requireText(name, "Item name is required");
+    if (name.length < MIN_NAME_LEN) {
+      throw new AppError(400, "Item name is too short");
+    }
 
     const items: GroceryListItem[] = foundList.items.map(
       (item: GroceryListItem, i: number) => ({
@@ -428,6 +432,9 @@ adminGroceryListRouter.post(
 
     requireText(listId, "List id is required");
     requireText(name, "Item name is required");
+    if (name.length < MIN_NAME_LEN) {
+      throw new AppError(400, "Item name is too short");
+    }
 
     const list = await GroceryList.findById(listId);
     const foundList = requireFound(list, "List not found", 404);

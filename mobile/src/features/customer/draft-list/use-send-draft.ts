@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useAuth } from "@clerk/clerk-expo";
+import { useTranslation } from "react-i18next";
 
 import type { RootStackParamList } from "@/navigation/types";
 import { useCustomerGroceryListStore } from "../grocery-list/store";
@@ -13,9 +14,13 @@ type Nav = NativeStackNavigationProp<RootStackParamList>;
 // The ONE send flow for the draft list, shared by the Home paper and the
 // Lists tab so the logic (validation, sign-in, phone capture, submit, clear)
 // never forks.
+// A real item name is never one character — mirrors the server's MIN_NAME_LEN.
+const MIN_NAME_LEN = 2;
+
 export function useSendDraft() {
   const navigation = useNavigation<Nav>();
   const { isSignedIn } = useAuth();
+  const { t } = useTranslation();
 
   const submitting = useCustomerGroceryListStore((state) => state.submitting);
   const submitList = useCustomerGroceryListStore((state) => state.submitList);
@@ -47,12 +52,22 @@ export function useSendDraft() {
 
   const send = async () => {
     if (!filledRows.length) {
-      toast.error("Write at least one item");
+      toast.error(t("home.writeAtLeastOne"));
+      return;
+    }
+
+    // Catch a stray single-letter row here, with the name in the message, so
+    // the customer can fix it — rather than having the server silently drop it.
+    const tooShort = filledRows.find(
+      (row) => row.name.trim().length < MIN_NAME_LEN,
+    );
+    if (tooShort) {
+      toast.error(t("home.nameTooShort", { name: tooShort.name.trim() }));
       return;
     }
 
     if (!isSignedIn) {
-      toast.error("Sign in to send your list");
+      toast.error(t("home.signInToSend"));
       navigation.navigate("SignIn");
       return;
     }

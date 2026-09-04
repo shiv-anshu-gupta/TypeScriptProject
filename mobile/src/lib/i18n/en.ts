@@ -27,6 +27,17 @@ export const en = {
     account: "Account",
   },
   home: {
+    listTitle: "Write your grocery list",
+    listSubtitle:
+      "Write whatever you need below. The shop will add the prices and send it back to you.",
+    step1: "Write",
+    step2: "Send",
+    step3: "Get price",
+    itemExample: "e.g. Rice",
+    qtyExample: "2 kg",
+    writeAtLeastOne: "Write at least one item",
+    nameTooShort: "“{{name}}” is too short — write the full item name",
+    signInToSend: "Sign in to send your list",
     tagline: "Your local shop, on your phone",
     browse: "Browse by collection",
     newArrivals: "New arrivals",

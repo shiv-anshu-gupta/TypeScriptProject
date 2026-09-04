@@ -22,6 +22,8 @@ import PriceCalculator from "./price-calculator";
 // server allowlist so what the shopkeeper types matches what's stored.
 // \p{M} keeps Hindi vowel signs (matras) — they're marks, not letters, so
 // omitting them would corrupt Devanagari words.
+const MIN_NAME_LEN = 2;
+
 const stripSpecials = (value: string) =>
   value.replace(/[^\p{L}\p{M}\p{N}\s.,&'\-/()%]/gu, "");
 
@@ -121,13 +123,13 @@ function GroceryListCard({
   };
   const cancelEdit = () => setEditingIndex(null);
   const submitEdit = () => {
-    if (editingIndex === null || !editName.trim()) return;
+    if (editingIndex === null || editName.trim().length < MIN_NAME_LEN) return;
     onEditItem(editingIndex, editName, editQty);
     setEditingIndex(null);
   };
 
   const submitNewItem = () => {
-    if (!newName.trim()) return;
+    if (newName.trim().length < MIN_NAME_LEN) return;
     onAddItem(newName, newQty);
     setNewName("");
     setNewQty("");
@@ -346,7 +348,7 @@ function GroceryListCard({
                   />
                   <Input
                     placeholder="Qty"
-                    maxLength={20}
+                    maxLength={12}
                     className="w-20"
                     value={editQty}
                     onChange={(event) => setEditQty(stripSpecials(event.target.value))}
@@ -360,7 +362,7 @@ function GroceryListCard({
                   <Button
                     type="button"
                     size="sm"
-                    disabled={saving || !editName.trim()}
+                    disabled={saving || editName.trim().length < MIN_NAME_LEN}
                     onClick={submitEdit}
                   >
                     Save
@@ -528,7 +530,7 @@ function GroceryListCard({
             />
             <Input
               placeholder="Qty"
-              maxLength={20}
+              maxLength={12}
               className="w-20"
               value={newQty}
               onChange={(event) => setNewQty(stripSpecials(event.target.value))}
@@ -543,7 +545,7 @@ function GroceryListCard({
               type="button"
               size="sm"
               variant="outline"
-              disabled={saving || !newName.trim()}
+              disabled={saving || newName.trim().length < MIN_NAME_LEN}
               onClick={submitNewItem}
             >
               <Plus className="mr-1 h-4 w-4" />

@@ -30,6 +30,17 @@ export const hi: Translations = {
     account: "अकाउंट",
   },
   home: {
+    listTitle: "अपनी राशन लिस्ट लिखें",
+    listSubtitle:
+      "जो भी चाहिए नीचे लिख दें। दुकान दाम लगाकर आपको वापस भेज देगी।",
+    step1: "लिखें",
+    step2: "भेजें",
+    step3: "भाव पाएं",
+    itemExample: "जैसे चावल",
+    qtyExample: "2 किलो",
+    writeAtLeastOne: "कम से कम एक आइटम लिखें",
+    nameTooShort: "“{{name}}” बहुत छोटा है — पूरा नाम लिखें",
+    signInToSend: "लिस्ट भेजने के लिए साइन इन करें",
     tagline: "आपकी अपनी दुकान, आपके फ़ोन पर",
     browse: "श्रेणी से चुनें",
     newArrivals: "नए आइटम",

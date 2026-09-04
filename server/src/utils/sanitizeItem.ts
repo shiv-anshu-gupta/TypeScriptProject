@@ -5,7 +5,9 @@ import { AppError } from "./AppError";
 // never trusted). Kept deliberately generous for real groceries, tight enough
 // that no single field or list can bloat / break the database.
 export const MAX_NAME_LEN = 60; // "Aashirvaad Multigrain Atta 5kg" ~= 30
-export const MAX_QTY_LEN = 20; // "2 packets", "500 g", "1 dozen"
+export const MAX_QTY_LEN = 12; // "2 packets", "500 g", "1 dozen"
+// A real item name is never a single character ("Dal", "आटा", "Rice"...).
+export const MIN_NAME_LEN = 2;
 export const MAX_NOTE_LEN = 300;
 export const MAX_ITEMS_PER_SUBMIT = 50; // one send
 export const MAX_ITEMS_PER_LIST = 100; // a single list after merges / additions
@@ -85,7 +87,7 @@ export function cleanItems(
         quantity: cleanField(obj.quantity, MAX_QTY_LEN, true),
       };
     })
-    .filter((item) => item.name.length > 0);
+    .filter((item) => item.name.length >= MIN_NAME_LEN);
 
   if (items.length > MAX_ITEMS_PER_SUBMIT) {
     throw new AppError(
