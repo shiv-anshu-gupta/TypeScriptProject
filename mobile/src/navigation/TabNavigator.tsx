@@ -2,7 +2,6 @@ import { useEffect, useRef } from "react";
 import { Animated } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import type { TabParamList } from "./types";
 import { HomeScreen } from "@/screens/HomeScreen";
@@ -11,6 +10,7 @@ import { AccountScreen } from "@/screens/AccountScreen";
 import { MyListsScreen } from "@/screens/MyListsScreen";
 import { useCustomerGroceryListStore } from "@/features/customer/grocery-list/store";
 import { useDraftListStore } from "@/features/customer/draft-list/store";
+import { CustomTabBar } from "@/components/CustomTabBar";
 
 const Tab = createBottomTabNavigator<TabParamList>();
 
@@ -76,7 +76,6 @@ function PulsingIcon({
 
 export function TabNavigator() {
   const { t } = useTranslation();
-  const insets = useSafeAreaInsets();
   const unseenLists = useCustomerGroceryListStore(
     (state) => state.unseenCount,
   );
@@ -92,20 +91,14 @@ export function TabNavigator() {
 
   return (
     <Tab.Navigator
+      // Custom bar so a raised circular button can sit in the middle; it
+      // handles its own safe-area padding.
+      tabBar={(props) => <CustomTabBar {...props} />}
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarLabel: t(`tabs.${route.name.toLowerCase()}`),
         tabBarActiveTintColor: "#3c5a64",
         tabBarInactiveTintColor: "#ada291",
-        // Reserve the bottom safe-area inset so the bar stays above the
-        // Android system nav (edge-to-edge is on by default in RN 0.81).
-        tabBarStyle: {
-          borderTopColor: "#e6dcc9",
-          height: 58 + insets.bottom,
-          paddingBottom: insets.bottom + 6,
-          paddingTop: 8,
-        },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: "600" },
         tabBarIcon: ({ color, size }) =>
           route.name === "Lists" ? (
             <PulsingIcon

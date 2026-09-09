@@ -15,6 +15,7 @@ import { useDraftListStore } from "@/features/customer/draft-list/store";
 import { usePushNotifications } from "@/features/customer/push/use-push-notifications";
 import { RootNavigator } from "@/navigation/RootNavigator";
 import { Toaster } from "@/components/Toaster";
+import { GroceryListSheet } from "@/components/GroceryListSheet";
 import { UpdatePrompt } from "@/components/UpdatePrompt";
 import { StoreUpdatePrompt } from "@/components/StoreUpdatePrompt";
 import { SplashScreen } from "@/screens/SplashScreen";
@@ -108,6 +109,8 @@ export default function App() {
           <NavigationContainer>
             <Bootstrap />
             <RootNavigator />
+            {/* Slides up over everything when the centre tab button is tapped */}
+            <GroceryListSheet />
             <UpdatePrompt />
             {/* Play Store (native release) update prompt — on top of the OTA one */}
             <StoreUpdatePrompt />
