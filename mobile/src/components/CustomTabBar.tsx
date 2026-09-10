@@ -1,8 +1,9 @@
-import { Pressable, Text, View } from "react-native";
+import { Pressable, Text, useWindowDimensions, View } from "react-native";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
+import Svg, { Path } from "react-native-svg";
 
 import { useDraftListStore } from "@/features/customer/draft-list/store";
 import { useGrocerySheetStore } from "@/features/customer/grocery-sheet/store";
@@ -13,21 +14,21 @@ const ALERT = "#c0492f";
 const CARD = "#ffffff";
 const BORDER = "#e6dcc9";
 
-// The button is absolutely positioned against the bar, so this offset is
-// exact: `top: 0` is the top of the wrapper, RISE px above the bar itself.
+// Geometry of the bar. CURVE_RADIUS is both the radius of the arc that sweeps
+// up around the button AND how far that arc rises above the bar's flat edge,
+// because the arc is a half-circle: it spans 2r horizontally and peaks r above.
+const CURVE_RADIUS = 38;
+const BAR_HEIGHT = 56; // the flat part, excluding the safe-area inset
 const BUTTON_SIZE = 58;
-// Only a small cap rises above the bar. A big float reads as an orb hovering
-// over the page, and every extra pixel here also eats into screen content.
-const BUTTON_RISE = 14;
 
-// A tab bar with a circular button raised over the middle of it.
+// A bottom tab bar whose top edge sweeps up and around a large circular button
+// in the middle.
 //
-// No curve is cut into the bar. border-radius cannot make the reverse
-// S-curves a real cradle needs, so a CSS arc meets the straight border at a
-// visible kink; and a heavily floating button reads as an orb hovering over
-// the page. A small raised cap on a straight bar is the honest version of
-// this pattern. A true cradle needs react-native-svg - a native module, so it
-// cannot ship over the air.
+// The curve is an SVG elliptical-arc command. This cannot be done with
+// border-radius: a cradle needs the arc to ease back into the straight edge,
+// and a CSS arc always meets that edge at a visible kink. Drawing the whole bar
+// as one path also means the outline is continuous, with no seam where the
+// curve joins the line.
 export function CustomTabBar({
   state,
   descriptors,
@@ -35,6 +36,7 @@ export function CustomTabBar({
 }: BottomTabBarProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
   const openSheet = useGrocerySheetStore((store) => store.open);
 
   // Unsent items — badges the centre button so the draft is never forgotten.
@@ -42,6 +44,31 @@ export function CustomTabBar({
     (store) =>
       store.rows.filter((row) => (row.name ?? "").trim().length > 0).length,
   );
+
+  const totalHeight = CURVE_RADIUS + BAR_HEIGHT + insets.bottom;
+  const curveLeftX = width / 2 - CURVE_RADIUS;
+  const curveRightX = width / 2 + CURVE_RADIUS;
+
+  // The filled body of the bar: down the left edge, across to the curve, over
+  // the arc (sweep-flag 1 bulges it upward), on to the right edge, then closed.
+  const bodyPath = [
+    `M0,${totalHeight}`,
+    `L0,${CURVE_RADIUS}`,
+    `L${curveLeftX},${CURVE_RADIUS}`,
+    `A${CURVE_RADIUS},${CURVE_RADIUS} 0 0 1 ${curveRightX},${CURVE_RADIUS}`,
+    `L${width},${CURVE_RADIUS}`,
+    `L${width},${totalHeight}`,
+    "Z",
+  ].join(" ");
+
+  // The same top edge again, stroked only, so the hairline border follows the
+  // curve. Stroking the body would also outline the sides and the bottom.
+  const edgePath = [
+    `M0,${CURVE_RADIUS}`,
+    `L${curveLeftX},${CURVE_RADIUS}`,
+    `A${CURVE_RADIUS},${CURVE_RADIUS} 0 0 1 ${curveRightX},${CURVE_RADIUS}`,
+    `L${width},${CURVE_RADIUS}`,
+  ].join(" ");
 
   const renderTab = (routeIndex: number) => {
     const route = state.routes[routeIndex];
@@ -83,7 +110,7 @@ export function CustomTabBar({
         accessibilityRole="button"
         accessibilityState={isFocused ? { selected: true } : {}}
         accessibilityLabel={String(label)}
-        className="flex-1 items-center justify-center gap-0.5 py-1"
+        className="flex-1 items-center justify-center gap-0.5"
       >
         <View>
           {icon}
@@ -107,19 +134,21 @@ export function CustomTabBar({
   };
 
   return (
-    // Outer wrapper reserves space above the bar so the button sits INSIDE its
-    // bounds. On Android a child positioned outside its parent is not tappable,
-    // so this is what keeps the whole button pressable rather than just the
-    // half overlapping the bar.
-    <View style={{ paddingTop: BUTTON_RISE, backgroundColor: "transparent" }}>
+    <View style={{ height: totalHeight, backgroundColor: "transparent" }}>
+      {/* The bar itself, drawn as one continuous shape */}
+      <Svg
+        width={width}
+        height={totalHeight}
+        style={{ position: "absolute", top: 0, left: 0 }}
+      >
+        <Path d={bodyPath} fill={CARD} />
+        <Path d={edgePath} fill="none" stroke={BORDER} strokeWidth={1} />
+      </Svg>
+
+      {/* Tabs sit on the flat part, below the curve */}
       <View
-        style={{
-          paddingBottom: insets.bottom + 6,
-          backgroundColor: CARD,
-          borderTopWidth: 1,
-          borderTopColor: BORDER,
-        }}
-        className="flex-row items-end pt-2"
+        style={{ marginTop: CURVE_RADIUS, height: BAR_HEIGHT }}
+        className="flex-row items-center"
       >
         {renderTab(0)}
         {renderTab(1)}
@@ -129,24 +158,23 @@ export function CustomTabBar({
         {renderTab(3)}
       </View>
 
-      {/* The raised button: mostly seated in the bar, with a small cap above */}
+      {/* The button, centred on the arc so the curve wraps it evenly */}
       <Pressable
         onPress={openSheet}
         accessibilityRole="button"
         accessibilityLabel={t("home.listTitle")}
         style={{
           position: "absolute",
-          top: 0,
-          left: "50%",
-          marginLeft: -BUTTON_SIZE / 2,
+          top: CURVE_RADIUS - BUTTON_SIZE / 2,
+          left: width / 2 - BUTTON_SIZE / 2,
           height: BUTTON_SIZE,
           width: BUTTON_SIZE,
           borderRadius: BUTTON_SIZE / 2,
-          elevation: 8,
+          elevation: 6,
           shadowColor: "#000",
-          shadowOpacity: 0.28,
-          shadowRadius: 6,
-          shadowOffset: { width: 0, height: 3 },
+          shadowOpacity: 0.2,
+          shadowRadius: 5,
+          shadowOffset: { width: 0, height: 2 },
         }}
         className="items-center justify-center bg-primary active:opacity-85"
       >
