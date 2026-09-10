@@ -13,19 +13,21 @@ const ALERT = "#c0492f";
 const CARD = "#ffffff";
 const BORDER = "#e6dcc9";
 
-// The raised centre button, and the curve the bar's top edge makes around it.
 // The button is absolutely positioned against the bar, so this offset is
 // exact: `top: 0` is the top of the wrapper, RISE px above the bar itself.
-const BUTTON_SIZE = 68; // includes the 4px ring
-const BUTTON_RISE = 30; // roughly half the button sits above the bar
+const BUTTON_SIZE = 58;
+// Only a small cap rises above the bar. A big float reads as an orb hovering
+// over the page, and every extra pixel here also eats into screen content.
+const BUTTON_RISE = 14;
 
-// A tab bar with a large circular button raised over the middle of it.
+// A tab bar with a circular button raised over the middle of it.
 //
-// There is deliberately no curve cut into the bar: border-radius cannot make
-// the reverse S-curves a real cradle needs, so an arc built that way meets the
-// straight border at a visible kink. A clean straight bar with a ringed
-// floating button reads far better. A true cradle needs react-native-svg,
-// which is a native module and cannot ship over the air.
+// No curve is cut into the bar. border-radius cannot make the reverse
+// S-curves a real cradle needs, so a CSS arc meets the straight border at a
+// visible kink; and a heavily floating button reads as an orb hovering over
+// the page. A small raised cap on a straight bar is the honest version of
+// this pattern. A true cradle needs react-native-svg - a native module, so it
+// cannot ship over the air.
 export function CustomTabBar({
   state,
   descriptors,
@@ -127,8 +129,7 @@ export function CustomTabBar({
         {renderTab(3)}
       </View>
 
-      {/* The raised button. The card-coloured ring separates it from the bar
-          so it reads as floating on top rather than cut into it. */}
+      {/* The raised button: mostly seated in the bar, with a small cap above */}
       <Pressable
         onPress={openSheet}
         accessibilityRole="button"
@@ -141,11 +142,9 @@ export function CustomTabBar({
           height: BUTTON_SIZE,
           width: BUTTON_SIZE,
           borderRadius: BUTTON_SIZE / 2,
-          borderWidth: 4,
-          borderColor: CARD,
           elevation: 8,
           shadowColor: "#000",
-          shadowOpacity: 0.22,
+          shadowOpacity: 0.28,
           shadowRadius: 6,
           shadowOffset: { width: 0, height: 3 },
         }}
@@ -153,7 +152,7 @@ export function CustomTabBar({
       >
         <MaterialCommunityIcons
           name="playlist-plus"
-          size={30}
+          size={27}
           color="#ffffff"
         />
         {draftCount > 0 ? (
