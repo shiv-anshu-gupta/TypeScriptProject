@@ -14,20 +14,18 @@ const CARD = "#ffffff";
 const BORDER = "#e6dcc9";
 
 // The raised centre button, and the curve the bar's top edge makes around it.
-// Both are absolutely positioned against the bar, so these offsets are exact:
-// `top: -RISE` measures straight up from the bar's top border.
-const BUTTON_SIZE = 64;
-const BUTTON_RISE = 20; // how far the button pokes above the bar
-const DOME_WIDTH = 116;
-const DOME_HEIGHT = 58;
-const DOME_RISE = 24; // 4px clear of the button, so the curve wraps it
+// The button is absolutely positioned against the bar, so this offset is
+// exact: `top: 0` is the top of the wrapper, RISE px above the bar itself.
+const BUTTON_SIZE = 68; // includes the 4px ring
+const BUTTON_RISE = 30; // roughly half the button sits above the bar
 
-// A tab bar with a large circular button in the middle. The bar's top edge
-// arcs up over it: the "dome" is an opaque card-coloured shape with only a top
-// border, so its curved outline continues the bar's straight border line and
-// its fill hides the straight line underneath. Done with border-radius rather
-// than SVG on purpose - react-native-svg is a native module, which would make
-// this change impossible to ship over the air.
+// A tab bar with a large circular button raised over the middle of it.
+//
+// There is deliberately no curve cut into the bar: border-radius cannot make
+// the reverse S-curves a real cradle needs, so an arc built that way meets the
+// straight border at a visible kink. A clean straight bar with a ringed
+// floating button reads far better. A true cradle needs react-native-svg,
+// which is a native module and cannot ship over the air.
 export function CustomTabBar({
   state,
   descriptors,
@@ -107,11 +105,11 @@ export function CustomTabBar({
   };
 
   return (
-    // Outer wrapper reserves DOME_RISE of transparent space above the bar, so
-    // the dome and button sit INSIDE its bounds. On Android a child positioned
-    // outside its parent is not tappable, so this is what keeps the whole
-    // button pressable rather than just the half overlapping the bar.
-    <View style={{ paddingTop: DOME_RISE, backgroundColor: "transparent" }}>
+    // Outer wrapper reserves space above the bar so the button sits INSIDE its
+    // bounds. On Android a child positioned outside its parent is not tappable,
+    // so this is what keeps the whole button pressable rather than just the
+    // half overlapping the bar.
+    <View style={{ paddingTop: BUTTON_RISE, backgroundColor: "transparent" }}>
       <View
         style={{
           paddingBottom: insets.bottom + 6,
@@ -129,43 +127,25 @@ export function CustomTabBar({
         {renderTab(3)}
       </View>
 
-      {/* The upward curve in the bar's top line. Opaque fill hides the straight
-          border beneath it; the rounded top border becomes the arc. */}
-      <View
-        pointerEvents="none"
-        style={{
-          position: "absolute",
-          top: 0,
-          left: "50%",
-          marginLeft: -DOME_WIDTH / 2,
-          width: DOME_WIDTH,
-          height: DOME_HEIGHT,
-          borderTopLeftRadius: DOME_WIDTH / 2,
-          borderTopRightRadius: DOME_WIDTH / 2,
-          backgroundColor: CARD,
-          borderTopWidth: 1,
-          borderLeftWidth: 1,
-          borderRightWidth: 1,
-          borderColor: BORDER,
-        }}
-      />
-
-      {/* The raised button, sitting in the curve */}
+      {/* The raised button. The card-coloured ring separates it from the bar
+          so it reads as floating on top rather than cut into it. */}
       <Pressable
         onPress={openSheet}
         accessibilityRole="button"
         accessibilityLabel={t("home.listTitle")}
         style={{
           position: "absolute",
-          top: DOME_RISE - BUTTON_RISE,
+          top: 0,
           left: "50%",
           marginLeft: -BUTTON_SIZE / 2,
           height: BUTTON_SIZE,
           width: BUTTON_SIZE,
           borderRadius: BUTTON_SIZE / 2,
+          borderWidth: 4,
+          borderColor: CARD,
           elevation: 8,
           shadowColor: "#000",
-          shadowOpacity: 0.25,
+          shadowOpacity: 0.22,
           shadowRadius: 6,
           shadowOffset: { width: 0, height: 3 },
         }}
