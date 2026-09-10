@@ -24,6 +24,7 @@ export const hi: Translations = {
     language: "भाषा",
   },
   tabs: {
+    writeList: "लिस्ट लिखें",
     home: "होम",
     shop: "दुकान",
     lists: "लिस्ट",

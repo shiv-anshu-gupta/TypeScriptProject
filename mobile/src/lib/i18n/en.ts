@@ -21,6 +21,7 @@ export const en = {
     language: "Language",
   },
   tabs: {
+    writeList: "Write list",
     home: "Home",
     shop: "Shop",
     lists: "Lists",

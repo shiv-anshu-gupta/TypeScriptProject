@@ -3,7 +3,12 @@ import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
-import Svg, { Path } from "react-native-svg";
+import Svg, {
+  Defs,
+  Path,
+  Text as SvgText,
+  TextPath,
+} from "react-native-svg";
 
 import { useDraftListStore } from "@/features/customer/draft-list/store";
 import { useGrocerySheetStore } from "@/features/customer/grocery-sheet/store";
@@ -20,6 +25,13 @@ const BORDER = "#e6dcc9";
 const CURVE_RADIUS = 38;
 const BAR_HEIGHT = 56; // the flat part, excluding the safe-area inset
 const BUTTON_SIZE = 58;
+
+// The caption rides its own arc, concentric with the button, so it bends with
+// the curve instead of sitting flat like the other four tab labels.
+const CAPTION_OFFSET = 17; // gap from the button's edge to the text
+const CAPTION_SIZE = 16.5;
+const CAPTION_WORDGAP = 3;
+const CAPTION_TRACKING = 1.6;
 
 // A bottom tab bar whose top edge sweeps up and around a large circular button
 // in the middle.
@@ -68,6 +80,14 @@ export function CustomTabBar({
     `L${curveLeftX},${CURVE_RADIUS}`,
     `A${CURVE_RADIUS},${CURVE_RADIUS} 0 0 1 ${curveRightX},${CURVE_RADIUS}`,
     `L${width},${CURVE_RADIUS}`,
+  ].join(" ");
+
+  // The rail the caption runs along: same centre as the button, drawn left to
+  // right with sweep-flag 0 so it bulges downward and the letters stay upright.
+  const captionRadius = BUTTON_SIZE / 2 + CAPTION_OFFSET;
+  const captionPath = [
+    `M${width / 2 - captionRadius},${CURVE_RADIUS}`,
+    `A${captionRadius},${captionRadius} 0 0 0 ${width / 2 + captionRadius},${CURVE_RADIUS}`,
   ].join(" ");
 
   const renderTab = (routeIndex: number) => {
@@ -141,8 +161,23 @@ export function CustomTabBar({
         height={totalHeight}
         style={{ position: "absolute", top: 0, left: 0 }}
       >
+        <Defs>
+          <Path id="captionArc" d={captionPath} />
+        </Defs>
         <Path d={bodyPath} fill={CARD} />
         <Path d={edgePath} fill="none" stroke={BORDER} strokeWidth={1} />
+        <SvgText
+          fill={ACTIVE}
+          fontSize={CAPTION_SIZE}
+          fontWeight="700"
+          letterSpacing={CAPTION_TRACKING}
+          wordSpacing={CAPTION_WORDGAP}
+          textAnchor="middle"
+        >
+          <TextPath href="#captionArc" startOffset="50%">
+            {t("tabs.writeList")}
+          </TextPath>
+        </SvgText>
       </Svg>
 
       {/* Tabs sit on the flat part, below the curve */}
