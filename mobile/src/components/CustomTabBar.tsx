@@ -37,6 +37,14 @@ const CAPTION_SIZE = 16.5;
 const CAPTION_WORDGAP = 3;
 const CAPTION_TRACKING = 1.6;
 
+// Devanagari cannot be curved. TextPath places every glyph individually along
+// the path, which destroys the shaping a complex script depends on: conjuncts
+// (स + ् + ट -> स्ट) break apart and matras land on the wrong consonant, so the
+// letters visibly collide. Latin has no such clusters and curves cleanly.
+// Scripts that need shaping therefore get a flat label instead.
+const DEVANAGARI = /[ऀ-ॿ]/;
+const FLAT_CAPTION_SIZE = 12.5;
+
 // A bottom tab bar whose top edge sweeps up and around a large circular button
 // in the middle.
 //
@@ -88,6 +96,9 @@ export function CustomTabBar({
 
   // The rail the caption runs along: same centre as the button, drawn left to
   // right with sweep-flag 0 so it bulges downward and the letters stay upright.
+  const caption = t("tabs.writeList");
+  const curvedCaption = !DEVANAGARI.test(caption);
+
   const captionRadius = BUTTON_SIZE / 2 + CAPTION_OFFSET;
   const captionPath = [
     `M${width / 2 - captionRadius},${CURVE_RADIUS}`,
@@ -170,19 +181,40 @@ export function CustomTabBar({
         </Defs>
         <Path d={bodyPath} fill={CARD} />
         <Path d={edgePath} fill="none" stroke={BORDER} strokeWidth={1} />
-        <SvgText
-          fill={ACTIVE}
-          fontSize={CAPTION_SIZE}
-          fontWeight="700"
-          letterSpacing={CAPTION_TRACKING}
-          wordSpacing={CAPTION_WORDGAP}
-          textAnchor="middle"
-        >
-          <TextPath href="#captionArc" startOffset="50%">
-            {t("tabs.writeList")}
-          </TextPath>
-        </SvgText>
+        {curvedCaption ? (
+          <SvgText
+            fill={ACTIVE}
+            fontSize={CAPTION_SIZE}
+            fontWeight="700"
+            letterSpacing={CAPTION_TRACKING}
+            wordSpacing={CAPTION_WORDGAP}
+            textAnchor="middle"
+          >
+            <TextPath href="#captionArc" startOffset="50%">
+              {caption}
+            </TextPath>
+          </SvgText>
+        ) : null}
       </Svg>
+
+      {/* Shaped scripts render flat, laid out by the platform's text engine */}
+      {curvedCaption ? null : (
+        <Text
+          numberOfLines={1}
+          style={{
+            position: "absolute",
+            top: CURVE_RADIUS + BUTTON_SIZE / 2 + 6,
+            left: 0,
+            right: 0,
+            textAlign: "center",
+            fontSize: FLAT_CAPTION_SIZE,
+            fontWeight: "700",
+            color: ACTIVE,
+          }}
+        >
+          {caption}
+        </Text>
+      )}
 
       {/* Tabs sit on the flat part, below the curve */}
       <View
