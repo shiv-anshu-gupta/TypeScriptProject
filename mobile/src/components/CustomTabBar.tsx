@@ -18,6 +18,10 @@ const INACTIVE = "#ada291";
 const ALERT = "#c0492f";
 const CARD = "#ffffff";
 const BORDER = "#e6dcc9";
+// The app's page ground. The corners either side of the arc are not covered by
+// the bar shape, so they must be painted with the same colour the screen above
+// uses — otherwise the navigator's own backdrop shows through there.
+const BACKGROUND = "#f0f4ec";
 
 // Geometry of the bar. CURVE_RADIUS is both the radius of the arc that sweeps
 // up around the button AND how far that arc rises above the bar's flat edge,
@@ -154,7 +158,7 @@ export function CustomTabBar({
   };
 
   return (
-    <View style={{ height: totalHeight, backgroundColor: "transparent" }}>
+    <View style={{ height: totalHeight, backgroundColor: BACKGROUND }}>
       {/* The bar itself, drawn as one continuous shape */}
       <Svg
         width={width}
