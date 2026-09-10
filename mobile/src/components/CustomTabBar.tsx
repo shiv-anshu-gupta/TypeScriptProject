@@ -6,15 +6,28 @@ import { useTranslation } from "react-i18next";
 
 import { useDraftListStore } from "@/features/customer/draft-list/store";
 import { useGrocerySheetStore } from "@/features/customer/grocery-sheet/store";
-import { cn } from "@/lib/utils";
 
 const ACTIVE = "#3c5a64";
 const INACTIVE = "#ada291";
 const ALERT = "#c0492f";
+const CARD = "#ffffff";
+const BORDER = "#e6dcc9";
 
-// A tab bar with a raised circular button in the middle. The four screen tabs
-// sit two-and-two on either side, and the centre button opens the grocery list
-// sheet rather than navigating anywhere — it is an action, not a destination.
+// The raised centre button, and the curve the bar's top edge makes around it.
+// Both are absolutely positioned against the bar, so these offsets are exact:
+// `top: -RISE` measures straight up from the bar's top border.
+const BUTTON_SIZE = 64;
+const BUTTON_RISE = 20; // how far the button pokes above the bar
+const DOME_WIDTH = 116;
+const DOME_HEIGHT = 58;
+const DOME_RISE = 24; // 4px clear of the button, so the curve wraps it
+
+// A tab bar with a large circular button in the middle. The bar's top edge
+// arcs up over it: the "dome" is an opaque card-coloured shape with only a top
+// border, so its curved outline continues the bar's straight border line and
+// its fill hides the straight line underneath. Done with border-radius rather
+// than SVG on purpose - react-native-svg is a native module, which would make
+// this change impossible to ship over the air.
 export function CustomTabBar({
   state,
   descriptors,
@@ -94,52 +107,90 @@ export function CustomTabBar({
   };
 
   return (
-    <View
-      // overflow must stay visible: the centre button is lifted above the bar
-      // with a negative margin and would otherwise be clipped on Android.
-      style={{ paddingBottom: insets.bottom + 6, overflow: "visible" }}
-      className="flex-row items-end border-t border-border bg-card pt-2"
-    >
-      {renderTab(0)}
-      {renderTab(1)}
-
-      {/* Centre action: opens the grocery list sheet. Sized to the same flex
-          slot as a tab so the four tabs stay evenly spaced. */}
-      <View className="flex-1 items-center">
-        <Pressable
-          onPress={openSheet}
-          accessibilityRole="button"
-          accessibilityLabel={t("home.listTitle")}
-          // Lifted above the bar so it reads as a floating action button.
-          style={{
-            marginTop: -28,
-            elevation: 8,
-            shadowColor: "#000",
-            shadowOpacity: 0.25,
-            shadowRadius: 6,
-            shadowOffset: { width: 0, height: 3 },
-          }}
-          className={cn(
-            "h-14 w-14 items-center justify-center rounded-full border-4 border-card bg-primary active:opacity-85",
-          )}
-        >
-          <MaterialCommunityIcons
-            name="playlist-plus"
-            size={26}
-            color="#ffffff"
-          />
-          {draftCount > 0 ? (
-            <View className="absolute -right-0.5 -top-0.5 min-w-[18px] items-center justify-center rounded-full border-2 border-card px-1" style={{ backgroundColor: ALERT }}>
-              <Text className="text-[10px] font-bold text-white">
-                {draftCount}
-              </Text>
-            </View>
-          ) : null}
-        </Pressable>
+    // Outer wrapper reserves DOME_RISE of transparent space above the bar, so
+    // the dome and button sit INSIDE its bounds. On Android a child positioned
+    // outside its parent is not tappable, so this is what keeps the whole
+    // button pressable rather than just the half overlapping the bar.
+    <View style={{ paddingTop: DOME_RISE, backgroundColor: "transparent" }}>
+      <View
+        style={{
+          paddingBottom: insets.bottom + 6,
+          backgroundColor: CARD,
+          borderTopWidth: 1,
+          borderTopColor: BORDER,
+        }}
+        className="flex-row items-end pt-2"
+      >
+        {renderTab(0)}
+        {renderTab(1)}
+        {/* Empty column: keeps the four tabs evenly spaced around the button */}
+        <View className="flex-1" />
+        {renderTab(2)}
+        {renderTab(3)}
       </View>
 
-      {renderTab(2)}
-      {renderTab(3)}
+      {/* The upward curve in the bar's top line. Opaque fill hides the straight
+          border beneath it; the rounded top border becomes the arc. */}
+      <View
+        pointerEvents="none"
+        style={{
+          position: "absolute",
+          top: 0,
+          left: "50%",
+          marginLeft: -DOME_WIDTH / 2,
+          width: DOME_WIDTH,
+          height: DOME_HEIGHT,
+          borderTopLeftRadius: DOME_WIDTH / 2,
+          borderTopRightRadius: DOME_WIDTH / 2,
+          backgroundColor: CARD,
+          borderTopWidth: 1,
+          borderLeftWidth: 1,
+          borderRightWidth: 1,
+          borderColor: BORDER,
+        }}
+      />
+
+      {/* The raised button, sitting in the curve */}
+      <Pressable
+        onPress={openSheet}
+        accessibilityRole="button"
+        accessibilityLabel={t("home.listTitle")}
+        style={{
+          position: "absolute",
+          top: DOME_RISE - BUTTON_RISE,
+          left: "50%",
+          marginLeft: -BUTTON_SIZE / 2,
+          height: BUTTON_SIZE,
+          width: BUTTON_SIZE,
+          borderRadius: BUTTON_SIZE / 2,
+          elevation: 8,
+          shadowColor: "#000",
+          shadowOpacity: 0.25,
+          shadowRadius: 6,
+          shadowOffset: { width: 0, height: 3 },
+        }}
+        className="items-center justify-center bg-primary active:opacity-85"
+      >
+        <MaterialCommunityIcons
+          name="playlist-plus"
+          size={30}
+          color="#ffffff"
+        />
+        {draftCount > 0 ? (
+          <View
+            className="absolute right-0 top-0 min-w-[20px] items-center justify-center rounded-full px-1"
+            style={{
+              backgroundColor: ALERT,
+              borderWidth: 2,
+              borderColor: CARD,
+            }}
+          >
+            <Text className="text-[10px] font-bold text-white">
+              {draftCount}
+            </Text>
+          </View>
+        ) : null}
+      </Pressable>
     </View>
   );
 }
