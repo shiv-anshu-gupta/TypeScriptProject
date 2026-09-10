@@ -37,11 +37,15 @@ const CAPTION_SIZE = 16.5;
 const CAPTION_WORDGAP = 3;
 const CAPTION_TRACKING = 1.6;
 
-// Devanagari needs more room on the curve than Latin: TextPath advances glyph
-// by glyph, and Devanagari combining marks (matras) carry no advance of their
-// own, so without extra tracking they land on top of the next consonant.
+// Devanagari cannot ride the curve, and this was verified on device, not
+// assumed: TextPath advances one codepoint at a time, while matras carry no
+// advance of their own, so ल and स are drawn almost on top of each other.
+// Raising tracking to 3.2 did not fix it - spacing moves glyphs apart but
+// never reattaches a matra to its consonant, so more of it only turns an
+// overlap into a detached, misspelt word. Shaped scripts get a flat label,
+// laid out by the platform's own text engine, which shapes them correctly.
 const DEVANAGARI = /[ऀ-ॿ]/;
-const CAPTION_TRACKING_DEVANAGARI = 3.2;
+const FLAT_CAPTION_SIZE = 13;
 
 // A bottom tab bar whose top edge sweeps up and around a large circular button
 // in the middle.
@@ -95,9 +99,7 @@ export function CustomTabBar({
   // The rail the caption runs along: same centre as the button, drawn left to
   // right with sweep-flag 0 so it bulges downward and the letters stay upright.
   const caption = t("tabs.writeList");
-  const captionTracking = DEVANAGARI.test(caption)
-    ? CAPTION_TRACKING_DEVANAGARI
-    : CAPTION_TRACKING;
+  const curvedCaption = !DEVANAGARI.test(caption);
 
   const captionRadius = BUTTON_SIZE / 2 + CAPTION_OFFSET;
   const captionPath = [
@@ -181,19 +183,40 @@ export function CustomTabBar({
         </Defs>
         <Path d={bodyPath} fill={CARD} />
         <Path d={edgePath} fill="none" stroke={BORDER} strokeWidth={1} />
-        <SvgText
-          fill={ACTIVE}
-          fontSize={CAPTION_SIZE}
-          fontWeight="700"
-          letterSpacing={captionTracking}
-          wordSpacing={CAPTION_WORDGAP}
-          textAnchor="middle"
-        >
-          <TextPath href="#captionArc" startOffset="50%">
-            {caption}
-          </TextPath>
-        </SvgText>
+        {curvedCaption ? (
+          <SvgText
+            fill={ACTIVE}
+            fontSize={CAPTION_SIZE}
+            fontWeight="700"
+            letterSpacing={CAPTION_TRACKING}
+            wordSpacing={CAPTION_WORDGAP}
+            textAnchor="middle"
+          >
+            <TextPath href="#captionArc" startOffset="50%">
+              {caption}
+            </TextPath>
+          </SvgText>
+        ) : null}
       </Svg>
+
+      {/* Shaped scripts render flat, so the platform can shape them properly */}
+      {curvedCaption ? null : (
+        <Text
+          numberOfLines={1}
+          style={{
+            position: "absolute",
+            top: CURVE_RADIUS + BUTTON_SIZE / 2 + 7,
+            left: 0,
+            right: 0,
+            textAlign: "center",
+            fontSize: FLAT_CAPTION_SIZE,
+            fontWeight: "700",
+            color: ACTIVE,
+          }}
+        >
+          {caption}
+        </Text>
+      )}
 
       {/* Tabs sit on the flat part, below the curve */}
       <View
