@@ -31,6 +31,18 @@ export const hi: Translations = {
     lists: "लिस्ट",
     account: "अकाउंट",
   },
+  journey: {
+    sendTitle: "लिस्ट भेजना बाकी है",
+    sendSub_one: "{{count}} आइटम लिखा है — दुकान को भेजें",
+    sendSub_other: "{{count}} आइटम लिखे हैं — दुकान को भेजें",
+    pricingTitle: "दुकान भाव लगा रही है",
+    pricingSub: "लिस्ट #{{code}} मिल गई — भाव आते ही बताएंगे",
+    pricedTitle: "भाव आ गया: {{amount}}",
+    pricedSub: "लिस्ट #{{code}} — देखने के लिए टैप करें",
+    packingSub: "लिस्ट #{{code}} — तैयार होते ही बताएंगे",
+    readyTitle: "तैयार है — आकर ले जाएं!",
+    readySub: "लिस्ट #{{code}} पैक होकर आपका इंतज़ार कर रही है",
+  },
   home: {
     myList: "मेरी लिस्ट",
     itemCount_one: "{{count}} आइटम",

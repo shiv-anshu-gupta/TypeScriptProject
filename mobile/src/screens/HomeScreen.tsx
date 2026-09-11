@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -8,15 +8,17 @@ import {
 } from "react-native";
 import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useAuth } from "@clerk/clerk-expo";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 
 import type { RootStackParamList } from "@/navigation/types";
 import { useCustomerHomeStore } from "@/features/customer/home/store";
+import { useCustomerGroceryListStore } from "@/features/customer/grocery-list/store";
 import { ProductCard } from "@/components/ProductCard";
-import { ListIntroCard } from "@/components/ListIntroCard";
+import { ListProgressCard } from "@/components/ListProgressCard";
 import { SearchBar } from "@/components/SearchBar";
 import { BannerCarousel } from "@/components/BannerCarousel";
 import { ProfileAvatar } from "@/components/ProfileAvatar";
@@ -35,6 +37,16 @@ export function HomeScreen() {
   useEffect(() => {
     void loadHome();
   }, [loadHome]);
+
+  // The progress card follows the customer's orders, which the shop moves on
+  // (priced, packed, ready) while they are away - refresh on every visit.
+  const { isSignedIn } = useAuth();
+  const loadLists = useCustomerGroceryListStore((state) => state.loadLists);
+  useFocusEffect(
+    useCallback(() => {
+      if (isSignedIn) void loadLists();
+    }, [isSignedIn, loadLists]),
+  );
 
   // Search results live on the Shop tab, which already owns search, filters
   // and sorting. Home hands the query over rather than duplicating all that.
@@ -93,7 +105,7 @@ export function HomeScreen() {
 
       <View className="mt-4 gap-4">
         {/* What the app does, with a button into the list sheet */}
-        <ListIntroCard />
+        <ListProgressCard />
 
         {/* Product search, with a shortcut to Shop's filters beside it */}
         <View className="flex-row items-center gap-2 px-4">

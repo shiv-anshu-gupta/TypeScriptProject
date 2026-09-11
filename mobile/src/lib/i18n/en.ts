@@ -28,6 +28,18 @@ export const en = {
     lists: "Lists",
     account: "Account",
   },
+  journey: {
+    sendTitle: "Your list isn't sent yet",
+    sendSub_one: "{{count}} item written — send it to the shop",
+    sendSub_other: "{{count}} items written — send it to the shop",
+    pricingTitle: "The shop is pricing your list",
+    pricingSub: "List #{{code}} received — we'll tell you when the price is in",
+    pricedTitle: "Price is in: {{amount}}",
+    pricedSub: "List #{{code}} — tap to see it",
+    packingSub: "List #{{code}} — we'll tell you when it's ready",
+    readyTitle: "Ready — come and collect!",
+    readySub: "List #{{code}} is packed and waiting for you",
+  },
   home: {
     myList: "My list",
     itemCount_one: "{{count}} item",
