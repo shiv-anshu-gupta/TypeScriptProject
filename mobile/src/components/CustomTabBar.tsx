@@ -10,6 +10,7 @@ import Svg, {
   TextPath,
 } from "react-native-svg";
 
+import { CurvedCaption } from "@/components/CurvedCaption";
 import { useDraftListStore } from "@/features/customer/draft-list/store";
 import { useGrocerySheetStore } from "@/features/customer/grocery-sheet/store";
 
@@ -37,13 +38,14 @@ const CAPTION_SIZE = 16.5;
 const CAPTION_WORDGAP = 3;
 const CAPTION_TRACKING = 1.6;
 
-// Devanagari rides the curve too, but needs far wider tracking than Latin.
-// TextPath advances one codepoint at a time and matras carry no advance of
-// their own, so at Latin spacing ल and स are drawn almost on top of each
-// other. Each unit of tracking is added twice between those two consonants
-// (once after ल, once after the zero-width ि), so this pulls them apart fast.
+// Devanagari cannot go through TextPath: it advances one codepoint at a time,
+// so the zero-width ि matra and the स्ट conjunct fall apart and ल/स collide,
+// and no letter-spacing fixes that (verified on device at 3.2 and 6). It is
+// drawn by CurvedCaption instead, which keeps each akshara whole.
 const DEVANAGARI = /[ऀ-ॿ]/;
-const CAPTION_TRACKING_DEVANAGARI = 6;
+const CAPTION_SIZE_DEVANAGARI = 15; // Devanagari reads larger at the same size
+const CAPTION_AKSHARA_GAP = 3; // space between syllables along the arc
+const CAPTION_CENTERLINE = 43; // button centre -> middle of each syllable
 
 // A bottom tab bar whose top edge sweeps up and around a large circular button
 // in the middle.
@@ -97,9 +99,7 @@ export function CustomTabBar({
   // The rail the caption runs along: same centre as the button, drawn left to
   // right with sweep-flag 0 so it bulges downward and the letters stay upright.
   const caption = t("tabs.writeList");
-  const captionTracking = DEVANAGARI.test(caption)
-    ? CAPTION_TRACKING_DEVANAGARI
-    : CAPTION_TRACKING;
+  const shapedScript = DEVANAGARI.test(caption);
 
   const captionRadius = BUTTON_SIZE / 2 + CAPTION_OFFSET;
   const captionPath = [
@@ -183,18 +183,20 @@ export function CustomTabBar({
         </Defs>
         <Path d={bodyPath} fill={CARD} />
         <Path d={edgePath} fill="none" stroke={BORDER} strokeWidth={1} />
-        <SvgText
-          fill={ACTIVE}
-          fontSize={CAPTION_SIZE}
-          fontWeight="700"
-          letterSpacing={captionTracking}
-          wordSpacing={CAPTION_WORDGAP}
-          textAnchor="middle"
-        >
-          <TextPath href="#captionArc" startOffset="50%">
-            {caption}
-          </TextPath>
-        </SvgText>
+        {shapedScript ? null : (
+          <SvgText
+            fill={ACTIVE}
+            fontSize={CAPTION_SIZE}
+            fontWeight="700"
+            letterSpacing={CAPTION_TRACKING}
+            wordSpacing={CAPTION_WORDGAP}
+            textAnchor="middle"
+          >
+            <TextPath href="#captionArc" startOffset="50%">
+              {caption}
+            </TextPath>
+          </SvgText>
+        )}
       </Svg>
 
       {/* Tabs sit on the flat part, below the curve */}
@@ -209,6 +211,22 @@ export function CustomTabBar({
         {renderTab(2)}
         {renderTab(3)}
       </View>
+
+      {/* Devanagari caption: whole aksharas placed along the arc. Keyed by the
+          text so switching language remounts it and re-measures. */}
+      {shapedScript ? (
+        <CurvedCaption
+          key={caption}
+          text={caption}
+          cx={width / 2}
+          cy={CURVE_RADIUS}
+          radius={CAPTION_CENTERLINE}
+          fontSize={CAPTION_SIZE_DEVANAGARI}
+          color={ACTIVE}
+          gap={CAPTION_AKSHARA_GAP}
+          wordGap={CAPTION_WORDGAP}
+        />
+      ) : null}
 
       {/* The button, centred on the arc so the curve wraps it evenly */}
       <Pressable
