@@ -32,6 +32,14 @@ export const hi: Translations = {
     account: "अकाउंट",
   },
   home: {
+    myList: "मेरी लिस्ट",
+    itemCount_one: "{{count}} आइटम",
+    itemCount_other: "{{count}} आइटम",
+    noLimit: "जितने चाहें जोड़ें",
+    writeHint: "हर लाइन में एक आइटम लिखें",
+    addItem: "आइटम जोड़ें",
+    send: "भेजें",
+    removeItem: "आइटम हटाएं",
     openFilters: "फ़िल्टर",
     listTitle: "अपनी राशन लिस्ट लिखें",
     listSubtitle:

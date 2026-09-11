@@ -29,6 +29,14 @@ export const en = {
     account: "Account",
   },
   home: {
+    myList: "My list",
+    itemCount_one: "{{count}} item",
+    itemCount_other: "{{count}} items",
+    noLimit: "add as many as you like",
+    writeHint: "Write one item on each line",
+    addItem: "Add item",
+    send: "Send",
+    removeItem: "Remove item",
     openFilters: "Filters",
     listTitle: "Write your grocery list",
     listSubtitle:

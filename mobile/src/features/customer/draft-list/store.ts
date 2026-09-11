@@ -57,6 +57,9 @@ type DraftListStore = {
   nextId: number;
   hydrate: () => Promise<void>;
   updateRow: (id: number, key: "name" | "quantity", value: string) => void;
+  // Take a line out entirely, so the numbering below it closes up instead of
+  // leaving a blank gap where the item was.
+  removeRow: (id: number) => void;
   addProduct: (name: string, unit?: string, unitValue?: number) => void;
   addProductWithQuantity: (name: string, quantity: string) => void;
   clearDraft: () => void;
@@ -194,6 +197,22 @@ export const useDraftListStore = create<DraftListStore>((set, get) => ({
       }
 
       const next = withTrailingBlank(rows, takeId);
+      persist(next);
+      return { rows: next, nextId: counter };
+    });
+  },
+
+  removeRow: (id) => {
+    set((state) => {
+      let counter = state.nextId;
+      const takeId = () => counter++;
+
+      // Keep the trailing blank line so there is always somewhere to write.
+      const next = withTrailingBlank(
+        state.rows.filter((row) => row.id !== id),
+        takeId,
+      );
+
       persist(next);
       return { rows: next, nextId: counter };
     });

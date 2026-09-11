@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Keyboard } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useAuth } from "@clerk/clerk-expo";
@@ -7,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import type { RootStackParamList } from "@/navigation/types";
 import { useCustomerGroceryListStore } from "../grocery-list/store";
 import { useDraftListStore } from "./store";
+import { useGrocerySheetStore } from "../grocery-sheet/store";
 import { toast } from "@/lib/toast";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -45,6 +47,11 @@ export function useSendDraft() {
     if (sent) {
       clearDraft();
       setPhonePromptOpen(false);
+      // If it was sent from the list sheet, put the sheet and keyboard away -
+      // otherwise the sheet stays open over the Lists tab, hiding the list the
+      // customer just sent.
+      Keyboard.dismiss();
+      useGrocerySheetStore.getState().close();
       navigation.navigate("Tabs", { screen: "Lists" });
     }
     return sent;
