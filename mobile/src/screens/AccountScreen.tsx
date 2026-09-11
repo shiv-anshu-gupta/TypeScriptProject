@@ -9,12 +9,11 @@ import { useTranslation } from "react-i18next";
 
 import type { RootStackParamList } from "@/navigation/types";
 import { useCustomerGroceryListStore } from "@/features/customer/grocery-list/store";
-import {
-  getCustomerProfile,
-  updateCustomerProfile,
-  type CustomerProfile,
-} from "@/features/customer/account/api";
+import { updateCustomerProfile } from "@/features/customer/account/api";
+import { useCustomerAccountStore } from "@/features/customer/account/store";
+import { useCustomerDisplayName } from "@/features/customer/account/use-display-name";
 import { Button } from "@/components/ui/Button";
+import { ProfileAvatar } from "@/components/ProfileAvatar";
 import { ProfileEditSheet } from "@/components/ProfileEditSheet";
 import { env } from "@/lib/env";
 import { setAppLanguage, type AppLanguage } from "@/lib/i18n";
@@ -155,25 +154,25 @@ export function AccountScreen() {
   const { isSignedIn, signOut } = useAuth();
   const { user } = useUser();
   const [langOpen, setLangOpen] = useState(false);
-  const [profile, setProfile] = useState<CustomerProfile | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const { items, customerPhone, loadLists } = useCustomerGroceryListStore(
     (state) => state,
   );
+  // Shared with the Home header's avatar, so an edit here shows there at once.
+  const profile = useCustomerAccountStore((state) => state.profile);
+  const loadProfile = useCustomerAccountStore((state) => state.loadProfile);
+  const setProfile = useCustomerAccountStore((state) => state.setProfile);
+  const displayName = useCustomerDisplayName();
 
   // Keep the counters and the saved details fresh whenever the tab is opened.
   useFocusEffect(
     useCallback(() => {
       if (!isSignedIn) return;
       void loadLists();
-      getCustomerProfile()
-        .then(setProfile)
-        .catch(() => {
-          // offline — fall back to the Clerk / store values below
-        });
-    }, [isSignedIn, loadLists]),
+      void loadProfile();
+    }, [isSignedIn, loadLists, loadProfile]),
   );
 
   const saveProfile = async (values: { name: string; phone: string }) => {
@@ -232,12 +231,10 @@ export function AccountScreen() {
 
   // Prefer the saved profile (what the shop actually sees on an order) and
   // fall back to Clerk / the lists store until it loads.
-  const name =
-    profile?.name || user?.fullName || (t("account.customer") as string);
+  const name = displayName ?? (t("account.customer") as string);
   const emailAddress =
     profile?.email || user?.primaryEmailAddress?.emailAddress || "";
   const phone = profile?.phone || customerPhone || "";
-  const initial = (name || "U").charAt(0).toUpperCase();
 
   // Counters. Cancelled lists are not counted as orders placed.
   const orders = items.filter((list) => list.status !== "cancelled");
@@ -289,11 +286,7 @@ export function AccountScreen() {
     >
       {/* Identity header */}
       <View className="flex-row items-center gap-3 rounded-2xl border border-border bg-secondary p-4">
-        <View className="h-14 w-14 items-center justify-center rounded-2xl bg-primary">
-          <Text className="text-xl font-bold text-primary-foreground">
-            {initial}
-          </Text>
-        </View>
+        <ProfileAvatar name={name} size={56} />
         <View className="flex-1">
           <Text numberOfLines={1} className="text-lg font-bold text-foreground">
             {name}

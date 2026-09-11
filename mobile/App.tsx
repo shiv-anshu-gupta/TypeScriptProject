@@ -11,6 +11,7 @@ import { tokenCache } from "@/lib/token-cache";
 import { useBootstrapAuth } from "@/features/auth/useBootstrapAuth";
 import { useCustomerGroceryListStore } from "@/features/customer/grocery-list/store";
 import { useCustomerWishlistStore } from "@/features/customer/wishlist/store";
+import { useCustomerAccountStore } from "@/features/customer/account/store";
 import { useDraftListStore } from "@/features/customer/draft-list/store";
 import { usePushNotifications } from "@/features/customer/push/use-push-notifications";
 import { RootNavigator } from "@/navigation/RootNavigator";
@@ -31,24 +32,37 @@ function Bootstrap() {
   const clearLists = useCustomerGroceryListStore((state) => state.clear);
   const loadWishlist = useCustomerWishlistStore((state) => state.loadWishlist);
   const clearWishlist = useCustomerWishlistStore((state) => state.clear);
+  const loadProfile = useCustomerAccountStore((state) => state.loadProfile);
+  const clearProfile = useCustomerAccountStore((state) => state.clear);
 
   // Restore any half-written draft list from the last session.
   useEffect(() => {
     void useDraftListStore.getState().hydrate();
   }, []);
 
-  // Keeps the "Lists" tab badge in sync with what the shop has sent back, and
-  // the wishlist loaded so the heart on every product card shows the right
-  // state from the first screen (not only after opening the Wishlist tab).
+  // Keeps the "Lists" tab badge in sync with what the shop has sent back, the
+  // wishlist loaded so the heart on every product card shows the right state
+  // from the first screen, and the profile loaded so the Home avatar shows the
+  // customer's saved name before they ever open Account.
   useEffect(() => {
     if (isSignedIn) {
       void loadLists();
       void loadWishlist();
+      void loadProfile();
     } else {
       clearLists();
       clearWishlist();
+      clearProfile();
     }
-  }, [isSignedIn, loadLists, clearLists, loadWishlist, clearWishlist]);
+  }, [
+    isSignedIn,
+    loadLists,
+    clearLists,
+    loadWishlist,
+    clearWishlist,
+    loadProfile,
+    clearProfile,
+  ]);
 
   return null;
 }

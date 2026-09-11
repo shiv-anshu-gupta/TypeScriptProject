@@ -19,6 +19,8 @@ import { ProductCard } from "@/components/ProductCard";
 import { ListIntroCard } from "@/components/ListIntroCard";
 import { SearchBar } from "@/components/SearchBar";
 import { BannerCarousel } from "@/components/BannerCarousel";
+import { ProfileAvatar } from "@/components/ProfileAvatar";
+import { useCustomerDisplayName } from "@/features/customer/account/use-display-name";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -28,6 +30,7 @@ export function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { data, loading, loadHome } = useCustomerHomeStore((state) => state);
   const [query, setQuery] = useState("");
+  const displayName = useCustomerDisplayName();
 
   useEffect(() => {
     void loadHome();
@@ -76,12 +79,15 @@ export function HomeScreen() {
           </View>
         </View>
 
+        {/* The customer's avatar - same as on Account - opens their account */}
         <Pressable
-          onPress={() => navigation.navigate("Tabs", { screen: "Lists" })}
+          onPress={() => navigation.navigate("Tabs", { screen: "Account" })}
           hitSlop={8}
-          className="h-10 w-10 items-center justify-center rounded-full bg-secondary"
+          accessibilityRole="button"
+          accessibilityLabel={t("tabs.account")}
+          className="active:opacity-80"
         >
-          <MaterialCommunityIcons name="notebook" size={19} color="#1f2a2e" />
+          <ProfileAvatar name={displayName} size={40} />
         </Pressable>
       </View>
 
