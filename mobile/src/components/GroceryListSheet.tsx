@@ -27,6 +27,15 @@ import { SendListButton } from "@/components/SendListButton";
 const SCROLL_PAD_TOP = 12; // space above the paper inside the scroll area
 const FOCUS_MARGIN = 20; // keep the line being typed in this far from the edges
 
+// Who keeps the focused line on screen. On Android the native ScrollView
+// already does it, instantly and with exact geometry: requestChildFocus()
+// scrolls a newly focused field into view, and onSizeChanged() keeps it in
+// view when the ScrollView shrinks for the keyboard. Doing it again from JS
+// made two scrollers fight - different margins, a throttled (stale) scroll
+// offset - and the list jumped on its own. So JS does it only on iOS, where
+// nothing native does.
+const SCROLL_FOCUSED_LINE_FROM_JS = Platform.OS === "ios";
+
 // The list sheet, opened by "Write list" and the centre tab button.
 //
 // Keyboard handling is the heart of it. Android edge-to-edge (the RN 0.81
@@ -89,30 +98,54 @@ export function GroceryListSheet() {
     }
   }, []);
 
+  // Read inside the keyboard listeners, which are registered once.
+  const bottomInsetRef = useRef(insets.bottom);
+  bottomInsetRef.current = insets.bottom;
+
   useEffect(() => {
     const showEvent =
       Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
     const hideEvent =
       Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
 
+    // Move the sheet's bottom edge. Android reports the keyboard only once it
+    // has finished opening, so a JS slide there just trails behind it - and
+    // resizes the ScrollView on every frame, each time kicking its native
+    // keep-focused-in-view logic. One step is both faster and calmer. iOS
+    // announces the keyboard beforehand with its duration, so it can match.
+    const moveTo = (lift: number, duration?: number) => {
+      if (Platform.OS === "android") {
+        keyboardLift.setValue(lift);
+        return;
+      }
+      Animated.timing(keyboardLift, {
+        toValue: lift,
+        duration: duration || 250,
+        useNativeDriver: false, // animates a layout prop
+      }).start();
+    };
+
     const showSub = Keyboard.addListener(showEvent, (event) => {
       setKeyboardOpen(true);
       keyboardOpenRef.current = true;
-      Animated.timing(keyboardLift, {
-        toValue: event.endCoordinates?.height ?? 0,
-        duration: event.duration || 180,
-        useNativeDriver: false, // animates a layout prop
-      }).start();
+      const reported = event.endCoordinates?.height ?? 0;
+      // React Native on Android reports the keyboard with the navigation bar
+      // SUBTRACTED (ReactRootView: imeInsets.bottom - barInsets.bottom). This
+      // edge-to-edge window draws behind the nav bar, so the keyboard actually
+      // covers `reported + nav bar` - lifting by `reported` alone left the
+      // last line behind the keyboard. Adding the bottom inset back is exact,
+      // and self-correcting: without edge-to-edge that inset is 0.
+      const lift =
+        Platform.OS === "android"
+          ? reported + bottomInsetRef.current
+          : reported;
+      moveTo(lift, event.duration);
     });
     const hideSub = Keyboard.addListener(hideEvent, (event) => {
       setKeyboardOpen(false);
       keyboardOpenRef.current = false;
       focusedIndex.current = null;
-      Animated.timing(keyboardLift, {
-        toValue: 0,
-        duration: event.duration || 180,
-        useNativeDriver: false,
-      }).start();
+      moveTo(0, event.duration);
     });
 
     return () => {
@@ -252,10 +285,16 @@ export function GroceryListSheet() {
             keyboardShouldPersistTaps="always"
             keyboardDismissMode="none"
             showsVerticalScrollIndicator={false}
-            scrollEventThrottle={32}
-            onScroll={(event) => {
-              scrollY.current = event.nativeEvent.contentOffset.y;
-            }}
+            // The scroll offset only feeds the JS scroll-into-view, so it is
+            // tracked only where that runs - Android scrolls with no JS work.
+            scrollEventThrottle={SCROLL_FOCUSED_LINE_FROM_JS ? 32 : undefined}
+            onScroll={
+              SCROLL_FOCUSED_LINE_FROM_JS
+                ? (event) => {
+                    scrollY.current = event.nativeEvent.contentOffset.y;
+                  }
+                : undefined
+            }
             onLayout={(event) => {
               const viewport = event.nativeEvent.layout.height;
               viewportHeight.current = viewport;
@@ -271,8 +310,12 @@ export function GroceryListSheet() {
                 );
               }
               // The viewport shrinks as the keyboard lifts the sheet; keep the
-              // line being typed in on screen while it does.
-              if (focusedIndex.current !== null) {
+              // line being typed in on screen while it does. (Android's
+              // ScrollView does this natively - see SCROLL_FOCUSED_LINE_FROM_JS.)
+              if (
+                SCROLL_FOCUSED_LINE_FROM_JS &&
+                focusedIndex.current !== null
+              ) {
                 ensureVisible(focusedIndex.current, false);
               }
             }}
@@ -283,10 +326,14 @@ export function GroceryListSheet() {
           >
             <GroceryListEditor
               autoFocusOnOpen
-              onRowFocus={(index) => {
-                focusedIndex.current = index;
-                ensureVisible(index, true);
-              }}
+              onRowFocus={
+                SCROLL_FOCUSED_LINE_FROM_JS
+                  ? (index) => {
+                      focusedIndex.current = index;
+                      ensureVisible(index, true);
+                    }
+                  : undefined
+              }
             />
           </ScrollView>
         </Animated.View>
