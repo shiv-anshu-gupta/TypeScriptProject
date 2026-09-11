@@ -9,6 +9,7 @@ export const en = {
     changeLater: "You can change this anytime in Account.",
   },
   common: {
+    clearSearch: "Clear search",
     somethingWrong: "Something went wrong. Please try again.",
     save: "Save",
     cancel: "Cancel",
@@ -28,9 +29,10 @@ export const en = {
     account: "Account",
   },
   home: {
+    openFilters: "Filters",
     listTitle: "Write your grocery list",
     listSubtitle:
-      "Write whatever you need below. The shop will add the prices and send it back to you.",
+      "Write whatever you need. The shop will add the prices and send it back to you.",
     step1: "Write",
     step2: "Send",
     step3: "Get price",

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -16,7 +16,9 @@ import { useTranslation } from "react-i18next";
 import type { RootStackParamList } from "@/navigation/types";
 import { useCustomerHomeStore } from "@/features/customer/home/store";
 import { ProductCard } from "@/components/ProductCard";
-import { GroceryList } from "@/components/GroceryList";
+import { ListIntroCard } from "@/components/ListIntroCard";
+import { SearchBar } from "@/components/SearchBar";
+import { BannerCarousel } from "@/components/BannerCarousel";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -25,10 +27,22 @@ export function HomeScreen() {
   const navigation = useNavigation<Nav>();
   const insets = useSafeAreaInsets();
   const { data, loading, loadHome } = useCustomerHomeStore((state) => state);
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     void loadHome();
   }, [loadHome]);
+
+  // Search results live on the Shop tab, which already owns search, filters
+  // and sorting. Home hands the query over rather than duplicating all that.
+  const runSearch = () => {
+    const term = query.trim();
+    navigation.navigate("Tabs", {
+      screen: "Shop",
+      params: term ? { search: term } : undefined,
+    });
+    setQuery("");
+  };
 
   if (loading) {
     return (
@@ -71,9 +85,33 @@ export function HomeScreen() {
         </Pressable>
       </View>
 
-      {/* Handwritten-style draft paper */}
-      <View className="mt-3">
-        <GroceryList showIntro />
+      <View className="mt-4 gap-4">
+        {/* What the app does, with a button into the list sheet */}
+        <ListIntroCard />
+
+        {/* Product search, with a shortcut to Shop's filters beside it */}
+        <View className="flex-row items-center gap-2 px-4">
+          <View className="flex-1">
+            <SearchBar
+              value={query}
+              onChangeText={setQuery}
+              onSubmit={runSearch}
+              placeholder={t("shop.searchPlaceholder")}
+            />
+          </View>
+          <Pressable
+            onPress={() => navigation.navigate("Tabs", { screen: "Shop" })}
+            hitSlop={4}
+            accessibilityRole="button"
+            accessibilityLabel={t("home.openFilters")}
+            className="h-11 w-11 items-center justify-center rounded-xl bg-primary active:opacity-85"
+          >
+            <Feather name="sliders" size={18} color="#ffffff" />
+          </Pressable>
+        </View>
+
+        {/* Promo banners from the admin panel; renders nothing if there are none */}
+        <BannerCarousel banners={data.banners} />
       </View>
 
       {/* Categories */}

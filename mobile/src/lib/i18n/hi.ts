@@ -12,6 +12,7 @@ export const hi: Translations = {
     changeLater: "इसे आप कभी भी Account में बदल सकते हैं।",
   },
   common: {
+    clearSearch: "खोज साफ़ करें",
     somethingWrong: "कुछ गड़बड़ हो गई। कृपया फिर कोशिश करें।",
     save: "सेव करें",
     cancel: "रद्द करें",
@@ -31,9 +32,10 @@ export const hi: Translations = {
     account: "अकाउंट",
   },
   home: {
+    openFilters: "फ़िल्टर",
     listTitle: "अपनी राशन लिस्ट लिखें",
     listSubtitle:
-      "जो भी चाहिए नीचे लिख दें। दुकान दाम लगाकर आपको वापस भेज देगी।",
+      "जो भी चाहिए लिख दें। दुकान दाम लगाकर आपको वापस भेज देगी।",
     step1: "लिखें",
     step2: "भेजें",
     step3: "भाव पाएं",

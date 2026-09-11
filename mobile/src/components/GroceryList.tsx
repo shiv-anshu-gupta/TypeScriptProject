@@ -1,5 +1,5 @@
 import { TextInput, View, Text } from "react-native";
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 
 import { useDraftListStore } from "@/features/customer/draft-list/store";
@@ -7,33 +7,7 @@ import { useSendDraft } from "@/features/customer/draft-list/use-send-draft";
 import { Button } from "@/components/ui/Button";
 import { PhonePrompt } from "@/components/PhonePrompt";
 
-// One numbered step in the "how this works" strip.
-function Step({ n, label }: { n: string; label: string }) {
-  return (
-    <View className="flex-1 items-center gap-1">
-      <View className="h-6 w-6 items-center justify-center rounded-full bg-primary">
-        <Text className="text-[11px] font-bold text-primary-foreground">
-          {n}
-        </Text>
-      </View>
-      <Text
-        numberOfLines={1}
-        className="text-[11px] font-semibold text-foreground"
-      >
-        {label}
-      </Text>
-    </View>
-  );
-}
-
-type GroceryListProps = {
-  // The "write your list" explainer card. Only the Home screen shows it — that
-  // is where a first-time customer meets the blank paper. Everywhere else the
-  // list is reached on purpose, so the explainer would just be clutter.
-  showIntro?: boolean;
-};
-
-export function GroceryList({ showIntro = false }: GroceryListProps) {
+export function GroceryList() {
   const { t } = useTranslation();
   // The paper is a view over the shared draft — the same draft that
   // "Add to list" on catalog products writes into.
@@ -51,38 +25,6 @@ export function GroceryList({ showIntro = false }: GroceryListProps) {
 
   return (
     <View className="gap-3">
-      {/* Tells the customer, up front, what this blank paper is for. */}
-      {showIntro ? (
-        <View className="mx-3 gap-3 rounded-2xl border border-border bg-card p-4">
-          <View className="flex-row items-center gap-3">
-            <View className="h-11 w-11 items-center justify-center rounded-xl bg-primary">
-              <MaterialCommunityIcons
-                name="notebook-edit-outline"
-                size={22}
-                color="#ffffff"
-              />
-            </View>
-            <View className="flex-1">
-              <Text className="text-base font-bold text-foreground">
-                {t("home.listTitle")}
-              </Text>
-              <Text className="mt-0.5 text-xs leading-4 text-muted-foreground">
-                {t("home.listSubtitle")}
-              </Text>
-            </View>
-          </View>
-
-          {/* Write → Send → Get the price */}
-          <View className="flex-row items-center rounded-xl bg-secondary px-2 py-2.5">
-            <Step n="1" label={t("home.step1")} />
-            <Feather name="chevron-right" size={14} color="#ada291" />
-            <Step n="2" label={t("home.step2")} />
-            <Feather name="chevron-right" size={14} color="#ada291" />
-            <Step n="3" label={t("home.step3")} />
-          </View>
-        </View>
-      ) : null}
-
       {/* Cream "paper" sheet with a soft shadow. */}
       <View
         className="mx-3 overflow-hidden rounded-md bg-[#fdf8ea]"

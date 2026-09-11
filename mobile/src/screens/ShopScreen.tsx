@@ -1,17 +1,17 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
   Pressable,
   ScrollView,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import type { RouteProp } from "@react-navigation/native";
 import { Feather } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
@@ -22,8 +22,10 @@ import { getCoverImage } from "@/features/customer/products/product-list.shared"
 import { useDraftListStore } from "@/features/customer/draft-list/store";
 import type { ProductSort } from "@/features/customer/products/types";
 import { ProductCard } from "@/components/ProductCard";
+import { SearchBar } from "@/components/SearchBar";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
+type ShopTabNav = BottomTabNavigationProp<TabParamList, "Shop">;
 type ShopRoute = RouteProp<TabParamList, "Shop">;
 
 const sortOptions: { key: ProductSort; labelKey: string }[] = [
@@ -140,6 +142,17 @@ export function ShopScreen() {
 
   const [searchOpen, setSearchOpen] = useState(false);
 
+  // A search handed over from the Home search bar: open the field, apply the
+  // term, then clear the param so searching the same word again still works.
+  const tabNavigation = useNavigation<ShopTabNav>();
+  const incomingSearch = route.params?.search;
+  useEffect(() => {
+    if (!incomingSearch) return;
+    setSearchOpen(true);
+    setSearch(incomingSearch);
+    tabNavigation.setParams({ search: undefined });
+  }, [incomingSearch, setSearch, tabNavigation]);
+
   const draftCount = useDraftListStore(
     (state) =>
       state.rows.filter((row) => (row.name ?? "").trim().length > 0).length,
@@ -174,21 +187,13 @@ export function ShopScreen() {
         </View>
 
         {searchOpen ? (
-          <View className="mt-2 flex-row items-center gap-2 rounded-xl border border-border bg-card px-3">
-            <Feather name="search" size={16} color="#6f6857" />
-            <TextInput
+          <View className="mt-2">
+            <SearchBar
               value={search}
               onChangeText={setSearch}
               placeholder={t("shop.searchPlaceholder")}
               autoFocus
-              returnKeyType="search"
-              className="h-11 flex-1 text-base text-foreground"
             />
-            {search ? (
-              <Pressable onPress={() => setSearch("")} hitSlop={8}>
-                <Feather name="x-circle" size={16} color="#6f6857" />
-              </Pressable>
-            ) : null}
           </View>
         ) : null}
 
