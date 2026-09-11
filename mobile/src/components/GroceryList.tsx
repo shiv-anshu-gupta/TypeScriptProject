@@ -4,15 +4,15 @@ import { useTranslation } from "react-i18next";
 import { GroceryListEditor } from "@/components/GroceryListEditor";
 import { SendListButton } from "@/components/SendListButton";
 
-// The draft list as shown inline on the Lists tab: the editable paper with a
-// full-width Send button under it. The list sheet composes the same editor
-// differently, with Send pinned in its header instead.
+// The draft list as shown inline on the Lists tab: the written lines plus one
+// to continue on, with a full-width Send button under it. The list sheet uses
+// the same editor as a full page instead, with Send pinned in its header.
 export function GroceryList() {
   const { t } = useTranslation();
 
   return (
     <View className="gap-3">
-      <GroceryListEditor />
+      <GroceryListEditor compact />
       <View className="mx-3 gap-3">
         <SendListButton variant="block" />
         <Text className="text-center text-xs font-medium text-muted-foreground">

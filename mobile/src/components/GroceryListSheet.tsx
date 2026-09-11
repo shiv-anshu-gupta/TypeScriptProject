@@ -45,6 +45,7 @@ export function GroceryListSheet() {
   const { height: screenHeight } = useWindowDimensions();
   const isOpen = useGrocerySheetStore((state) => state.isOpen);
   const close = useGrocerySheetStore((state) => state.close);
+  const ensureRows = useDraftListStore((state) => state.ensureRows);
   const itemCount = useDraftListStore(
     (state) =>
       state.rows.filter((row) => (row.name ?? "").trim().length > 0).length,
@@ -58,6 +59,8 @@ export function GroceryListSheet() {
   // How far the keyboard pushes the sheet's bottom edge up.
   const keyboardLift = useRef(new Animated.Value(0)).current;
   const [keyboardOpen, setKeyboardOpen] = useState(false);
+  // Same flag for layout callbacks, which must not read a stale render value.
+  const keyboardOpenRef = useRef(false);
 
   const scrollRef = useRef<ScrollView>(null);
   const scrollY = useRef(0);
@@ -94,6 +97,7 @@ export function GroceryListSheet() {
 
     const showSub = Keyboard.addListener(showEvent, (event) => {
       setKeyboardOpen(true);
+      keyboardOpenRef.current = true;
       Animated.timing(keyboardLift, {
         toValue: event.endCoordinates?.height ?? 0,
         duration: event.duration || 180,
@@ -102,6 +106,7 @@ export function GroceryListSheet() {
     });
     const hideSub = Keyboard.addListener(hideEvent, (event) => {
       setKeyboardOpen(false);
+      keyboardOpenRef.current = false;
       focusedIndex.current = null;
       Animated.timing(keyboardLift, {
         toValue: 0,
@@ -242,9 +247,9 @@ export function GroceryListSheet() {
           <ScrollView
             ref={scrollRef}
             style={{ flex: 1 }}
-            // Taps on lines and buttons work without first closing the
-            // keyboard, and scrolling never closes it.
-            keyboardShouldPersistTaps="handled"
+            // The keyboard stays up: no tap and no scroll inside the list
+            // closes it, so writing the next line is always one tap away.
+            keyboardShouldPersistTaps="always"
             keyboardDismissMode="none"
             showsVerticalScrollIndicator={false}
             scrollEventThrottle={32}
@@ -252,7 +257,19 @@ export function GroceryListSheet() {
               scrollY.current = event.nativeEvent.contentOffset.y;
             }}
             onLayout={(event) => {
-              viewportHeight.current = event.nativeEvent.layout.height;
+              const viewport = event.nativeEvent.layout.height;
+              viewportHeight.current = viewport;
+              // Fill the page with lines, so there is never empty space under
+              // the list. Measured at full height (keyboard down) - the
+              // tallest the page gets.
+              if (!keyboardOpenRef.current) {
+                ensureRows(
+                  Math.ceil(
+                    (viewport - SCROLL_PAD_TOP - PAPER_HEADER_HEIGHT) /
+                      ROW_HEIGHT,
+                  ),
+                );
+              }
               // The viewport shrinks as the keyboard lifts the sheet; keep the
               // line being typed in on screen while it does.
               if (focusedIndex.current !== null) {
@@ -265,15 +282,12 @@ export function GroceryListSheet() {
             }}
           >
             <GroceryListEditor
-              autoFocusWhenEmpty
+              autoFocusOnOpen
               onRowFocus={(index) => {
                 focusedIndex.current = index;
                 ensureVisible(index, true);
               }}
             />
-            <Text className="mt-3 px-6 text-center text-xs font-medium text-muted-foreground">
-              {t("home.priceNote")}
-            </Text>
           </ScrollView>
         </Animated.View>
       </Animated.View>

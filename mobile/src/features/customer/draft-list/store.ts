@@ -60,6 +60,9 @@ type DraftListStore = {
   // Take a line out entirely, so the numbering below it closes up instead of
   // leaving a blank gap where the item was.
   removeRow: (id: number) => void;
+  // Top the paper up with blank lines until it has at least `count`, so a tall
+  // screen shows a full page of writable lines instead of empty space.
+  ensureRows: (count: number) => void;
   addProduct: (name: string, unit?: string, unitValue?: number) => void;
   addProductWithQuantity: (name: string, quantity: string) => void;
   clearDraft: () => void;
@@ -216,6 +219,23 @@ export const useDraftListStore = create<DraftListStore>((set, get) => ({
       persist(next);
       return { rows: next, nextId: counter };
     });
+  },
+
+  ensureRows: (count) => {
+    const { rows, nextId } = get();
+    if (rows.length >= count) return;
+
+    let counter = nextId;
+    const padded = [
+      ...rows,
+      ...Array.from({ length: count - rows.length }, () => ({
+        id: counter++,
+        name: "",
+        quantity: "",
+      })),
+    ];
+    persist(padded);
+    set({ rows: padded, nextId: counter });
   },
 
   clearDraft: () => {
