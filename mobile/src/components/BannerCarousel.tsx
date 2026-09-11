@@ -29,7 +29,13 @@ export function BannerCarousel({ banners }: { banners: CustomerHomeBanner[] }) {
   const [index, setIndex] = useState(0);
   const [reduceMotion, setReduceMotion] = useState(false);
 
-  const many = banners.length > 1;
+  // Banners whose image failed to load (e.g. deleted from Cloudinary). They are
+  // dropped rather than shown as an empty grey box - a broken banner should
+  // never be the thing a customer sees on the Home screen.
+  const [failed, setFailed] = useState<Set<string>>(() => new Set());
+  const visible = banners.filter((banner) => !failed.has(banner._id));
+
+  const many = visible.length > 1;
   const itemWidth = width - SIDE * 2 - (many ? PEEK : 0);
   const itemHeight = Math.round(itemWidth * ASPECT);
   const interval = itemWidth + GAP;
@@ -49,7 +55,7 @@ export function BannerCarousel({ banners }: { banners: CustomerHomeBanner[] }) {
     if (!many || !isFocused || reduceMotion) return;
     const timer = setInterval(() => {
       if (dragging.current) return;
-      const next = (indexRef.current + 1) % banners.length;
+      const next = (indexRef.current + 1) % visible.length;
       indexRef.current = next;
       setIndex(next);
       listRef.current?.scrollToOffset({
@@ -58,9 +64,18 @@ export function BannerCarousel({ banners }: { banners: CustomerHomeBanner[] }) {
       });
     }, AUTOPLAY_MS);
     return () => clearInterval(timer);
-  }, [many, isFocused, reduceMotion, banners.length, interval]);
+  }, [many, isFocused, reduceMotion, visible.length, interval]);
 
-  if (!banners.length) return null;
+  // A banner dropping out can leave the page index past the end - start over.
+  useEffect(() => {
+    if (indexRef.current >= visible.length) {
+      indexRef.current = 0;
+      setIndex(0);
+      listRef.current?.scrollToOffset({ offset: 0, animated: false });
+    }
+  }, [visible.length]);
+
+  if (!visible.length) return null;
 
   const onSettle = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const settled = Math.round(event.nativeEvent.contentOffset.x / interval);
@@ -73,7 +88,7 @@ export function BannerCarousel({ banners }: { banners: CustomerHomeBanner[] }) {
     <View className="gap-2.5">
       <FlatList
         ref={listRef}
-        data={banners}
+        data={visible}
         keyExtractor={(banner) => banner._id}
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -96,6 +111,9 @@ export function BannerCarousel({ banners }: { banners: CustomerHomeBanner[] }) {
               style={{ width: "100%", height: "100%" }}
               contentFit="cover"
               transition={200}
+              onError={() =>
+                setFailed((prev) => new Set(prev).add(item._id))
+              }
             />
           </View>
         )}
@@ -103,7 +121,7 @@ export function BannerCarousel({ banners }: { banners: CustomerHomeBanner[] }) {
 
       {many ? (
         <View className="flex-row items-center justify-center gap-1.5">
-          {banners.map((banner, i) => (
+          {visible.map((banner, i) => (
             <View
               key={banner._id}
               className={
