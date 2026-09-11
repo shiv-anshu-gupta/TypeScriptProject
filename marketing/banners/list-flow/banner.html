@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Mukta:wght@600;700;800&family=Kalam:wght@700&display=block">
+<style>
+  /* sKirana palette: ocean teal ground, marigold accent, terracotta, cream paper */
+  :root {
+    --teal-deep: #2b4750;
+    --teal: #3c5a64;
+    --teal-lift: #4f7682;
+    --marigold: #f4b042;
+    --marigold-deep: #e09a28;
+    --terracotta: #c0492f;
+    --cream: #fdf8ea;
+    --ink: #1f2a2e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1600px; height: 736px; overflow: hidden; }
+  body {
+    position: relative;
+    font-family: "Mukta", "Nirmala UI", sans-serif;
+    color: #fff;
+    background:
+      radial-gradient(rgba(255,255,255,.055) 1.6px, transparent 1.8px) 0 0 / 30px 30px,
+      radial-gradient(circle at 74% 58%, rgba(98,140,152,.55) 0%, rgba(98,140,152,0) 46%),
+      linear-gradient(118deg, var(--teal-deep) 0%, var(--teal) 52%, #355561 100%);
+  }
+
+  svg.art { position: absolute; inset: 0; }
+
+  .copy {
+    position: absolute;
+    left: 78px; top: 0; bottom: 0; width: 820px;
+    display: flex; flex-direction: column; justify-content: center;
+    gap: 30px;
+  }
+
+  .badge {
+    align-self: flex-start;
+    display: inline-flex; align-items: center; gap: 12px;
+    background: var(--marigold);
+    color: #2a1d10;
+    font-weight: 800; font-size: 40px; line-height: 1;
+    padding: 14px 30px 12px 22px;
+    border-radius: 999px;
+    box-shadow: 0 6px 0 rgba(0,0,0,.14);
+  }
+  .badge svg { width: 34px; height: 34px; }
+
+  h1 {
+    font-family: "Baloo 2", "Nirmala UI", sans-serif;
+    font-weight: 800;
+    font-size: 118px;
+    line-height: 1.0;
+    letter-spacing: -1px;
+    text-shadow: 0 5px 0 rgba(0,0,0,.14);
+  }
+  h1 .hl { color: var(--marigold); display: block; }
+
+  .steps { display: flex; align-items: flex-start; gap: 6px; }
+  .step {
+    width: 168px;
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+  }
+  .dot {
+    width: 90px; height: 90px; border-radius: 50%;
+    display: grid; place-items: center;
+    background: #fff;
+    box-shadow: 0 6px 0 rgba(0,0,0,.16);
+  }
+  .dot svg { width: 44px; height: 44px; }
+  .dot .rupee {
+    font-family: "Baloo 2", sans-serif; font-weight: 800;
+    font-size: 54px; line-height: 1; color: var(--teal); margin-top: 6px;
+  }
+  .step.goal .dot { background: var(--marigold); }
+  .step span {
+    font-weight: 800; font-size: 40px; line-height: 1; white-space: nowrap;
+  }
+  .arrow { width: 34px; height: 90px; display: grid; place-items: center; }
+  .arrow svg { width: 34px; height: 34px; }
+
+  .hint {
+    align-self: flex-start;
+    display: inline-flex; align-items: center; gap: 18px;
+    padding: 10px 32px 10px 10px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.12);
+    border: 2px solid rgba(255,255,255,.26);
+    font-weight: 700; font-size: 38px; line-height: 1;
+  }
+  .fab {
+    width: 62px; height: 62px; border-radius: 50%;
+    display: grid; place-items: center;
+    background: var(--teal-deep);
+    border: 4px solid #fff;
+  }
+  .fab svg { width: 30px; height: 30px; }
+</style>
+</head>
+<body>
+
+<svg class="art" viewBox="0 0 1600 736" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="lift" x="-30%" y="-30%" width="160%" height="170%">
+      <feDropShadow dx="0" dy="14" stdDeviation="14" flood-color="#0b1a1f" flood-opacity=".35"/>
+    </filter>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="170%">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#0b1a1f" flood-opacity=".28"/>
+    </filter>
+    <pattern id="buti" width="22" height="22" patternUnits="userSpaceOnUse">
+      <rect width="22" height="22" fill="#f4b042"/>
+      <circle cx="11" cy="11" r="3" fill="#e09a28"/>
+    </pattern>
+    <clipPath id="screen"><rect x="-98" y="388" width="196" height="344" rx="20"/></clipPath>
+  </defs>
+
+  <!-- halo behind the figure -->
+  <circle cx="1165" cy="470" r="292" fill="#ffffff" opacity=".07"/>
+  <circle cx="1165" cy="470" r="338" fill="none" stroke="#ffffff" stroke-opacity=".08" stroke-width="3"/>
+
+  <!-- ============ THE SHOPPER ============ -->
+  <g transform="translate(1165 0)">
+    <!-- hair behind + bun -->
+    <ellipse cx="0" cy="214" rx="93" ry="102" fill="#2b1e1c"/>
+    <circle cx="-10" cy="120" r="44" fill="#2b1e1c"/>
+    <path d="M-40 108 Q-10 84 22 104" stroke="#4a3632" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <circle cx="-44" cy="112" r="7" fill="#f4b042"/>
+
+    <!-- neck -->
+    <path d="M-27 296 L27 296 L33 356 L-33 356 Z" fill="#b1714d"/>
+
+    <!-- kurta -->
+    <path d="M-160 462 C-152 392 -112 364 -46 354 L46 354 C112 364 152 392 160 462 L180 770 L-180 770 Z" fill="#c0492f"/>
+    <path d="M-160 462 C-152 392 -112 364 -62 357 C-104 428 -116 580 -124 770 L-180 770 Z" fill="#9f3a24" opacity=".55"/>
+
+    <!-- dupatta over her left shoulder -->
+    <path d="M36 356 C112 362 152 402 160 464 L180 770 L96 770 C110 600 94 474 36 404 Z" fill="url(#buti)"/>
+    <path d="M36 404 C94 474 110 600 96 770" stroke="#c9822a" stroke-width="7" fill="none"/>
+
+    <!-- neckline -->
+    <path d="M-46 354 Q0 430 46 354 Z" fill="#c68660"/>
+    <path d="M-48 354 Q0 433 48 354" stroke="#f4b042" stroke-width="9" fill="none" stroke-linecap="round"/>
+
+    <!-- head, tilted toward the phone -->
+    <g transform="rotate(-5 0 300)">
+      <ellipse cx="-73" cy="242" rx="13" ry="20" fill="#b1714d"/>
+      <ellipse cx="73" cy="242" rx="13" ry="20" fill="#b1714d"/>
+      <ellipse cx="0" cy="232" rx="73" ry="89" fill="#c68660"/>
+      <!-- jhumkas -->
+      <circle cx="-74" cy="268" r="6.5" fill="#f4b042"/>
+      <path d="M-84 278 Q-74 300 -64 278 Z" fill="#f4b042"/>
+      <circle cx="74" cy="268" r="6.5" fill="#f4b042"/>
+      <path d="M64 278 Q74 300 84 278 Z" fill="#f4b042"/>
+      <!-- hair front, side part -->
+      <path d="M-80 238 C-88 150 -30 110 14 116 C66 122 92 170 81 234 C70 196 44 170 8 168 C-28 166 -56 188 -80 238 Z" fill="#2b1e1c"/>
+      <!-- face -->
+      <path d="M-46 212 Q-31 203 -16 211" stroke="#2b1e1c" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <path d="M16 211 Q31 203 46 212" stroke="#2b1e1c" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <path d="M-44 238 Q-31 226 -18 238" stroke="#2b1e1c" stroke-width="5.5" fill="none" stroke-linecap="round"/>
+      <path d="M18 238 Q31 226 44 238" stroke="#2b1e1c" stroke-width="5.5" fill="none" stroke-linecap="round"/>
+      <circle cx="0" cy="193" r="5.5" fill="#c0492f"/>
+      <path d="M2 246 Q9 263 -1 268" stroke="#9a5b3b" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <path d="M-23 284 Q0 305 23 284 Q0 293 -23 284 Z" fill="#7a2e1e"/>
+      <ellipse cx="-45" cy="268" rx="13" ry="8" fill="#e0736a" opacity=".45"/>
+      <ellipse cx="45" cy="268" rx="13" ry="8" fill="#e0736a" opacity=".45"/>
+    </g>
+
+    <!-- arms, phone and hands tilt together -->
+    <g transform="rotate(-4 0 560)">
+      <path d="M-215 806 L-140 716" stroke="#b4432b" stroke-width="66" stroke-linecap="round"/>
+      <path d="M215 806 L140 716" stroke="#b4432b" stroke-width="66" stroke-linecap="round"/>
+      <path d="M-158 700 L-122 732" stroke="#f4b042" stroke-width="9" stroke-linecap="round"/>
+      <path d="M158 700 L122 732" stroke="#f4b042" stroke-width="9" stroke-linecap="round"/>
+      <path d="M-140 716 L-118 694" stroke="#c68660" stroke-width="44" stroke-linecap="round"/>
+      <path d="M140 716 L118 694" stroke="#c68660" stroke-width="44" stroke-linecap="round"/>
+
+      <!-- phone -->
+      <g filter="url(#soft)">
+        <rect x="-110" y="374" width="220" height="372" rx="30" fill="#1f2a2e"/>
+      </g>
+      <rect x="-98" y="388" width="196" height="344" rx="20" fill="#fdf8ea"/>
+      <g clip-path="url(#screen)">
+        <rect x="-98" y="388" width="196" height="58" fill="#f5f0e8"/>
+        <rect x="-20" y="395" width="40" height="8" rx="4" fill="#1f2a2e"/>
+        <text x="-82" y="436" font-family="Mukta" font-weight="800" font-size="22" fill="#3c5a64">मेरी लिस्ट</text>
+        <rect x="30" y="418" width="56" height="24" rx="12" fill="#3c5a64"/>
+        <text x="58" y="436" text-anchor="middle" font-family="Mukta" font-weight="700" font-size="15" fill="#fff">4 आइटम</text>
+        <line x1="-98" y1="446" x2="98" y2="446" stroke="#c9d9ea" stroke-width="2.5"/>
+        <line x1="-60" y1="446" x2="-60" y2="732" stroke="#d9a89b" stroke-width="2"/>
+        <g font-family="Kalam" font-weight="700" fill="#26303a">
+          <line x1="-98" y1="494" x2="98" y2="494" stroke="#c9d9ea" stroke-width="1.6"/>
+          <line x1="-98" y1="536" x2="98" y2="536" stroke="#c9d9ea" stroke-width="1.6"/>
+          <line x1="-98" y1="578" x2="98" y2="578" stroke="#c9d9ea" stroke-width="1.6"/>
+          <line x1="-98" y1="620" x2="98" y2="620" stroke="#c9d9ea" stroke-width="1.6"/>
+          <text x="-82" y="480" font-family="Mukta" font-size="16" fill="#a89b78">1</text>
+          <text x="-50" y="482" font-size="27">चावल</text>
+          <text x="84" y="481" font-size="19" fill="#5d6b62" text-anchor="end">5 किलो</text>
+          <text x="-82" y="522" font-family="Mukta" font-size="16" fill="#a89b78">2</text>
+          <text x="-50" y="524" font-size="27">आटा</text>
+          <text x="84" y="523" font-size="19" fill="#5d6b62" text-anchor="end">10 किलो</text>
+          <text x="-82" y="564" font-family="Mukta" font-size="16" fill="#a89b78">3</text>
+          <text x="-50" y="566" font-size="27">दूध</text>
+          <text x="84" y="565" font-size="19" fill="#5d6b62" text-anchor="end">2 लीटर</text>
+          <text x="-82" y="606" font-family="Mukta" font-size="16" fill="#a89b78">4</text>
+          <text x="-50" y="608" font-size="27">दाल</text>
+          <text x="84" y="607" font-size="19" fill="#5d6b62" text-anchor="end">1 किलो</text>
+        </g>
+        <rect x="-68" y="638" width="136" height="44" rx="22" fill="#3c5a64"/>
+        <g transform="translate(-40 648)" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/>
+        </g>
+        <text x="16" y="668" text-anchor="middle" font-family="Mukta" font-weight="800" font-size="22" fill="#fff">भेजें</text>
+      </g>
+
+      <!-- hands at the bottom of the phone, thumbs just inside the edge -->
+      <ellipse cx="-108" cy="690" rx="30" ry="34" fill="#c68660"/>
+      <ellipse cx="-88" cy="664" rx="11" ry="24" transform="rotate(-24 -88 664)" fill="#c68660"/>
+      <path d="M-126 684 Q-118 688 -112 684 M-128 700 Q-119 704 -112 700" stroke="#9a5b3b" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+      <ellipse cx="108" cy="690" rx="30" ry="34" fill="#c68660"/>
+      <ellipse cx="88" cy="664" rx="11" ry="24" transform="rotate(24 88 664)" fill="#c68660"/>
+      <path d="M126 684 Q118 688 112 684 M128 700 Q119 704 112 700" stroke="#9a5b3b" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+    </g>
+  </g>
+
+  <!-- ============ SENT -> PRICED ============ -->
+  <path d="M1242 392 C1230 350 1256 316 1298 306" stroke="#f4b042" stroke-width="5" stroke-dasharray="1 13" stroke-linecap="round" fill="none"/>
+  <g transform="translate(1302 280) rotate(-22)" filter="url(#soft)">
+    <path d="M0 22 L66 0 L44 50 L32 32 Z" fill="#ffffff"/>
+    <path d="M0 22 L32 32 L66 0" stroke="#c9d9ea" stroke-width="2.5" fill="none" stroke-linejoin="round"/>
+    <path d="M32 32 L30 48 L44 50" fill="#dde8ee"/>
+  </g>
+  <path d="M1372 262 C1388 246 1394 232 1394 222" stroke="#f4b042" stroke-width="5" stroke-dasharray="1 13" stroke-linecap="round" fill="none"/>
+
+  <!-- price card -->
+  <g transform="translate(1300 90) rotate(5)" filter="url(#lift)">
+    <rect width="236" height="146" rx="26" fill="#ffffff"/>
+    <circle cx="42" cy="46" r="23" fill="#4f9d5a"/>
+    <path d="M31 46 L39 54 L54 37" stroke="#fff" stroke-width="5.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="76" y="56" font-family="Mukta" font-weight="800" font-size="29" fill="#1f2a2e">भाव आ गया!</text>
+    <text x="24" y="124" font-family="Mukta" font-weight="700" font-size="24" fill="#6f6857">कुल</text>
+    <text x="74" y="128" font-family="'Baloo 2'" font-weight="800" font-size="58" fill="#3c5a64">₹540</text>
+  </g>
+
+  <!-- sparkles -->
+  <path d="M1296 58 l6 16 16 6 -16 6 -6 16 -6 -16 -16 -6 16 -6z" fill="#f4b042"/>
+  <path d="M1546 250 l4 11 11 4 -11 4 -4 11 -4 -11 -11 -4 11 -4z" fill="#ffffff" opacity=".8"/>
+  <path d="M1004 118 l4 11 11 4 -11 4 -4 11 -4 -11 -11 -4 11 -4z" fill="#ffffff" opacity=".55"/>
+
+  <!-- ============ READY TO COLLECT ============ -->
+  <g transform="translate(1410 536)" filter="url(#soft)">
+    <path d="M40 44 C40 -6 104 -6 104 44" stroke="#7d5632" stroke-width="7" fill="none"/>
+    <rect x="16" y="-44" width="34" height="112" rx="17" transform="rotate(-15 33 12)" fill="#e3b97a"/>
+    <path d="M18 -10 l14 -6 M20 8 l14 -6 M22 26 l14 -6" stroke="#c9985a" stroke-width="3" stroke-linecap="round" transform="rotate(-15 33 12)"/>
+    <rect x="66" y="-26" width="34" height="88" rx="10" fill="#ffffff"/>
+    <rect x="72" y="-42" width="22" height="18" rx="4" fill="#4a8cc7"/>
+    <ellipse cx="124" cy="8" rx="30" ry="20" fill="#5e9e4a"/>
+    <ellipse cx="138" cy="-8" rx="22" ry="15" fill="#78b25e"/>
+    <circle cx="52" cy="26" r="22" fill="#d9463a"/>
+    <path d="M52 6 l4 8 8 -3 -5 7 7 5 -9 0 -5 7 0 -8 -8 -3 8 -3z" fill="#4f8a3c"/>
+    <path d="M0 44 L150 44 L138 214 L12 214 Z" fill="#c99a63"/>
+    <path d="M-4 36 L154 36 L150 62 L0 62 Z" fill="#b7864f"/>
+    <circle cx="75" cy="130" r="26" fill="#3c5a64"/>
+    <path d="M63 131 L72 140 L88 122" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>
+
+<div class="copy">
+  <div class="badge">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#2a1d10" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/></svg>
+    घर बैठे भाव जानें
+  </div>
+
+  <h1>राशन की पर्ची<span class="hl">अब फ़ोन पर!</span></h1>
+
+  <div class="steps">
+    <div class="step">
+      <div class="dot"><svg viewBox="0 0 24 24" fill="none" stroke="#3c5a64" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg></div>
+      <span>लिखें</span>
+    </div>
+    <div class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="#f4b042" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></div>
+    <div class="step">
+      <div class="dot"><svg viewBox="0 0 24 24" fill="none" stroke="#3c5a64" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/></svg></div>
+      <span>भेजें</span>
+    </div>
+    <div class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="#f4b042" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></div>
+    <div class="step">
+      <div class="dot"><span class="rupee">₹</span></div>
+      <span>भाव पाएं</span>
+    </div>
+    <div class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="#f4b042" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></div>
+    <div class="step goal">
+      <div class="dot"><svg viewBox="0 0 24 24" fill="none" stroke="#2a1d10" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></div>
+      <span>ले जाएं</span>
+    </div>
+  </div>
+
+  <div class="hint">
+    <div class="fab"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h12M3 11h12M3 16h7"/><path d="M17.5 13v7M14 16.5h7"/></svg></div>
+    नीचे बीच वाला बटन दबाएं
+  </div>
+</div>
+
+</body>
+</html>
