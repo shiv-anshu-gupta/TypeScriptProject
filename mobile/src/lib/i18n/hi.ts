@@ -39,6 +39,7 @@ export const hi: Translations = {
     step1: "लिखें",
     step2: "भेजें",
     step3: "भाव पाएं",
+    step4: "ले जाएं",
     itemExample: "जैसे चावल",
     qtyExample: "2 किलो",
     writeAtLeastOne: "कम से कम एक आइटम लिखें",

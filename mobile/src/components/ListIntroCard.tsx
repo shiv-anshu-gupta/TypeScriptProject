@@ -24,7 +24,7 @@ function Step({ n, label }: { n: string; label: string }) {
   );
 }
 
-// The Home screen's lead card: what the app does, in three steps. The list
+// The Home screen's lead card: what the app does, in four steps. The list
 // itself lives in the sheet behind the centre tab button, so the card ends in a
 // button that opens it - explaining a list without a way to reach it would be a
 // dead end.
@@ -52,13 +52,16 @@ export function ListIntroCard() {
         </View>
       </View>
 
-      {/* Write -> Send -> Get the price */}
-      <View className="flex-row items-center rounded-xl bg-secondary px-2 py-2.5">
+      {/* Write -> Send -> Get the price -> Collect: the whole journey, the same
+          four steps the Home promo banner shows */}
+      <View className="flex-row items-center rounded-xl bg-secondary px-1.5 py-2.5">
         <Step n="1" label={t("home.step1")} />
-        <Feather name="chevron-right" size={14} color="#ada291" />
+        <Feather name="chevron-right" size={13} color="#ada291" />
         <Step n="2" label={t("home.step2")} />
-        <Feather name="chevron-right" size={14} color="#ada291" />
+        <Feather name="chevron-right" size={13} color="#ada291" />
         <Step n="3" label={t("home.step3")} />
+        <Feather name="chevron-right" size={13} color="#ada291" />
+        <Step n="4" label={t("home.step4")} />
       </View>
 
       <Button

@@ -36,6 +36,7 @@ export const en = {
     step1: "Write",
     step2: "Send",
     step3: "Get price",
+    step4: "Collect",
     itemExample: "e.g. Rice",
     qtyExample: "2 kg",
     writeAtLeastOne: "Write at least one item",
