@@ -73,6 +73,15 @@ export function useCustomerProductList(initialCategory?: string) {
     setFilters(emptyFilters);
   }, []);
 
+  // Start a fresh browse when arriving from a shortcut outside Shop (a Home
+  // category or search): exactly the given category, or none, with every other
+  // filter and any old search text dropped - so the user sees what they tapped,
+  // not that narrowed by whatever they picked on a previous visit.
+  const startFresh = useCallback((category?: string) => {
+    setFilters({ ...emptyFilters, category: category || "" });
+    setSearch("");
+  }, []);
+
   const activeFilterBadges = useMemo<ActiveFilterBadge[]>(() => {
     const items: ActiveFilterBadge[] = [];
 
@@ -155,6 +164,7 @@ export function useCustomerProductList(initialCategory?: string) {
     availableColors,
     toggleFacet,
     clearFilters,
+    startFresh,
     activeFilterBadges,
   };
 }

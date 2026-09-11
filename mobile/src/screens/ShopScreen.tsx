@@ -137,21 +137,34 @@ export function ShopScreen() {
     changeSort,
     toggleFacet,
     clearFilters,
+    startFresh,
     activeFilterBadges,
   } = useCustomerProductList(route.params?.category);
 
   const [searchOpen, setSearchOpen] = useState(false);
 
-  // A search handed over from the Home search bar: open the field, apply the
-  // term, then clear the param so searching the same word again still works.
+  // Shortcuts handed over from Home. The Shop tab stays mounted after its first
+  // visit, so the hook's initial category is read only once - these effects
+  // apply every later hand-off. Each starts a fresh browse (no leftover filters
+  // or search), then clears its param so tapping the same thing twice works.
   const tabNavigation = useNavigation<ShopTabNav>();
+  const incomingCategory = route.params?.category;
   const incomingSearch = route.params?.search;
+
+  useEffect(() => {
+    if (!incomingCategory) return;
+    startFresh(incomingCategory);
+    setSearchOpen(false);
+    tabNavigation.setParams({ category: undefined });
+  }, [incomingCategory, startFresh, tabNavigation]);
+
   useEffect(() => {
     if (!incomingSearch) return;
+    startFresh();
     setSearchOpen(true);
     setSearch(incomingSearch);
     tabNavigation.setParams({ search: undefined });
-  }, [incomingSearch, setSearch, tabNavigation]);
+  }, [incomingSearch, startFresh, setSearch, tabNavigation]);
 
   const draftCount = useDraftListStore(
     (state) =>
