@@ -8,6 +8,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Text,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -138,9 +139,12 @@ export function GroceryListSheet() {
           <View className="h-1.5 w-12 rounded-full bg-muted" />
         </View>
 
-        {/* Close button only — the list's own intro card carries the title,
-            so repeating it here would read as a duplicate heading. */}
-        <View className="flex-row items-center justify-end px-5 pb-1 pt-2">
+        {/* Title + close. The list's explainer card is Home-only, so the sheet
+            names itself here. */}
+        <View className="flex-row items-center justify-between px-5 pb-2 pt-2">
+          <Text className="text-lg font-bold text-foreground">
+            {t("home.listTitle")}
+          </Text>
           <Pressable
             onPress={close}
             hitSlop={8}

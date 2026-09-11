@@ -73,7 +73,7 @@ export function HomeScreen() {
 
       {/* Handwritten-style draft paper */}
       <View className="mt-3">
-        <GroceryList />
+        <GroceryList showIntro />
       </View>
 
       {/* Categories */}

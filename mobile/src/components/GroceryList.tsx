@@ -26,7 +26,14 @@ function Step({ n, label }: { n: string; label: string }) {
   );
 }
 
-export function GroceryList() {
+type GroceryListProps = {
+  // The "write your list" explainer card. Only the Home screen shows it — that
+  // is where a first-time customer meets the blank paper. Everywhere else the
+  // list is reached on purpose, so the explainer would just be clutter.
+  showIntro?: boolean;
+};
+
+export function GroceryList({ showIntro = false }: GroceryListProps) {
   const { t } = useTranslation();
   // The paper is a view over the shared draft — the same draft that
   // "Add to list" on catalog products writes into.
@@ -45,34 +52,36 @@ export function GroceryList() {
   return (
     <View className="gap-3">
       {/* Tells the customer, up front, what this blank paper is for. */}
-      <View className="mx-3 gap-3 rounded-2xl border border-border bg-card p-4">
-        <View className="flex-row items-center gap-3">
-          <View className="h-11 w-11 items-center justify-center rounded-xl bg-primary">
-            <MaterialCommunityIcons
-              name="notebook-edit-outline"
-              size={22}
-              color="#ffffff"
-            />
+      {showIntro ? (
+        <View className="mx-3 gap-3 rounded-2xl border border-border bg-card p-4">
+          <View className="flex-row items-center gap-3">
+            <View className="h-11 w-11 items-center justify-center rounded-xl bg-primary">
+              <MaterialCommunityIcons
+                name="notebook-edit-outline"
+                size={22}
+                color="#ffffff"
+              />
+            </View>
+            <View className="flex-1">
+              <Text className="text-base font-bold text-foreground">
+                {t("home.listTitle")}
+              </Text>
+              <Text className="mt-0.5 text-xs leading-4 text-muted-foreground">
+                {t("home.listSubtitle")}
+              </Text>
+            </View>
           </View>
-          <View className="flex-1">
-            <Text className="text-base font-bold text-foreground">
-              {t("home.listTitle")}
-            </Text>
-            <Text className="mt-0.5 text-xs leading-4 text-muted-foreground">
-              {t("home.listSubtitle")}
-            </Text>
-          </View>
-        </View>
 
-        {/* Write → Send → Get the price */}
-        <View className="flex-row items-center rounded-xl bg-secondary px-2 py-2.5">
-          <Step n="1" label={t("home.step1")} />
-          <Feather name="chevron-right" size={14} color="#ada291" />
-          <Step n="2" label={t("home.step2")} />
-          <Feather name="chevron-right" size={14} color="#ada291" />
-          <Step n="3" label={t("home.step3")} />
+          {/* Write → Send → Get the price */}
+          <View className="flex-row items-center rounded-xl bg-secondary px-2 py-2.5">
+            <Step n="1" label={t("home.step1")} />
+            <Feather name="chevron-right" size={14} color="#ada291" />
+            <Step n="2" label={t("home.step2")} />
+            <Feather name="chevron-right" size={14} color="#ada291" />
+            <Step n="3" label={t("home.step3")} />
+          </View>
         </View>
-      </View>
+      ) : null}
 
       {/* Cream "paper" sheet with a soft shadow. */}
       <View
