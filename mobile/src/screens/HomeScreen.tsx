@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -19,7 +19,7 @@ import { useCustomerHomeStore } from "@/features/customer/home/store";
 import { useCustomerGroceryListStore } from "@/features/customer/grocery-list/store";
 import { ProductCard } from "@/components/ProductCard";
 import { ListProgressCard } from "@/components/ListProgressCard";
-import { SearchBar } from "@/components/SearchBar";
+import { SearchEntry } from "@/components/SearchBar";
 import { BannerCarousel } from "@/components/BannerCarousel";
 import { ProfileAvatar } from "@/components/ProfileAvatar";
 import { useCustomerDisplayName } from "@/features/customer/account/use-display-name";
@@ -31,7 +31,6 @@ export function HomeScreen() {
   const navigation = useNavigation<Nav>();
   const insets = useSafeAreaInsets();
   const { data, loading, loadHome } = useCustomerHomeStore((state) => state);
-  const [query, setQuery] = useState("");
   const displayName = useCustomerDisplayName();
 
   useEffect(() => {
@@ -47,17 +46,6 @@ export function HomeScreen() {
       if (isSignedIn) void loadLists();
     }, [isSignedIn, loadLists]),
   );
-
-  // Search results live on the Shop tab, which already owns search, filters
-  // and sorting. Home hands the query over rather than duplicating all that.
-  const runSearch = () => {
-    const term = query.trim();
-    navigation.navigate("Tabs", {
-      screen: "Shop",
-      params: term ? { search: term } : undefined,
-    });
-    setQuery("");
-  };
 
   if (loading) {
     return (
@@ -104,28 +92,21 @@ export function HomeScreen() {
       </View>
 
       <View className="mt-4 gap-4">
-        {/* What the app does, with a button into the list sheet */}
+        {/* The customer's live list journey - the next step, one tap away */}
         <ListProgressCard />
 
-        {/* Product search, with a shortcut to Shop's filters beside it */}
-        <View className="flex-row items-center gap-2 px-4">
-          <View className="flex-1">
-            <SearchBar
-              value={query}
-              onChangeText={setQuery}
-              onSubmit={runSearch}
-              placeholder={t("shop.searchPlaceholder")}
-            />
-          </View>
-          <Pressable
-            onPress={() => navigation.navigate("Tabs", { screen: "Shop" })}
-            hitSlop={4}
-            accessibilityRole="button"
-            accessibilityLabel={t("home.openFilters")}
-            className="h-11 w-11 items-center justify-center rounded-xl bg-primary active:opacity-85"
-          >
-            <Feather name="sliders" size={18} color="#ffffff" />
-          </Pressable>
+        {/* Product search. Searching itself happens on the Shop tab, which
+            shows results as you type; this opens it ready to type. */}
+        <View className="px-4">
+          <SearchEntry
+            placeholder={t("home.searchHint")}
+            onPress={() =>
+              navigation.navigate("Tabs", {
+                screen: "Shop",
+                params: { openSearch: true },
+              })
+            }
+          />
         </View>
 
         {/* Promo banners from the admin panel; renders nothing if there are none */}

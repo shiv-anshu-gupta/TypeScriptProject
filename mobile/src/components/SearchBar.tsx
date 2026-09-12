@@ -1,4 +1,4 @@
-import { Pressable, TextInput, View } from "react-native";
+import { Pressable, Text, TextInput, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 
@@ -47,5 +47,31 @@ export function SearchBar({
         </Pressable>
       ) : null}
     </View>
+  );
+}
+
+type SearchEntryProps = {
+  placeholder: string;
+  onPress: () => void;
+};
+
+// Looks exactly like the search field, but is a button that takes the customer
+// straight to where searching happens (the Shop tab, field focused, results
+// appearing as they type). Typing into a field that shows nothing until you
+// find the keyboard's search key looks broken, especially to someone who
+// doesn't know that key is there.
+export function SearchEntry({ placeholder, onPress }: SearchEntryProps) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="search"
+      accessibilityLabel={placeholder}
+      className="h-11 flex-row items-center gap-2 rounded-xl border border-border bg-card px-3 active:opacity-80"
+    >
+      <Feather name="search" size={16} color="#6f6857" />
+      <Text numberOfLines={1} className="flex-1 text-base text-[#ada291]">
+        {placeholder}
+      </Text>
+    </Pressable>
   );
 }

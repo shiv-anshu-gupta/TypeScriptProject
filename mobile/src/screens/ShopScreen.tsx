@@ -142,6 +142,9 @@ export function ShopScreen() {
   } = useCustomerProductList(route.params?.category);
 
   const [searchOpen, setSearchOpen] = useState(false);
+  // Bumped to remount the search field, so it takes focus (and brings the
+  // keyboard up) even when it was already open from an earlier visit.
+  const [searchFocusKey, setSearchFocusKey] = useState(0);
 
   // Shortcuts handed over from Home. The Shop tab stays mounted after its first
   // visit, so the hook's initial category is read only once - these effects
@@ -149,7 +152,7 @@ export function ShopScreen() {
   // or search), then clears its param so tapping the same thing twice works.
   const tabNavigation = useNavigation<ShopTabNav>();
   const incomingCategory = route.params?.category;
-  const incomingSearch = route.params?.search;
+  const incomingOpenSearch = route.params?.openSearch;
 
   useEffect(() => {
     if (!incomingCategory) return;
@@ -158,13 +161,14 @@ export function ShopScreen() {
     tabNavigation.setParams({ category: undefined });
   }, [incomingCategory, startFresh, tabNavigation]);
 
+  // From the Home search bar: search across everything, typing straight away.
   useEffect(() => {
-    if (!incomingSearch) return;
+    if (!incomingOpenSearch) return;
     startFresh();
     setSearchOpen(true);
-    setSearch(incomingSearch);
-    tabNavigation.setParams({ search: undefined });
-  }, [incomingSearch, startFresh, setSearch, tabNavigation]);
+    setSearchFocusKey((key) => key + 1);
+    tabNavigation.setParams({ openSearch: undefined });
+  }, [incomingOpenSearch, startFresh, tabNavigation]);
 
   const draftCount = useDraftListStore(
     (state) =>
@@ -202,6 +206,7 @@ export function ShopScreen() {
         {searchOpen ? (
           <View className="mt-2">
             <SearchBar
+              key={searchFocusKey}
               value={search}
               onChangeText={setSearch}
               placeholder={t("shop.searchPlaceholder")}

@@ -51,7 +51,7 @@ export const hi: Translations = {
     writeHint: "हर लाइन में एक आइटम लिखें",
     send: "भेजें",
     removeItem: "आइटम हटाएं",
-    openFilters: "फ़िल्टर",
+    searchHint: "आटा, दाल, चावल खोजें…",
     listTitle: "अपनी राशन लिस्ट लिखें",
     listSubtitle:
       "जो भी चाहिए लिख दें। दुकान दाम लगाकर आपको वापस भेज देगी।",

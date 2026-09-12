@@ -48,7 +48,7 @@ export const en = {
     writeHint: "Write one item on each line",
     send: "Send",
     removeItem: "Remove item",
-    openFilters: "Filters",
+    searchHint: "Search atta, dal, rice…",
     listTitle: "Write your grocery list",
     listSubtitle:
       "Write whatever you need. The shop will add the prices and send it back to you.",

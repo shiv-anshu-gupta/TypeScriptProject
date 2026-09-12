@@ -2,9 +2,10 @@ import type { NavigatorScreenParams } from "@react-navigation/native";
 
 export type TabParamList = {
   Home: undefined;
-  // `search` is a one-shot hand-off from the Home search bar: Shop applies it,
-  // then clears it so the same term can be searched again later.
-  Shop: { category?: string; search?: string } | undefined;
+  // One-shot hand-offs from Home, each cleared by Shop once applied so the
+  // same shortcut works again: `category` shows that category; `openSearch`
+  // opens the search field focused, with the keyboard up.
+  Shop: { category?: string; openSearch?: boolean } | undefined;
   Lists: undefined;
   Account: undefined;
 };
