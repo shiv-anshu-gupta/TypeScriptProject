@@ -10,10 +10,36 @@ type RoleGuardLayoutProps = {
 };
 
 export function RoleGuardLayout({ allow }: RoleGuardLayoutProps) {
-  const { isBootstrapped, status, user } = useAuthStore();
+  const { isBootstrapped, status, user, error } = useAuthStore();
 
   if (!isBootstrapped || status === "loading") {
     return <Commonloader />;
+  }
+
+  // Signed in with Clerk, but our server couldn't load the account (it's down,
+  // or it blocked this site's address). Sending them to /sign-in here would
+  // loop: that page sees a signed-in user and sends them straight back.
+  if (status === "error") {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-secondary/45 px-8 text-center">
+        <h1 className="text-2xl font-semibold text-foreground">
+          Couldn't reach the shop server
+        </h1>
+        <p className="max-w-sm text-sm text-muted-foreground">
+          You're signed in, but your account couldn't be loaded. Check your
+          internet and try again.
+        </p>
+        {error ? (
+          <p className="max-w-sm text-xs text-muted-foreground">{error}</p>
+        ) : null}
+        <div className="flex gap-3">
+          <Button onClick={() => window.location.reload()}>Try again</Button>
+          <SignOutButton>
+            <Button variant="outline">Sign out</Button>
+          </SignOutButton>
+        </div>
+      </div>
+    );
   }
 
   if (!user) {
