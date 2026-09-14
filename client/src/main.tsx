@@ -5,7 +5,12 @@ import { ClerkProvider } from "@clerk/react";
 import { Toaster } from "./components/ui/sonner.tsx";
 
 createRoot(document.getElementById("root")!).render(
-  <ClerkProvider publishableKey={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY!}>
+  // "/" is the public homepage (a separate static page), so signing out lands
+  // on the admin sign-in instead.
+  <ClerkProvider
+    publishableKey={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY!}
+    afterSignOutUrl="/sign-in"
+  >
     <App />
     <Toaster />
   </ClerkProvider>,
