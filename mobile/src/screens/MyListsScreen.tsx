@@ -386,7 +386,7 @@ export function MyListsScreen() {
           {t("lists.emptySignedOut")}
         </Text>
         <Button
-          label={t("common.signIn")}
+          label={t("auth.cta")}
           onPress={() => navigation.navigate("SignIn")}
           className="w-full"
         />

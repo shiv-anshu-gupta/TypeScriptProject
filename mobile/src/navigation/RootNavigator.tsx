@@ -4,8 +4,7 @@ import type { RootStackParamList } from "./types";
 import { TabNavigator } from "./TabNavigator";
 import { ProductDetailsScreen } from "@/screens/ProductDetailsScreen";
 import { WishlistScreen } from "@/screens/WishlistScreen";
-import { SignInScreen } from "@/screens/SignInScreen";
-import { SignUpScreen } from "@/screens/SignUpScreen";
+import { AuthScreen } from "@/screens/AuthScreen";
 import { LegalScreen } from "@/screens/LegalScreen";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -38,15 +37,12 @@ export function RootNavigator() {
         component={WishlistScreen}
         options={{ title: t("account.savedProducts") }}
       />
+      {/* One screen for both logging in and creating an account - it draws
+          its own close/back bar, so no stack header. */}
       <Stack.Screen
         name="SignIn"
-        component={SignInScreen}
-        options={{ title: t("common.signIn"), presentation: "modal" }}
-      />
-      <Stack.Screen
-        name="SignUp"
-        component={SignUpScreen}
-        options={{ title: t("account.createAccount"), presentation: "modal" }}
+        component={AuthScreen}
+        options={{ headerShown: false, presentation: "modal" }}
       />
       <Stack.Screen
         name="Legal"

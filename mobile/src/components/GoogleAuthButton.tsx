@@ -51,15 +51,9 @@ export function GoogleAuthButton({ onDone }: GoogleAuthButtonProps) {
     <Pressable
       onPress={onPress}
       disabled={loading}
-      className="h-14 w-full flex-row items-center justify-center gap-3 rounded-2xl border border-border bg-card active:opacity-90"
-      style={{
-        opacity: loading ? 0.7 : 1,
-        elevation: 3,
-        shadowColor: "#1f2a2e",
-        shadowOpacity: 0.14,
-        shadowRadius: 7,
-        shadowOffset: { width: 0, height: 3 },
-      }}
+      accessibilityRole="button"
+      className="h-14 w-full flex-row items-center justify-center gap-3 rounded-2xl border border-[#d6ccb8] bg-card active:bg-secondary"
+      style={{ opacity: loading ? 0.7 : 1 }}
     >
       {loading ? (
         <ActivityIndicator size="small" color="#3c5a64" />

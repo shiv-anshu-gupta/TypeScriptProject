@@ -15,6 +15,5 @@ export type RootStackParamList = {
   ProductDetails: { productId: string };
   Wishlist: undefined;
   SignIn: undefined;
-  SignUp: undefined;
   Legal: undefined;
 };
