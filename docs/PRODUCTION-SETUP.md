@@ -77,6 +77,7 @@ All Clerk records are **DNS only (grey cloud)**. Orange/proxied breaks login.
 - Users don't move between Clerk instances: everyone signs up again. Admin rights come back via `ADMIN_EMAILS`.
 - Vercel values apply only after **Redeploy**; `VITE_` values are baked into the admin build.
 - Changing the app's Clerk key → bump the app version in the same commit (OTA only reaches the same version).
+- Publish OTA updates with `npm run ota -- --message "..."` (from `mobile/`). It adds `--clear-cache`: Metro's cache kept the old `pk_test` key inlined after `.env` changed, and one OTA shipped it to 1.0.2 (Google then said "continue to Clerk").
 - Switch app, admin and server keys **together**; mismatched keys = login fails.
 - Google Cloud console "Failed to load" → incognito window with one Google account.
 - Expo `Linking.createURL("/")` = `skirana:///` in production; it must be in Clerk's allowlist.
