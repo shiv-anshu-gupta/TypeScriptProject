@@ -1,9 +1,10 @@
 import { SignUp } from "@clerk/react";
+import { AuthShell } from "@/components/auth/AuthShell";
 
 export function SignUpPage() {
   return (
-    <div className="flex min-h-[70vh] items-center justify-center">
+    <AuthShell>
       <SignUp />
-    </div>
+    </AuthShell>
   );
 }
