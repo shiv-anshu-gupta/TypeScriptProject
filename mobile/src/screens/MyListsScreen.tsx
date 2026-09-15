@@ -23,6 +23,7 @@ import type {
 } from "@/features/customer/grocery-list/types";
 import { useDraftListStore } from "@/features/customer/draft-list/store";
 import { Button } from "@/components/ui/Button";
+import { AuthView } from "@/components/auth/AuthView";
 import { Badge } from "@/components/ui/Badge";
 import { GroceryList } from "@/components/GroceryList";
 import { ChatSheet } from "@/components/ChatSheet";
@@ -375,22 +376,18 @@ export function MyListsScreen() {
     }, [isSignedIn, loadLists]),
   );
 
+  // Signed out: log in right here, no extra button to tap first.
   if (!isSignedIn) {
     return (
-      <View
-        className="flex-1 items-center justify-center gap-4 bg-background px-8"
-        style={{ paddingTop: insets.top }}
-      >
-        <MaterialCommunityIcons name="notebook" size={44} color="#ada291" />
-        <Text className="text-center text-sm text-muted-foreground">
-          {t("lists.emptySignedOut")}
-        </Text>
-        <Button
-          label={t("auth.cta")}
-          onPress={() => navigation.navigate("SignIn")}
-          className="w-full"
-        />
-      </View>
+      <AuthView
+        onDone={() => {}}
+        subtitle={t("lists.emptySignedOut")}
+        header={
+          <Text className="pb-4 pt-3 text-2xl font-bold text-foreground">
+            {t("tabs.lists")}
+          </Text>
+        }
+      />
     );
   }
 

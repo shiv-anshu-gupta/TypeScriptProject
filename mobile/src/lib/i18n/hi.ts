@@ -104,7 +104,7 @@ export const hi: Translations = {
     removeTitle: "आइटम हटाएँ",
     removeConfirm: '"{{name}}" को इस लिस्ट से हटाएँ?',
     cancelled: "रद्द किया गया",
-    emptySignedOut: "दुकान को भेजी गई लिस्ट देखने के लिए साइन इन करें।",
+    emptySignedOut: "दुकान को भेजी गई लिस्ट देखने के लिए लॉग इन करें।",
     emptyNoLists:
       "आपने अभी तक कोई लिस्ट नहीं भेजी। होम पेज पर एक लिस्ट लिखें।",
     goHome: "होम पर जाएँ",
@@ -161,7 +161,6 @@ export const hi: Translations = {
     added: "जोड़ दिया — Lists टैब से भेजें",
   },
   auth: {
-    cta: "लॉग इन / साइन अप",
     title: "sKirana में आपका स्वागत है",
     subtitle: "लिस्ट भेजने और ऑर्डर देखने के लिए लॉग इन करें या नया अकाउंट बनाएँ।",
     continueGoogle: "Google से जारी रखें",
@@ -226,8 +225,6 @@ export const hi: Translations = {
     rateSub: "हमें बताएं कैसा लगा",
     terms: "नियम और शर्तें",
     savedProductsSub: "आपकी पसंद",
-    signedOutTitle: "आपका sKirana अकाउंट",
-    signedOutPrompt: "लिस्ट भेजने, दाम देखने और ऑर्डर ट्रैक करने के लिए लॉग इन करें।",
     settings: "सेटिंग्स",
     privacyTerms: "प्राइवेसी और शर्तें",
     savedProducts: "सेव किए सामान",

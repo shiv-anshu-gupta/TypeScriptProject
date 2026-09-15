@@ -1,5 +1,5 @@
 import { useCallback, useState, type ReactNode } from "react";
-import { Image, Linking, Pressable, ScrollView, Text, View } from "react-native";
+import { Linking, Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -15,6 +15,7 @@ import { useCustomerDisplayName } from "@/features/customer/account/use-display-
 import { Button } from "@/components/ui/Button";
 import { ProfileAvatar } from "@/components/ProfileAvatar";
 import { ProfileEditSheet } from "@/components/ProfileEditSheet";
+import { AuthView } from "@/components/auth/AuthView";
 import { env } from "@/lib/env";
 import { setAppLanguage, type AppLanguage } from "@/lib/i18n";
 import { toast } from "@/lib/toast";
@@ -25,7 +26,6 @@ type Nav = NativeStackNavigationProp<RootStackParamList>;
 const INK = "#1f2a2e";
 const PRIMARY = "#3c5a64";
 const ANDROID_PACKAGE = "com.skirana.app";
-const logo = require("../../assets/icon.png");
 
 // The language switch - under Settings on the Account screen, for signed-in
 // and signed-out customers alike, so anyone can flip हिंदी/English any time.
@@ -194,65 +194,45 @@ export function AccountScreen() {
     }
   };
 
-  // Signed out: one way in (the login screen handles new and returning
-  // customers alike), and the settings that work without an account kept
-  // apart from it, so language never looks like a login option.
+  // Signed out: the login itself, right here - no extra "Log in" button to
+  // tap first. Settings that work without an account (language, terms) sit
+  // below it, apart from the login choices.
   if (!isSignedIn) {
     return (
-      <ScrollView
-        className="flex-1 bg-background"
-        contentContainerStyle={{
-          paddingTop: insets.top + 8,
-          paddingHorizontal: 16,
-          paddingBottom: 40,
-          gap: 12,
-        }}
-        showsVerticalScrollIndicator={false}
-      >
-        <Text className="px-1 pb-1 pt-2 text-2xl font-bold text-foreground">
-          {t("tabs.account")}
-        </Text>
-
-        <View className="items-center rounded-3xl border border-border bg-card px-6 py-8">
-          <Image source={logo} style={{ width: 64, height: 64, borderRadius: 18 }} />
-          <Text className="mt-4 text-center text-xl font-bold text-foreground">
-            {t("account.signedOutTitle")}
+      <AuthView
+        onDone={() => {}}
+        header={
+          <Text className="pb-4 pt-3 text-2xl font-bold text-foreground">
+            {t("tabs.account")}
           </Text>
-          <Text className="mt-2 text-center text-sm leading-6 text-muted-foreground">
-            {t("account.signedOutPrompt")}
-          </Text>
-          <Button
-            label={t("auth.cta")}
-            size="lg"
-            onPress={() => navigation.navigate("SignIn")}
-            className="mt-6 w-full rounded-2xl"
-            textClassName="text-base font-bold"
-          />
-        </View>
-
-        <Text className="px-1 pt-3 text-sm font-bold text-muted-foreground">
-          {t("account.settings")}
-        </Text>
-        <View className="overflow-hidden rounded-2xl border border-border bg-card">
-          <MenuRow
-            icon={<Feather name="globe" size={18} color={INK} />}
-            title={t("common.language")}
-            subtitle={i18n.language === "hi" ? "हिंदी" : "English"}
-            onPress={() => setLangOpen((open) => !open)}
-          />
-          {langOpen ? (
-            <View className="border-b border-border/60 px-4 pb-4">
-              <LanguageToggle />
+        }
+        footer={
+          <View className="gap-3">
+            <Text className="px-1 text-sm font-bold text-muted-foreground">
+              {t("account.settings")}
+            </Text>
+            <View className="overflow-hidden rounded-2xl border border-border bg-card">
+              <MenuRow
+                icon={<Feather name="globe" size={18} color={INK} />}
+                title={t("common.language")}
+                subtitle={i18n.language === "hi" ? "हिंदी" : "English"}
+                onPress={() => setLangOpen((open) => !open)}
+              />
+              {langOpen ? (
+                <View className="border-b border-border/60 px-4 pb-4">
+                  <LanguageToggle />
+                </View>
+              ) : null}
+              <MenuRow
+                icon={<Feather name="file-text" size={18} color={INK} />}
+                title={t("account.terms")}
+                onPress={() => navigation.navigate("Legal")}
+                last
+              />
             </View>
-          ) : null}
-          <MenuRow
-            icon={<Feather name="file-text" size={18} color={INK} />}
-            title={t("account.terms")}
-            onPress={() => navigation.navigate("Legal")}
-            last
-          />
-        </View>
-      </ScrollView>
+          </View>
+        }
+      />
     );
   }
 

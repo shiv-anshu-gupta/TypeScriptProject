@@ -100,7 +100,7 @@ export const en = {
     removeTitle: "Remove item",
     removeConfirm: 'Remove "{{name}}" from this list?',
     cancelled: "Cancelled",
-    emptySignedOut: "Sign in to see the lists you've sent to the shop.",
+    emptySignedOut: "Log in to see the lists you've sent to the shop.",
     emptyNoLists:
       "You haven't sent any list yet. Write one on the home page.",
     goHome: "Go to home",
@@ -157,7 +157,6 @@ export const en = {
     added: "Added — send it from the Lists tab",
   },
   auth: {
-    cta: "Log in / Sign up",
     title: "Welcome to sKirana",
     subtitle: "Log in or create an account to send your list and follow your order.",
     continueGoogle: "Continue with Google",
@@ -222,8 +221,6 @@ export const en = {
     rateSub: "Tell us how it feels",
     terms: "Terms & conditions",
     savedProductsSub: "Your wishlist",
-    signedOutTitle: "Your sKirana account",
-    signedOutPrompt: "Log in to send lists, see prices and follow your orders.",
     settings: "Settings",
     privacyTerms: "Privacy & Terms",
     savedProducts: "Saved products",
