@@ -46,9 +46,17 @@ const UserSchema = new mongoose.Schema(
       type: String,
       required: false,
     },
+    // One record per email: the database has a unique index on it (email_1),
+    // declared here so the code says what the database enforces. It's what
+    // lets a returning customer be re-linked by email after a Clerk instance
+    // change (services/user-sync.ts). Records without an email count as null,
+    // so phone-only sign-up will need this made sparse/partial first.
     email: {
       type: String,
       required: false,
+      unique: true,
+      trim: true,
+      lowercase: true,
     },
     // Customer's mobile number so the shop can call about an order. Collected
     // once, the first time they send a list.

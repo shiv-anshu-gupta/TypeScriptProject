@@ -3,6 +3,7 @@ import type { Request, Response, NextFunction } from "express";
 import { AppError } from "../utils/AppError";
 import { User } from "../models/User";
 import { asyncHandler } from "../utils/asyncHandler";
+import { syncDbUser } from "../services/user-sync";
 
 export function requireAuth(req: Request, _res: Response, next: NextFunction) {
   const { userId } = getAuth(req);
@@ -24,11 +25,12 @@ export async function getDbUserFromReq(req: Request) {
   }
 
   const dbUser = await User.findOne({ clerkUserId: userId });
-  if (!dbUser) {
-    throw new AppError(404, "User is not found in the DB");
-  }
+  if (dbUser) return dbUser;
 
-  return dbUser;
+  // No record for this login yet - e.g. the app's first request raced ahead
+  // of its sync call, or the sync failed. Create or re-link it now rather
+  // than failing, so a signed-in customer always has a record.
+  return syncDbUser(userId);
 }
 
 // admin gate

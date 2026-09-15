@@ -1,0 +1,141 @@
+import { clerkClient } from "@clerk/express";
+import { User } from "../models/User";
+import { AppError } from "../utils/AppError";
+
+// Keeps the app's own user record in step with Clerk.
+//
+// A person is identified by their Clerk user id, but that id is per Clerk
+// INSTANCE: when the app moved from Clerk's test instance to production,
+// every returning customer got a new id with the same email. The users
+// collection has a unique index on email, so creating a second record failed
+// and the customer ended up with no record at all ("User is not found in the
+// DB"). A verified email that already has a record is therefore re-linked to
+// the new id - keeping the customer's lists, phone number and role.
+
+type ClerkIdentity = {
+  email: string | null;
+  emailVerified: boolean;
+  name: string | undefined;
+};
+
+const DUPLICATE_KEY = 11000;
+
+function isDuplicateKey(error: unknown) {
+  return (
+    !!error &&
+    typeof error === "object" &&
+    (error as { code?: number }).code === DUPLICATE_KEY
+  );
+}
+
+function adminEmails() {
+  return new Set(
+    (process.env.ADMIN_EMAILS || "")
+      .split(",")
+      .map((item) => item.trim().toLowerCase())
+      .filter(Boolean),
+  );
+}
+
+async function readClerkIdentity(clerkUserId: string): Promise<ClerkIdentity> {
+  const clerkUser = await clerkClient.users.getUser(clerkUserId);
+  const primary =
+    clerkUser.emailAddresses.find(
+      (item) => item.id === clerkUser.primaryEmailAddressId,
+    ) ?? clerkUser.emailAddresses[0];
+
+  const fullName = [clerkUser.firstName, clerkUser.lastName]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+
+  return {
+    email: primary?.emailAddress?.trim().toLowerCase() || null,
+    emailVerified: primary?.verification?.status === "verified",
+    name: fullName || clerkUser.username || undefined,
+  };
+}
+
+// Emails are matched case-insensitively (Clerk lowercases them, but records
+// from older code may not be).
+const CASE_INSENSITIVE = { locale: "en", strength: 2 } as const;
+
+// Returns the user record for a Clerk user, creating it - or re-linking an
+// earlier record with the same verified email - when there isn't one yet.
+// Safe to call repeatedly and concurrently.
+export async function syncDbUser(clerkUserId: string) {
+  const identity = await readClerkIdentity(clerkUserId);
+  const shouldBeAdmin = identity.email
+    ? adminEmails().has(identity.email)
+    : false;
+
+  // 1. Already known under this Clerk id: refresh what Clerk owns. The name is
+  //    only filled in when empty - the customer may have changed it in the
+  //    app, and that's the name the shop sees on their orders.
+  const existing = await User.findOne({ clerkUserId });
+  if (existing) {
+    let changed = false;
+    if (identity.email && identity.email !== existing.email) {
+      const taken = await User.exists({
+        email: identity.email,
+        _id: { $ne: existing._id },
+      }).collation(CASE_INSENSITIVE);
+      if (!taken) {
+        existing.email = identity.email;
+        changed = true;
+      }
+    }
+    if (!existing.name && identity.name) {
+      existing.name = identity.name;
+      changed = true;
+    }
+    if (shouldBeAdmin && existing.role !== "admin") {
+      existing.role = "admin";
+      changed = true;
+    }
+    if (changed) await existing.save();
+    return existing;
+  }
+
+  // 2. A record with the same VERIFIED email under an older Clerk id: the same
+  //    person, back after a Clerk instance change. Only a verified email may
+  //    claim a record - otherwise anyone could type someone else's address.
+  if (identity.email && identity.emailVerified) {
+    const previous = await User.findOne({ email: identity.email }).collation(
+      CASE_INSENSITIVE,
+    );
+    if (previous) {
+      const oldId = previous.clerkUserId;
+      previous.clerkUserId = clerkUserId;
+      if (!previous.name && identity.name) previous.name = identity.name;
+      if (shouldBeAdmin) previous.role = "admin";
+      await previous.save();
+      console.info(
+        `[user-sync] re-linked user ${String(previous._id)} from ${oldId} to ${clerkUserId}`,
+      );
+      return previous;
+    }
+  }
+
+  // 3. A new customer.
+  try {
+    return await User.create({
+      clerkUserId,
+      email: identity.email ?? undefined,
+      name: identity.name,
+      role: shouldBeAdmin ? "admin" : "user",
+    });
+  } catch (error) {
+    if (!isDuplicateKey(error)) throw error;
+    // Two requests from the same login raced to create the record and the
+    // other one won - use it.
+    const created = await User.findOne({ clerkUserId });
+    if (created) return created;
+    // The email belongs to another record and couldn't be re-linked (it isn't
+    // verified on this account).
+    throw new AppError(
+      409,
+      "This email is already used by another sKirana account. Please contact the shop.",
+    );
+  }
+}
