@@ -159,6 +159,10 @@ export function ListProgressCard() {
       break;
   }
 
+  // Other orders still in progress: mentioned, not followed - tapping the card
+  // opens Lists, where all of them are.
+  const others = "others" in stage ? stage.others : 0;
+
   const states = STEP_STATES[stage.kind];
   const labels = [
     t("home.step1"),
@@ -171,7 +175,11 @@ export function ListProgressCard() {
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`${title}. ${subtitle}`}
+      accessibilityLabel={
+        others > 0
+          ? `${title}. ${subtitle}. ${t("journey.moreActive", { count: others })}`
+          : `${title}. ${subtitle}`
+      }
       className="mx-4 gap-3 rounded-2xl border border-border bg-card p-4 active:opacity-90"
     >
       <View className="flex-row items-center gap-3">
@@ -197,6 +205,14 @@ export function ListProgressCard() {
           >
             {subtitle}
           </Text>
+          {others > 0 ? (
+            <Text
+              numberOfLines={1}
+              className="mt-0.5 text-xs font-semibold text-primary"
+            >
+              {t("journey.moreActive", { count: others })}
+            </Text>
+          ) : null}
         </View>
         <Feather name="chevron-right" size={18} color={MUTED} />
       </View>

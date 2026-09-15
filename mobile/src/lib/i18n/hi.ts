@@ -43,6 +43,8 @@ export const hi: Translations = {
     packingSub: "लिस्ट #{{code}} — तैयार होते ही बताएंगे",
     readyTitle: "तैयार है — आकर ले जाएं!",
     readySub: "लिस्ट #{{code}} पैक होकर आपका इंतज़ार कर रही है",
+    moreActive_one: "+{{count}} और ऑर्डर चल रहा है",
+    moreActive_other: "+{{count}} और ऑर्डर चल रहे हैं",
   },
   home: {
     myList: "मेरी लिस्ट",

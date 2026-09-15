@@ -40,6 +40,8 @@ export const en = {
     packingSub: "List #{{code}} — we'll tell you when it's ready",
     readyTitle: "Ready — come and collect!",
     readySub: "List #{{code}} is packed and waiting for you",
+    moreActive_one: "+{{count}} more order in progress",
+    moreActive_other: "+{{count}} more orders in progress",
   },
   home: {
     myList: "My list",

@@ -2,26 +2,28 @@ import type { CustomerGroceryList, GroceryListStatus } from "./types";
 
 // Where the customer is in the write -> send -> get price -> collect journey,
 // so the Home card can show their real progress and point at the next step.
+// `others` counts the customer's other orders still in progress, so the card
+// can mention them without following them.
 export type JourneyStage =
   | { kind: "write" } // nothing on the go - start a list
   | { kind: "send"; count: number } // written but not sent
-  | { kind: "pricing"; list: CustomerGroceryList } // sent, shop is pricing
-  | { kind: "priced"; list: CustomerGroceryList } // price is in
-  | { kind: "packing"; list: CustomerGroceryList } // being packed / packed
-  | { kind: "ready"; list: CustomerGroceryList }; // come and collect
+  | { kind: "pricing"; list: CustomerGroceryList; others: number } // sent, shop is pricing
+  | { kind: "priced"; list: CustomerGroceryList; others: number } // price is in
+  | { kind: "packing"; list: CustomerGroceryList; others: number } // being packed / packed
+  | { kind: "ready"; list: CustomerGroceryList; others: number }; // come and collect
 
-// How far along each active status is. Completed and cancelled orders are
-// finished, so they are not tracked - the journey starts over at "write".
-const PROGRESS: Partial<Record<GroceryListStatus, number>> = {
-  received: 1,
-  priced: 2,
-  packing: 3,
-  packed: 4,
-  ready: 5,
-};
+// Orders still in progress. Completed and cancelled orders are finished, so
+// they are not tracked - with none left the journey starts over at "write".
+const ACTIVE: ReadonlySet<GroceryListStatus> = new Set([
+  "received",
+  "priced",
+  "packing",
+  "packed",
+  "ready",
+]);
 
 // Pure decision, kept free of React so it can be reasoned about and tested on
-// its own. `lists` arrive newest first, as the API returns them.
+// its own.
 export function journeyStage(
   draftCount: number,
   lists: CustomerGroceryList[],
@@ -29,25 +31,31 @@ export function journeyStage(
   // An unsent list comes first: forgotten, the shop never receives it.
   if (draftCount > 0) return { kind: "send", count: draftCount };
 
-  const active = lists.filter((list) => PROGRESS[list.status] !== undefined);
+  // Newest first. Sorted here rather than trusting the order lists arrive in.
+  const active = lists
+    .filter((list) => ACTIVE.has(list.status))
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
   if (!active.length) return { kind: "write" };
 
-  // Otherwise follow the most advanced order - the one nearest to needing the
-  // customer (a ready order beats one still being priced). On a tie the
-  // newest wins, since it comes first.
-  const lead = active.reduce((best, list) =>
-    (PROGRESS[list.status] ?? 0) > (PROGRESS[best.status] ?? 0) ? list : best,
-  );
+  // A ready order needs the customer in person, so it always leads (the
+  // newest one if several are ready). Otherwise the card follows the newest
+  // order - the one the customer last sent - not the one furthest along: an
+  // old order left unfinished must never hide the list they just sent.
+  const lead = active.find((list) => list.status === "ready") ?? active[0];
+  const others = active.length - 1;
 
   switch (lead.status) {
     case "ready":
-      return { kind: "ready", list: lead };
+      return { kind: "ready", list: lead, others };
     case "packing":
     case "packed":
-      return { kind: "packing", list: lead };
+      return { kind: "packing", list: lead, others };
     case "priced":
-      return { kind: "priced", list: lead };
+      return { kind: "priced", list: lead, others };
     default:
-      return { kind: "pricing", list: lead };
+      return { kind: "pricing", list: lead, others };
   }
 }
