@@ -17,6 +17,7 @@ import { useTranslation } from "react-i18next";
 import type { RootStackParamList } from "@/navigation/types";
 import { Button } from "@/components/ui/Button";
 import { GoogleAuthButton } from "@/components/GoogleAuthButton";
+import { clerkErrorCode, useSessionGuard } from "@/lib/clerk-session";
 import { cn } from "@/lib/utils";
 
 const logo = require("../../../assets/icon.png");
@@ -29,16 +30,6 @@ type Step = "email" | "code";
 // Decided by the server, never by the customer: an email with an account
 // signs in, a new one signs up. Both then confirm with the same 6-digit code.
 type Mode = "signIn" | "signUp";
-
-// Clerk reports failures as { errors: [{ code, message }] }. Its messages are
-// English-only, so the common cases get our own (translated) wording.
-function clerkErrorCode(error: unknown): string | undefined {
-  if (error && typeof error === "object" && "errors" in error) {
-    const errors = (error as { errors?: { code?: string }[] }).errors;
-    return errors?.[0]?.code;
-  }
-  return undefined;
-}
 
 // Six boxes over one invisible input: typing, pasting and the keyboard's
 // code suggestion all go into the real field, the boxes just show it.
@@ -119,6 +110,7 @@ export function AuthPanel({ onDone, subtitle, grow }: AuthPanelProps) {
   const { signUp, setActive: setSignUpActive, isLoaded: signUpLoaded } =
     useSignUp();
   const ready = signInLoaded && signUpLoaded;
+  const { activate, clearPending, recoverExisting } = useSessionGuard();
 
   const [step, setStep] = useState<Step>("email");
   const [mode, setMode] = useState<Mode>("signIn");
@@ -128,6 +120,12 @@ export function AuthPanel({ onDone, subtitle, grow }: AuthPanelProps) {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [resendIn, setResendIn] = useState(0);
+
+  // A session left "pending" by an earlier attempt blocks every new login
+  // with "session_exists" - clear it as soon as the login is on screen.
+  useEffect(() => {
+    if (ready) void clearPending();
+  }, [ready, clearPending]);
 
   // Resend countdown.
   useEffect(() => {
@@ -146,6 +144,8 @@ export function AuthPanel({ onDone, subtitle, grow }: AuthPanelProps) {
     return () => sub.remove();
   }, [step]);
 
+  // Clerk's own messages are English-only, so the common cases get our own
+  // (translated) wording.
   const messageFor = (err: unknown) => {
     switch (clerkErrorCode(err)) {
       case "form_code_incorrect":
@@ -165,14 +165,21 @@ export function AuthPanel({ onDone, subtitle, grow }: AuthPanelProps) {
 
   const finish = async (
     sessionId: string | null,
-    activate: typeof setSignInActive,
+    setActive: typeof setSignInActive,
   ) => {
-    if (!sessionId || !activate) {
+    if (!sessionId || !setActive) {
       setError(t("auth.setupIncomplete"));
       return;
     }
-    await activate({ session: sessionId });
-    onDone();
+    if (await activate(sessionId, setActive)) onDone();
+    else setError(t("auth.accountOnHold"));
+  };
+
+  // The device already holds a session: an active one means the customer is
+  // in; a held-back one has been cleared, so the next try works.
+  const handleExisting = async () => {
+    if ((await recoverExisting()) === "signedIn") onDone();
+    else setError(t("auth.tryAgain"));
   };
 
   // Email step: find out whether this email already has an account, then send
@@ -213,7 +220,8 @@ export function AuthPanel({ onDone, subtitle, grow }: AuthPanelProps) {
       setResendIn(RESEND_SECONDS);
       setStep("code");
     } catch (err) {
-      setError(messageFor(err));
+      if (clerkErrorCode(err) === "session_exists") await handleExisting();
+      else setError(messageFor(err));
     } finally {
       setBusy(false);
     }
@@ -249,7 +257,8 @@ export function AuthPanel({ onDone, subtitle, grow }: AuthPanelProps) {
         );
       }
     } catch (err) {
-      setError(messageFor(err));
+      if (clerkErrorCode(err) === "session_exists") await handleExisting();
+      else setError(messageFor(err));
       setCode("");
     } finally {
       setBusy(false);

@@ -183,7 +183,8 @@ export const en = {
     tooMany: "Too many tries. Please wait a minute and try again.",
     setupIncomplete: "We couldn't finish creating your account. Please try “Continue with Google”.",
     somethingWrong: "Something went wrong. Please try again.",
-    moreVerification: "Additional verification required",
+    accountOnHold: "Your login couldn't be completed. Please try again - if it keeps happening, contact the shop.",
+    tryAgain: "Please tap once more to log in.",
     googleFailed: "Google sign-in failed",
   },
   chat: {

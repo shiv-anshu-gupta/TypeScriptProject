@@ -187,7 +187,8 @@ export const hi: Translations = {
     tooMany: "बहुत बार कोशिश हो गई। एक मिनट रुककर फिर करें।",
     setupIncomplete: "अकाउंट पूरा नहीं बन पाया। कृपया “Google से जारी रखें” आज़माएँ।",
     somethingWrong: "कुछ गड़बड़ हो गई। फिर से कोशिश करें।",
-    moreVerification: "अतिरिक्त वेरिफ़िकेशन ज़रूरी है",
+    accountOnHold: "लॉग इन पूरा नहीं हो सका। फिर से कोशिश करें - बार-बार हो तो दुकान से संपर्क करें।",
+    tryAgain: "लॉग इन के लिए एक बार फिर दबाएँ।",
     googleFailed: "Google साइन-इन असफल",
   },
   chat: {
