@@ -1,6 +1,15 @@
+// What a banner opens when tapped - chosen in the admin panel.
+export type BannerLink =
+  | { type: "none" | "writeList" | "shop" }
+  | { type: "category" | "product"; targetId: string };
+
 export type CustomerHomeBanner = {
   _id: string;
   imageUrl: string;
+  // Admin's name for the banner; read aloud by screen readers.
+  title?: string;
+  // Missing from servers older than banner links - treated as "none".
+  link?: BannerLink;
   createdAt: string;
 };
 

@@ -1,7 +1,12 @@
 import { Router, type Request, type Response } from "express";
 import { Types } from "mongoose";
 import { asyncHandler } from "../../utils/asyncHandler";
-import { Banner } from "../../models/Banner";
+import {
+  Banner,
+  HOME_BANNER_LIMIT,
+  liveBannerFilter,
+  type BannerLink,
+} from "../../models/Banner";
 import { Category } from "../../models/Category";
 import { Product } from "../../models/Product";
 import { Promo } from "../../models/Promo";
@@ -10,8 +15,48 @@ import { ok } from "../../utils/envelope";
 type BannerRow = {
   _id: Types.ObjectId;
   imageUrl: string;
+  title?: string;
+  link?: BannerLink;
   createdAt: Date;
 };
+
+// A banner's tap action, dropped to "none" when what it points at has since
+// been deleted or hidden - a tap should never land on an empty page.
+async function resolveBannerLinks(banners: BannerRow[]) {
+  const ids = (type: "category" | "product") =>
+    banners
+      .filter((b) => b.link?.type === type && b.link.targetId)
+      .map((b) => b.link?.targetId as string);
+
+  const [categories, products] = await Promise.all([
+    ids("category").length
+      ? Category.find({ _id: { $in: ids("category") } }).select("_id").lean<{ _id: Types.ObjectId }[]>()
+      : [],
+    ids("product").length
+      ? Product.find({ _id: { $in: ids("product") }, status: "active" }).select("_id").lean<{ _id: Types.ObjectId }[]>()
+      : [],
+  ]);
+  const alive = new Set([...categories, ...products].map((row) => String(row._id)));
+
+  return banners.map((banner) => {
+    const type = banner.link?.type ?? "none";
+    const targetId = banner.link?.targetId;
+    const needsTarget = type === "category" || type === "product";
+    const link: BannerLink =
+      needsTarget && (!targetId || !alive.has(targetId))
+        ? { type: "none" }
+        : needsTarget
+          ? { type, targetId }
+          : { type };
+    return {
+      _id: String(banner._id),
+      imageUrl: banner.imageUrl,
+      title: banner.title ?? "",
+      link,
+      createdAt: banner.createdAt.toISOString(),
+    };
+  });
+}
 
 type CategoryRow = {
   _id: Types.ObjectId;
@@ -49,7 +94,10 @@ customerHomeRouter.get(
     const now = new Date();
 
     const [banners, categories, recentProducts, promos] = await Promise.all([
-      Banner.find().sort({ createdAt: -1 }).limit(6).lean<BannerRow[]>(),
+      Banner.find(liveBannerFilter(now))
+        .sort({ sortOrder: 1, createdAt: -1 })
+        .limit(HOME_BANNER_LIMIT)
+        .lean<BannerRow[]>(),
       Category.find().sort({ name: 1 }).lean<CategoryRow[]>(),
       Product.find({ status: "active" })
         .select("title brand unit unitValue images createdAt")
@@ -68,11 +116,7 @@ customerHomeRouter.get(
 
     res.json(
       ok({
-        banners: banners.map((bannerItem) => ({
-          _id: String(bannerItem._id),
-          imageUrl: bannerItem.imageUrl,
-          createAt: bannerItem.createdAt.toISOString(),
-        })),
+        banners: await resolveBannerLinks(banners),
         categories: categories.map((categoryItem) => ({
           _id: String(categoryItem._id),
           name: categoryItem.name,

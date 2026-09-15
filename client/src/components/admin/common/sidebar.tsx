@@ -4,7 +4,7 @@ import {
   LayoutDashboard,
   MessagesSquare,
   Package,
-  Settings2,
+  GalleryHorizontal,
   Store,
   type LucideIcon,
 } from "lucide-react";
@@ -24,7 +24,7 @@ export const adminNavItems: AdminNavItem[] = [
   { label: "Messages", href: "/admin/messages", icon: MessagesSquare },
   { label: "Products", href: "/admin/products", icon: Package },
   { label: "Coupons", href: "/admin/coupons", icon: BadgePercent },
-  { label: "Settings", href: "/admin/settings", icon: Settings2 },
+  { label: "Home banners", href: "/admin/settings", icon: GalleryHorizontal },
 ];
 
 const sidebarRoot =

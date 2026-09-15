@@ -2,15 +2,21 @@ import { useEffect, useRef, useState } from "react";
 import {
   AccessibilityInfo,
   FlatList,
+  Pressable,
   useWindowDimensions,
   View,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
 } from "react-native";
 import { Image } from "expo-image";
-import { useIsFocused } from "@react-navigation/native";
+import { useIsFocused, useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
+import type { RootStackParamList } from "@/navigation/types";
 import type { CustomerHomeBanner } from "@/features/customer/home/types";
+import { useGrocerySheetStore } from "@/features/customer/grocery-sheet/store";
+
+type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 const SIDE = 16; // matches the px-4 inset used down the Home screen
 const GAP = 12;
@@ -18,8 +24,10 @@ const PEEK = 28; // how much of the next banner shows, so the row reads as swipe
 const ASPECT = 0.46; // banner height / width - a wide promo strip
 const AUTOPLAY_MS = 4500;
 
-// Promo banners uploaded from the admin panel (Settings -> Banners). They are
-// images only, so the design lives in the artwork itself.
+// Promo banners from the admin panel (Home banners): the live ones, in the
+// order the shop set. The design lives in the artwork itself; a banner can
+// also open something when tapped - the list sheet, the Shop, a category or
+// a product - as chosen in the admin panel.
 export function BannerCarousel({ banners }: { banners: CustomerHomeBanner[] }) {
   const { width } = useWindowDimensions();
   const isFocused = useIsFocused();
@@ -28,6 +36,29 @@ export function BannerCarousel({ banners }: { banners: CustomerHomeBanner[] }) {
   const dragging = useRef(false);
   const [index, setIndex] = useState(0);
   const [reduceMotion, setReduceMotion] = useState(false);
+  const navigation = useNavigation<Nav>();
+
+  const open = (banner: CustomerHomeBanner) => {
+    const link = banner.link;
+    if (!link) return;
+    switch (link.type) {
+      case "writeList":
+        useGrocerySheetStore.getState().open();
+        break;
+      case "shop":
+        navigation.navigate("Tabs", { screen: "Shop" });
+        break;
+      case "category":
+        navigation.navigate("Tabs", {
+          screen: "Shop",
+          params: { category: link.targetId },
+        });
+        break;
+      case "product":
+        navigation.navigate("ProductDetails", { productId: link.targetId });
+        break;
+    }
+  };
 
   // Banners whose image failed to load (e.g. deleted from Cloudinary). They are
   // dropped rather than shown as an empty grey box - a broken banner should
@@ -102,9 +133,15 @@ export function BannerCarousel({ banners }: { banners: CustomerHomeBanner[] }) {
         }}
         onMomentumScrollEnd={onSettle}
         renderItem={({ item }) => (
-          <View
+          <Pressable
+            onPress={() => open(item)}
+            disabled={!item.link || item.link.type === "none"}
+            accessibilityRole={
+              item.link && item.link.type !== "none" ? "button" : "image"
+            }
+            accessibilityLabel={item.title || undefined}
             style={{ width: itemWidth, height: itemHeight }}
-            className="overflow-hidden rounded-2xl bg-muted"
+            className="overflow-hidden rounded-2xl bg-muted active:opacity-90"
           >
             <Image
               source={{ uri: item.imageUrl }}
@@ -115,7 +152,7 @@ export function BannerCarousel({ banners }: { banners: CustomerHomeBanner[] }) {
                 setFailed((prev) => new Set(prev).add(item._id))
               }
             />
-          </View>
+          </Pressable>
         )}
       />
 
