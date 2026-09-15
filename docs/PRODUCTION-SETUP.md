@@ -28,19 +28,20 @@ production on `skirana.com`. No secret values are written here.
 6. Configure → Developers → Domains → skirana.com → **Configure automatically** (Cloudflare) → Authorize → **Verify configuration** (SSL issues itself).
 7. Configure → Native applications → Android: package `com.skirana.app` (SHA-256 empty, only needed for passkeys). Allowlist for mobile SSO redirect: `skirana:///` (three slashes). Keep the default `clerk://com.skirana.app.callback`.
 8. Application → Settings: logo, favicon, support email. (Admin sign-in is also themed in code: `client/src/lib/clerk-appearance.ts`.)
-9. API keys: publishable key `pk_live_Y2xlcmsuc2tpcmFuYS5jb20k` (public). Secret key `sk_live_…` goes only into Vercel.
+9. Configure → **Organizations** → turn Organizations **OFF** (sKirana doesn't use them). With "membership required" on, Clerk holds every login as a *pending* session: the app stays on the login screen and retries fail with "session already exists". Dev had it off; production had it on.
+10. API keys: publishable key `pk_live_Y2xlcmsuc2tpcmFuYS5jb20k` (public). Secret key `sk_live_…` goes only into Vercel.
 
 ### Google login
-10. console.cloud.google.com → new project "skirana" → Google Auth Platform → **Branding**: name sKirana, logo, home page `https://www.skirana.com`, privacy `/privacy`, terms `/terms`, authorized domain `skirana.com`.
-11. **Audience** → External → **Publish app** (status "In production"). In "Testing" only listed test users can log in.
-12. **Clients** → Create client → **Web application** "sKirana Clerk" → redirect URI `https://clerk.skirana.com/v1/oauth_callback` → copy Client ID + secret into Clerk → SSO connections → Google → **Use custom credentials**.
-13. Search Console → Add property → **Domain** → `skirana.com` → Start verification (Cloudflare) → Authorize (adds the `google-site-verification` TXT record).
-14. Google Cloud → Branding → **Publish / verify branding**. Until approved, Google shows "continue to clerk.skirana.com" instead of "sKirana".
+11. console.cloud.google.com → new project "skirana" → Google Auth Platform → **Branding**: name sKirana, logo, home page `https://www.skirana.com`, privacy `/privacy`, terms `/terms`, authorized domain `skirana.com`.
+12. **Audience** → External → **Publish app** (status "In production"). In "Testing" only listed test users can log in.
+13. **Clients** → Create client → **Web application** "sKirana Clerk" → redirect URI `https://clerk.skirana.com/v1/oauth_callback` → copy Client ID + secret into Clerk → SSO connections → Google → **Use custom credentials**.
+14. Search Console → Add property → **Domain** → `skirana.com` → Start verification (Cloudflare) → Authorize (adds the `google-site-verification` TXT record).
+15. Google Cloud → Branding → **Publish / verify branding**. Until approved, Google shows "continue to clerk.skirana.com" instead of "sKirana".
 
 ### Switch keys & ship
-15. `mobile/.env` → `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` = pk_live, and `app.json` version → 1.0.2 **in the same commit**.
-16. EAS production build 1.0.2 (versionCode 17) → .aab uploaded to Play Console closed testing.
-17. Vercel env values below → **Redeploy both projects**.
+16. `mobile/.env` → `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` = pk_live, and `app.json` version → 1.0.2 **in the same commit**.
+17. EAS production build 1.0.2 (versionCode 17) → .aab uploaded to Play Console closed testing.
+18. Vercel env values below → **Redeploy both projects**.
 
 ## Keys by place
 
@@ -79,6 +80,7 @@ All Clerk records are **DNS only (grey cloud)**. Orange/proxied breaks login.
 - Changing the app's Clerk key → bump the app version in the same commit (OTA only reaches the same version).
 - Publish OTA updates with `npm run ota -- --message "..."` (from `mobile/`). It adds `--clear-cache`: Metro's cache kept the old `pk_test` key inlined after `.env` changed, and one OTA shipped it to 1.0.2 (Google then said "continue to Clerk").
 - Switch app, admin and server keys **together**; mismatched keys = login fails.
+- Cloning an instance doesn't guarantee identical settings: compare `/v1/environment` of both (e.g. `organization_settings.force_organization_selection`).
 - Google Cloud console "Failed to load" → incognito window with one Google account.
 - Expo `Linking.createURL("/")` = `skirana:///` in production; it must be in Clerk's allowlist.
 
@@ -87,6 +89,7 @@ All Clerk records are **DNS only (grey cloud)**. Orange/proxied breaks login.
 - [ ] Clerk production → User & authentication → **Password OFF** (needed for email-code sign-up)
 - [ ] Replace the secret key that appeared in a screenshot
 - [ ] Confirm Vercel values saved + both projects redeployed
+- [ ] Clerk production → Organizations **OFF** (step 9)
 - [ ] Google shows "sKirana" on its login screen (after branding approval)
 - [ ] Test 1.0.2 on phone: Google login, email code, send list → price in admin → price shows in app
 - [ ] Release 1.0.2 to production (India, staged 20%), new store screenshots
