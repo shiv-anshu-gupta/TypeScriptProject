@@ -3,13 +3,7 @@ export type ProductSort = "recent";
 export type ProductSize = "S" | "M" | "L" | "XL";
 
 export type ProductUnit =
-  | "kg"
-  | "g"
-  | "litre"
-  | "ml"
-  | "piece"
-  | "dozen"
-  | "pack";
+  "kg" | "g" | "litre" | "ml" | "piece" | "dozen" | "pack";
 
 export type ProductCategory = {
   _id: string;

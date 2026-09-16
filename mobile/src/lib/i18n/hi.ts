@@ -3,25 +3,15 @@ import type { Translations } from "./en";
 // Hindi strings — simple, everyday Hindi for non-English-speaking customers.
 // Keys must match en.ts exactly.
 export const hi: Translations = {
-  lang: {
-    welcome: "स्वागत है",
-    choosePrompt: "अपनी भाषा चुनें",
-    hindi: "हिंदी",
-    english: "English",
-    continue: "आगे बढ़ें",
-    changeLater: "इसे आप कभी भी Account में बदल सकते हैं।",
-  },
   common: {
     clearSearch: "खोज साफ़ करें",
     somethingWrong: "कुछ गड़बड़ हो गई। कृपया फिर कोशिश करें।",
     save: "सेव करें",
     cancel: "रद्द करें",
     close: "बंद करें",
-    back: "वापस",
     delete: "हटाएँ",
     remove: "हटाएँ",
     later: "बाद में",
-    signIn: "साइन इन करें",
     updateNow: "अभी अपडेट करें",
     language: "भाषा",
   },
@@ -56,8 +46,7 @@ export const hi: Translations = {
     removeItem: "आइटम हटाएं",
     searchHint: "आटा, दाल, चावल खोजें…",
     listTitle: "अपनी राशन लिस्ट लिखें",
-    listSubtitle:
-      "जो भी चाहिए लिख दें। दुकान दाम लगाकर आपको वापस भेज देगी।",
+    listSubtitle: "जो भी चाहिए लिख दें। दुकान दाम लगाकर आपको वापस भेज देगी।",
     step1: "लिखें",
     step2: "भेजें",
     step3: "भाव पाएं",
@@ -87,14 +76,23 @@ export const hi: Translations = {
     save: "सेव करके लिस्ट भेजें",
   },
   lists: {
+    sentToShop: "लिस्ट दुकान को भेज दी",
+    mergedIntoList:
+      "आपकी पिछली लिस्ट में जोड़ दिया - दुकान ने अभी शुरू नहीं की है",
+    sendFailed: "लिस्ट नहीं भेजी जा सकी। फिर से कोशिश करें।",
+    itemRemoved: "आइटम हटा दिया",
+    payAtShopSet: "आप सामान लेते समय दुकान पर भुगतान करेंगे",
+    payFailed: "भुगतान का तरीका बदला नहीं जा सका",
+    noUpiSetUp: "दुकान ने अभी UPI भुगतान चालू नहीं किया है",
+    notPricedYet: "इस लिस्ट का भाव अभी नहीं लगा है",
+    noUpiApp: "इस फ़ोन में कोई UPI ऐप नहीं मिला",
     title: "मेरी लिस्ट",
     listNo: "लिस्ट #{{code}}",
     itemsCount_one: "{{count}} आइटम",
     itemsCount_other: "{{count}} आइटम",
     newUpdate: "नया अपडेट",
     waiting: "दुकान द्वारा दाम लगाने का इंतज़ार है।",
-    busy:
-      "दुकान अभी थोड़ी व्यस्त है — आपकी लिस्ट मिल गई है, हम जल्द ही दाम भेज देंगे।",
+    busy: "दुकान अभी थोड़ी व्यस्त है — आपकी लिस्ट मिल गई है, हम जल्द ही दाम भेज देंगे।",
     total: "कुल",
     estimate: "अनुमानित कुल — आपका असली बिल दुकान पर बनेगा।",
     paymentReceived: "पेमेंट मिल गया",
@@ -107,12 +105,10 @@ export const hi: Translations = {
     removeConfirm: '"{{name}}" को इस लिस्ट से हटाएँ?',
     cancelled: "रद्द किया गया",
     emptySignedOut: "दुकान को भेजी गई लिस्ट देखने के लिए लॉग इन करें।",
-    emptyNoLists:
-      "आपने अभी तक कोई लिस्ट नहीं भेजी। होम पेज पर एक लिस्ट लिखें।",
+    emptyNoLists: "आपने अभी तक कोई लिस्ट नहीं भेजी। होम पेज पर एक लिस्ट लिखें।",
     goHome: "होम पर जाएँ",
     newListLabel: "आपकी नई लिस्ट",
     notSent: "अभी भेजी नहीं",
-    addMore: "दुकान टैब से और जोड़ें, या होम पेज पर बदलें।",
     tabs: {
       active: "चालू",
       completed: "पूरे हुए",
@@ -145,6 +141,8 @@ export const hi: Translations = {
     addToList: "लिस्ट में जोड़ें",
   },
   product: {
+    shopWillReceive: "दुकान को यह जाएगा:",
+    saveFailed: "सेव्ड आइटम अपडेट नहीं हो सके",
     save: "पसंदीदा में सेव करें",
     saved: "सेव हो गया",
     removed: "हटा दिया",
@@ -165,7 +163,8 @@ export const hi: Translations = {
   },
   auth: {
     title: "sKirana में आपका स्वागत है",
-    subtitle: "लिस्ट भेजने और ऑर्डर देखने के लिए लॉग इन करें या नया अकाउंट बनाएँ।",
+    subtitle:
+      "लिस्ट भेजने और ऑर्डर देखने के लिए लॉग इन करें या नया अकाउंट बनाएँ।",
     continueGoogle: "Google से जारी रखें",
     or: "या",
     emailLabel: "ईमेल पता",
@@ -179,7 +178,8 @@ export const hi: Translations = {
     codeSentTo: "हमने 6 अंकों का कोड इस ईमेल पर भेजा है",
     changeEmail: "बदलें",
     checkSpam: "नहीं मिला? Spam फ़ोल्डर भी देखें।",
-    newAccount: "नए हैं? अपना नाम लिखें, ताकि दुकान को पता रहे कि ऑर्डर किसका है।",
+    newAccount:
+      "नए हैं? अपना नाम लिखें, ताकि दुकान को पता रहे कि ऑर्डर किसका है।",
     nameLabel: "आपका नाम",
     namePlaceholder: "जैसे रमेश कुमार",
     verifyContinue: "वेरिफ़ाई करके आगे बढ़ें",
@@ -189,9 +189,10 @@ export const hi: Translations = {
     codeExpired: "कोड की समय-सीमा खत्म हो गई। “कोड दोबारा भेजें” दबाएँ।",
     codeDead: "यह कोड अब काम नहीं करेगा। “कोड दोबारा भेजें” दबाकर नया कोड लें।",
     tooMany: "बहुत बार कोशिश हो गई। एक मिनट रुककर फिर करें।",
-    setupIncomplete: "अकाउंट पूरा नहीं बन पाया। कृपया “Google से जारी रखें” आज़माएँ।",
-    somethingWrong: "कुछ गड़बड़ हो गई। फिर से कोशिश करें।",
-    accountOnHold: "लॉग इन पूरा नहीं हो सका। फिर से कोशिश करें - बार-बार हो तो दुकान से संपर्क करें।",
+    setupIncomplete:
+      "अकाउंट पूरा नहीं बन पाया। कृपया “Google से जारी रखें” आज़माएँ।",
+    accountOnHold:
+      "लॉग इन पूरा नहीं हो सका। फिर से कोशिश करें - बार-बार हो तो दुकान से संपर्क करें।",
     tryAgain: "लॉग इन के लिए एक बार फिर दबाएँ।",
     googleFailed: "Google साइन-इन असफल",
   },
@@ -226,7 +227,6 @@ export const hi: Translations = {
     daysValue_other: "{{count}} दिन",
     notifications: "सूचनाएं",
     notificationsSub: "ऑर्डर अपडेट",
-    languageSub: "बदलने के लिए टैप करें",
     help: "सहायता",
     helpSub: "WhatsApp पर बात करें",
     rate: "ऐप रेट करें",

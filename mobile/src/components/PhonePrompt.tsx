@@ -14,6 +14,7 @@ import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/Button";
 import { useKeyboardHeight } from "@/lib/use-keyboard-height";
+import { isValidMobile, normalizeMobile } from "@/lib/phone";
 
 type PhonePromptProps = {
   open: boolean;
@@ -21,17 +22,6 @@ type PhonePromptProps = {
   onClose: () => void;
   onSubmit: (phone: string) => void;
 };
-
-// Indian mobile: 10 digits starting 6–9 (after stripping +91 / leading 0).
-function normalize(raw: string): string {
-  let d = raw.replace(/\D/g, "");
-  if (d.length === 12 && d.startsWith("91")) d = d.slice(2);
-  else if (d.length === 11 && d.startsWith("0")) d = d.slice(1);
-  return d;
-}
-function isValid(raw: string): boolean {
-  return /^[6-9]\d{9}$/.test(normalize(raw));
-}
 
 // Asked once, the first time a customer sends a list, so the shop can call them
 // about their order. Includes a short trust line explaining why.
@@ -58,8 +48,7 @@ export function PhonePrompt({
     }
   }, [open]);
 
-
-  const valid = isValid(value);
+  const valid = isValidMobile(value);
 
   // Push the sheet's content up above the keyboard when it's open; otherwise
   // just clear the home indicator / gesture bar.
@@ -136,7 +125,7 @@ export function PhonePrompt({
             label={t("phone.save")}
             loading={submitting}
             disabled={!valid}
-            onPress={() => onSubmit(normalize(value))}
+            onPress={() => onSubmit(normalizeMobile(value))}
           />
         </Pressable>
       </Pressable>

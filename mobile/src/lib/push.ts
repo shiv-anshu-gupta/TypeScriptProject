@@ -16,11 +16,11 @@ Notifications.setNotificationHandler({
 
 function getProjectId(): string | undefined {
   const fromConfig = Constants.expoConfig?.extra?.eas?.projectId as
-    | string
-    | undefined;
+    string | undefined;
 
-  const fromEas = (Constants as unknown as { easConfig?: { projectId?: string } })
-    .easConfig?.projectId;
+  const fromEas = (
+    Constants as unknown as { easConfig?: { projectId?: string } }
+  ).easConfig?.projectId;
 
   return fromConfig ?? fromEas;
 }

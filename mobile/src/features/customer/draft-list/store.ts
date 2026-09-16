@@ -1,5 +1,7 @@
 import { create } from "zustand";
+import { stripSpecials } from "@/lib/clean-text";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { AppState } from "react-native";
 
 // The ONE place a customer builds their order before sending it to the shop.
 // Both the hand-written paper on Home and "Add to list" on catalog products
@@ -8,14 +10,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const STORAGE_KEY = "draft_grocery_list_rows";
 
-// Block "special characters" as the customer types. Letters (English AND
-// Hindi), digits, spaces and the punctuation real names use (. , & ' - / ( ) %)
-// stay; the dangerous ASCII specials are removed. A blocklist (not a \p{L}
-// allowlist) so it's safe on Hermes; the server enforces the strict allowlist.
-const DISALLOWED_SPECIALS = /[!"#$*+:;<=>?@^_`{|}~[\]\\]/g;
-function stripSpecials(value: string): string {
-  return value.replace(DISALLOWED_SPECIALS, "");
-}
 // Start compact; the list auto-grows a fresh blank line as each one is filled
 // (see withTrailingBlank), so there is no upper limit on items.
 const INITIAL_ROWS = 8;
@@ -34,8 +28,20 @@ function makeInitialRows(): DraftRow[] {
   }));
 }
 
+// A line the customer has started: it holds something worth keeping.
 function isRowFilled(row: DraftRow) {
   return (row.name ?? "").trim() !== "" || (row.quantity ?? "").trim() !== "";
+}
+
+// A line that will actually be SENT: the shop needs a name. This is the one
+// definition behind every "how many items" count in the app - the tab badge,
+// the Home card, the sheet header and Send - so they can never disagree.
+export function isSendableRow(row: DraftRow) {
+  return (row.name ?? "").trim().length > 0;
+}
+
+export function countSendableRows(rows: DraftRow[]) {
+  return rows.filter(isSendableRow).length;
 }
 
 // Keep one trailing blank line so the "paper" grows as items are added.
@@ -47,9 +53,34 @@ function withTrailingBlank(rows: DraftRow[], nextId: () => number): DraftRow[] {
   return rows;
 }
 
-function persist(rows: DraftRow[]) {
+// Saving the draft is a native disk write. Typing a list would do one per
+// keystroke, which is exactly the moment the phone should be free, so writes
+// are collected and made shortly after typing stops - and immediately when
+// the app goes to the background, so nothing is lost.
+const PERSIST_DELAY_MS = 500;
+let persistTimer: ReturnType<typeof setTimeout> | null = null;
+let pendingRows: DraftRow[] | null = null;
+
+function writeNow() {
+  if (persistTimer) {
+    clearTimeout(persistTimer);
+    persistTimer = null;
+  }
+  const rows = pendingRows;
+  pendingRows = null;
+  if (!rows) return;
   void AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(rows)).catch(() => {});
 }
+
+function persist(rows: DraftRow[]) {
+  pendingRows = rows;
+  if (persistTimer) clearTimeout(persistTimer);
+  persistTimer = setTimeout(writeNow, PERSIST_DELAY_MS);
+}
+
+AppState.addEventListener("change", (state) => {
+  if (state !== "active") writeNow();
+});
 
 type DraftListStore = {
   rows: DraftRow[];
@@ -66,7 +97,6 @@ type DraftListStore = {
   addProduct: (name: string, unit?: string, unitValue?: number) => void;
   addProductWithQuantity: (name: string, quantity: string) => void;
   clearDraft: () => void;
-  filledCount: () => number;
 };
 
 export const useDraftListStore = create<DraftListStore>((set, get) => ({
@@ -243,6 +273,4 @@ export const useDraftListStore = create<DraftListStore>((set, get) => ({
     persist(rows);
     set({ rows, nextId: INITIAL_ROWS + 1 });
   },
-
-  filledCount: () => get().rows.filter(isRowFilled).length,
 }));

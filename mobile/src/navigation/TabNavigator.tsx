@@ -9,7 +9,10 @@ import { ShopScreen } from "@/screens/ShopScreen";
 import { AccountScreen } from "@/screens/AccountScreen";
 import { MyListsScreen } from "@/screens/MyListsScreen";
 import { useCustomerGroceryListStore } from "@/features/customer/grocery-list/store";
-import { useDraftListStore } from "@/features/customer/draft-list/store";
+import {
+  countSendableRows,
+  useDraftListStore,
+} from "@/features/customer/draft-list/store";
 import { CustomTabBar } from "@/components/CustomTabBar";
 
 const Tab = createBottomTabNavigator<TabParamList>();
@@ -76,14 +79,11 @@ function PulsingIcon({
 
 export function TabNavigator() {
   const { t } = useTranslation();
-  const unseenLists = useCustomerGroceryListStore(
-    (state) => state.unseenCount,
-  );
+  const unseenLists = useCustomerGroceryListStore((state) => state.unseenCount);
   // Unsent draft items — badged + heartbeat on Lists so the customer
   // remembers the draft still has to be SENT from there.
-  const draftCount = useDraftListStore(
-    (state) =>
-      state.rows.filter((row) => (row.name ?? "").trim().length > 0).length,
+  const draftCount = useDraftListStore((state) =>
+    countSendableRows(state.rows),
   );
 
   const listsBadge =
@@ -95,6 +95,9 @@ export function TabNavigator() {
       // handles its own safe-area padding.
       tabBar={(props) => <CustomTabBar {...props} />}
       screenOptions={({ route }) => ({
+        // A tab that isn't on screen stops re-rendering; it wakes up with the
+        // latest data when the customer comes back to it.
+        freezeOnBlur: true,
         headerShown: false,
         tabBarLabel: t(`tabs.${route.name.toLowerCase()}`),
         tabBarActiveTintColor: "#3c5a64",

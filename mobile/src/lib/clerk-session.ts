@@ -35,13 +35,19 @@ export function useSessionGuard() {
     return true;
   }, [clerk]);
 
-  // Make a newly created session the current one. Resolves true once the
-  // customer is really signed in; false if Clerk held the session back (it
-  // has been cleared, so the next attempt starts clean).
-  const activate = useCallback(
-    async (sessionId: string, setActive: Activate) => {
+  // Finish a login attempt. One decision for both ways in (Google and the
+  // email code), so they can never answer the same situation differently:
+  //   "done"       - signed in
+  //   "onHold"     - Clerk held the session back; it has been cleared
+  //   "incomplete" - Clerk wants something this app doesn't collect
+  const complete = useCallback(
+    async (
+      sessionId: string | null | undefined,
+      setActive: Activate | undefined,
+    ): Promise<"done" | "onHold" | "incomplete"> => {
+      if (!sessionId || !setActive) return "incomplete";
       await setActive({ session: sessionId });
-      return !(await clearPending());
+      return (await clearPending()) ? "onHold" : "done";
     },
     [clearPending],
   );
@@ -49,7 +55,9 @@ export function useSessionGuard() {
   // A login attempt failed with "session_exists": the device already holds a
   // session. An active one means the customer is in; a pending one is cleared
   // so trying again works.
-  const recoverExisting = useCallback(async (): Promise<"signedIn" | "cleared"> => {
+  const recoverExisting = useCallback(async (): Promise<
+    "signedIn" | "cleared"
+  > => {
     if (clerk.session?.status === "active") return "signedIn";
     if (await clearPending()) return "cleared";
     // Clerk said a session exists but none is current here - sign the device
@@ -58,5 +66,10 @@ export function useSessionGuard() {
     return "cleared";
   }, [clerk, clearPending]);
 
-  return { clearPending, activate, recoverExisting };
+  // The message key for an outcome that isn't "done", so both screens say the
+  // same thing.
+  const messageForOutcome = (outcome: "onHold" | "incomplete") =>
+    outcome === "onHold" ? "auth.accountOnHold" : "auth.setupIncomplete";
+
+  return { clearPending, complete, messageForOutcome, recoverExisting };
 }

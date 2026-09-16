@@ -47,10 +47,7 @@ export function QuantitySheet({
       onRequestClose={onClose}
     >
       {/* Backdrop */}
-      <Pressable
-        onPress={onClose}
-        className="flex-1 justify-end bg-black/50"
-      >
+      <Pressable onPress={onClose} className="flex-1 justify-end bg-black/50">
         {/* Sheet — stop propagation so taps inside don't close it */}
         <Pressable
           onPress={(event) => event.stopPropagation()}

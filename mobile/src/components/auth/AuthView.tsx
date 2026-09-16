@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { ScrollView, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -38,9 +44,7 @@ export function AuthView({ onDone, header, footer, subtitle }: AuthViewProps) {
   // height: padding the tab bar's height as well would scroll the field being
   // typed in off the top.
   const overlap =
-    gapBelow === null
-      ? keyboardHeight
-      : Math.max(0, keyboardHeight - gapBelow);
+    gapBelow === null ? keyboardHeight : Math.max(0, keyboardHeight - gapBelow);
 
   // The keyboard opened: bring the field and its button into view.
   useEffect(() => {

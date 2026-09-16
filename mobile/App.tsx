@@ -1,6 +1,7 @@
 import "./global.css";
 import { useEffect, useState } from "react";
 import { StatusBar } from "expo-status-bar";
+import { StyleSheet, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { NavigationContainer } from "@react-navigation/native";
@@ -109,10 +110,9 @@ export default function App() {
     return <LanguagePicker onSelect={() => setShowLanguagePicker(false)} />;
   }
 
-  if (isSplashVisible) {
-    return <SplashScreen progress={loadingProgress} />;
-  }
-
+  // The app is mounted straight away and the splash is drawn ON TOP of it, so
+  // Clerk, the first Home request and the customer's lists all load while the
+  // logo is still showing - instead of starting only once it disappears.
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ClerkProvider
@@ -133,6 +133,11 @@ export default function App() {
           </NavigationContainer>
         </SafeAreaProvider>
       </ClerkProvider>
+      {isSplashVisible ? (
+        <View style={StyleSheet.absoluteFill}>
+          <SplashScreen progress={loadingProgress} />
+        </View>
+      ) : null}
     </GestureHandlerRootView>
   );
 }

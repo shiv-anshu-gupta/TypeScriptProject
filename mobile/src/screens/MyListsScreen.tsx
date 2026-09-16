@@ -22,17 +22,17 @@ import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useAuth } from "@clerk/clerk-expo";
 import { useTranslation } from "react-i18next";
 
-import type {
-  RootStackParamList,
-  TabParamList,
-} from "@/navigation/types";
+import type { RootStackParamList, TabParamList } from "@/navigation/types";
 import { useCustomerGroceryListStore } from "@/features/customer/grocery-list/store";
 import {
   ACTIVE_STATUSES,
   type CustomerGroceryList,
   type GroceryListStatus,
 } from "@/features/customer/grocery-list/types";
-import { useDraftListStore } from "@/features/customer/draft-list/store";
+import {
+  countSendableRows,
+  useDraftListStore,
+} from "@/features/customer/draft-list/store";
 import { Button } from "@/components/ui/Button";
 import { AuthView } from "@/components/auth/AuthView";
 import { Badge } from "@/components/ui/Badge";
@@ -144,13 +144,17 @@ function ListCard({ list }: { list: CustomerGroceryList }) {
   // the customer is on another tab and never saw it.
   const isFocused = useIsFocused();
   const [chatOpen, setChatOpen] = useState(false);
-  const { markSeen, payAtShop, payViaUpi, payingListId, removeItem } =
-    useCustomerGroceryListStore((state) => state);
+  // Only this card's own "am I busy" flag: subscribing to the whole store
+  // re-renders every card (and its chat sheet) on any list change.
+  const busy = useCustomerGroceryListStore(
+    (state) => state.payingListId === list._id,
+  );
+  const { markSeen, payAtShop, payViaUpi, removeItem } =
+    useCustomerGroceryListStore.getState();
 
   const isPriced = list.totalAmount > 0;
   const isPaid = list.paymentStatus === "paid";
   const isLive = (ACTIVE_STATUSES as readonly string[]).includes(list.status);
-  const busy = payingListId === list._id;
 
   // Still "received" (not priced) after BUSY_AFTER_MIN minutes → show the shop
   // a friendly "we're busy, hang tight" note instead of a blank wait.
@@ -235,7 +239,10 @@ function ListCard({ list }: { list: CustomerGroceryList }) {
             >
               {index + 1}. {item.name}
               {item.quantity ? (
-                <Text className="text-muted-foreground"> · {item.quantity}</Text>
+                <Text className="text-muted-foreground">
+                  {" "}
+                  · {item.quantity}
+                </Text>
               ) : null}
             </Text>
             {item.available === false ? (
@@ -357,9 +364,8 @@ function ListCard({ list }: { list: CustomerGroceryList }) {
 // so items can be edited / added / removed and sent without going back Home.
 function DraftCard() {
   const { t } = useTranslation();
-  const filledCount = useDraftListStore(
-    (state) =>
-      state.rows.filter((row) => (row.name ?? "").trim().length > 0).length,
+  const filledCount = useDraftListStore((state) =>
+    countSendableRows(state.rows),
   );
 
   if (!filledCount) return null;
@@ -390,13 +396,12 @@ export function MyListsScreen() {
   const navigation = useNavigation<Nav>();
   const { isSignedIn } = useAuth();
 
-  const { items, loading, loadLists } = useCustomerGroceryListStore(
-    (state) => state,
-  );
+  const items = useCustomerGroceryListStore((state) => state.items);
+  const loading = useCustomerGroceryListStore((state) => state.loading);
+  const loadLists = useCustomerGroceryListStore((state) => state.loadLists);
 
   const hasDraft = useDraftListStore(
-    (state) =>
-      state.rows.filter((row) => (row.name ?? "").trim().length > 0).length > 0,
+    (state) => countSendableRows(state.rows) > 0,
   );
 
   const [statusTab, setStatusTab] = useState<StatusTab>("active");
@@ -459,7 +464,10 @@ export function MyListsScreen() {
         gap: 12,
       }}
       refreshControl={
-        <RefreshControl refreshing={loading} onRefresh={() => void loadLists()} />
+        <RefreshControl
+          refreshing={loading}
+          onRefresh={() => void loadLists()}
+        />
       }
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"

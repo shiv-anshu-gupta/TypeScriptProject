@@ -10,10 +10,10 @@ import type {
 export async function submitGroceryList(body: SubmitGroceryListBody) {
   // `merged` is true when the server appended these items to an existing
   // not-yet-priced list instead of creating a new one.
-  return apiPost<CustomerGroceryList & { merged?: boolean }, SubmitGroceryListBody>(
-    "/customer/grocery-lists",
-    body,
-  );
+  return apiPost<
+    CustomerGroceryList & { merged?: boolean },
+    SubmitGroceryListBody
+  >("/customer/grocery-lists", body);
 }
 
 export async function getCustomerGroceryLists() {

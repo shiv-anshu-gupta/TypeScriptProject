@@ -48,10 +48,11 @@ export function usePushNotifications() {
       if (isSignedIn) void loadLists();
     });
 
-    const responseSub =
-      Notifications.addNotificationResponseReceivedListener(() => {
+    const responseSub = Notifications.addNotificationResponseReceivedListener(
+      () => {
         if (isSignedIn) void loadLists();
-      });
+      },
+    );
 
     return () => {
       receivedSub.remove();

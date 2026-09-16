@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { Image } from "expo-image";
 import { Feather } from "@expo/vector-icons";
-import { useAuth } from "@clerk/clerk-expo";
+import { useClerk } from "@clerk/clerk-expo";
 import { useTranslation } from "react-i18next";
 
 import { useDraftListStore } from "@/features/customer/draft-list/store";
@@ -27,22 +27,25 @@ type ProductCardProps = {
 
 export function ProductCard({ product, onPress }: ProductCardProps) {
   const { t } = useTranslation();
-  const { isSignedIn } = useAuth();
+  const clerk = useClerk();
   const addProductWithQuantity = useDraftListStore(
     (state) => state.addProductWithQuantity,
   );
   const packLabel = formatPack(product.unit, product.unitValue);
   const [sheetOpen, setSheetOpen] = useState(false);
 
-  // Wishlist heart. Subscribing to `items` (not a derived selector) keeps the
-  // card in sync when the product is saved/removed from anywhere else.
-  const wishlistItems = useCustomerWishlistStore((state) => state.items);
+  // Wishlist heart. Each card watches only its OWN saved/not-saved answer, so
+  // saving one product doesn't re-render every card in the grid.
+  const saved = useCustomerWishlistStore((state) =>
+    state.items.some((item) => item.productId === product.id),
+  );
   const toggleItem = useCustomerWishlistStore((state) => state.toggleItem);
   const [savingWishlist, setSavingWishlist] = useState(false);
-  const saved = wishlistItems.some((item) => item.productId === product.id);
 
   const onToggleWishlist = async () => {
-    if (!isSignedIn) {
+    // Read at press time rather than subscribing: useAuth re-renders every
+    // card each time Clerk refreshes its token.
+    if (!clerk.session) {
       toast.error(t("product.signInToSave"));
       return;
     }

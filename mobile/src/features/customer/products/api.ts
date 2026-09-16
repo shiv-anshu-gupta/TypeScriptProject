@@ -13,7 +13,8 @@ export async function getCustomerCategories() {
 export async function getCustomerProducts(params?: GetCustomerProductsParams) {
   const query: string[] = [];
 
-  if (params?.category) query.push(`category=${encodeURIComponent(params.category)}`);
+  if (params?.category)
+    query.push(`category=${encodeURIComponent(params.category)}`);
   if (params?.brand) query.push(`brand=${encodeURIComponent(params.brand)}`);
   if (params?.color) query.push(`color=${encodeURIComponent(params.color)}`);
   if (params?.size) query.push(`size=${encodeURIComponent(params.size)}`);

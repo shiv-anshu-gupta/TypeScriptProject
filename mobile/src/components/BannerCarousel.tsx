@@ -24,6 +24,12 @@ const PEEK = 28; // how much of the next banner shows, so the row reads as swipe
 const ASPECT = 0.46; // banner height / width - a wide promo strip
 const AUTOPLAY_MS = 4500;
 
+// Defined once: an inline component would be a new type on every render, so
+// the separators would remount on each autoplay tick.
+function Gap() {
+  return <View style={{ width: GAP }} />;
+}
+
 // Promo banners from the admin panel (Home banners): the live ones, in the
 // order the shop set. The design lives in the artwork itself; a banner can
 // also open something when tapped - the list sheet, the Shop, a category or
@@ -149,7 +155,7 @@ export function BannerCarousel({ banners }: { banners: CustomerHomeBanner[] }) {
         decelerationRate="fast"
         disableIntervalMomentum
         contentContainerStyle={{ paddingHorizontal: SIDE }}
-        ItemSeparatorComponent={() => <View style={{ width: GAP }} />}
+        ItemSeparatorComponent={Gap}
         onScrollBeginDrag={() => {
           dragging.current = true;
         }}
@@ -171,9 +177,7 @@ export function BannerCarousel({ banners }: { banners: CustomerHomeBanner[] }) {
               style={{ width: "100%", height: "100%" }}
               contentFit="cover"
               transition={200}
-              onError={() =>
-                setFailed((prev) => new Set(prev).add(item._id))
-              }
+              onError={() => setFailed((prev) => new Set(prev).add(item._id))}
             />
           </Pressable>
         )}

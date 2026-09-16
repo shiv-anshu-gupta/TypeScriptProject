@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 
 import {
   buildQuantityString,
@@ -26,6 +27,7 @@ export function QuantityControl({
   value,
   onChange,
 }: QuantityControlProps) {
+  const { t } = useTranslation();
   const countable = isCountableUnit(unit, unitValue);
   const step = countable ? 1 : stepFor(unit);
   const min = minFor(unit, unitValue);
@@ -155,7 +157,7 @@ export function QuantityControl({
 
       {/* What the shop will see */}
       <Text className="text-center text-xs text-muted-foreground">
-        Shop will receive:{" "}
+        {t("product.shopWillReceive")}{" "}
         <Text className="font-semibold text-foreground">
           {buildQuantityString(unit, unitValue, value)}
         </Text>

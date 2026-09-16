@@ -16,7 +16,10 @@ import { Feather } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 
 import { useGrocerySheetStore } from "@/features/customer/grocery-sheet/store";
-import { useDraftListStore } from "@/features/customer/draft-list/store";
+import {
+  countSendableRows,
+  useDraftListStore,
+} from "@/features/customer/draft-list/store";
 import {
   GroceryListEditor,
   PAPER_HEADER_HEIGHT,
@@ -55,10 +58,7 @@ export function GroceryListSheet() {
   const isOpen = useGrocerySheetStore((state) => state.isOpen);
   const close = useGrocerySheetStore((state) => state.close);
   const ensureRows = useDraftListStore((state) => state.ensureRows);
-  const itemCount = useDraftListStore(
-    (state) =>
-      state.rows.filter((row) => (row.name ?? "").trim().length > 0).length,
-  );
+  const itemCount = useDraftListStore((state) => countSendableRows(state.rows));
 
   // Kept mounted until the closing slide has finished.
   const [mounted, setMounted] = useState(false);

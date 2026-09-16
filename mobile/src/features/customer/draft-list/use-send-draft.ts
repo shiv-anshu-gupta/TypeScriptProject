@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 
 import type { RootStackParamList } from "@/navigation/types";
 import { useCustomerGroceryListStore } from "../grocery-list/store";
-import { useDraftListStore } from "./store";
+import { isSendableRow, useDraftListStore } from "./store";
 import { useGrocerySheetStore } from "../grocery-sheet/store";
 import { toast } from "@/lib/toast";
 
@@ -37,7 +37,7 @@ export function useSendDraft() {
   // a second tap in that gap would send the whole list twice.
   const sending = useRef(false);
 
-  const filledRows = rows.filter((row) => (row.name ?? "").trim().length > 0);
+  const filledRows = rows.filter(isSendableRow);
 
   const doSubmit = async (phone?: string) => {
     const sent = await submitList({

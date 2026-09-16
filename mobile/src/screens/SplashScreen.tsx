@@ -47,10 +47,18 @@ export function SplashScreen({ progress }: SplashScreenProps) {
       {/* Background Decorative Kirana Products Pattern */}
       <View className="absolute inset-0 opacity-10 overflow-hidden">
         <View className="absolute top-10 left-8 items-center">
-          <MaterialCommunityIcons name="bottle-wine" size={48} color="#3c5a64" />
+          <MaterialCommunityIcons
+            name="bottle-wine"
+            size={48}
+            color="#3c5a64"
+          />
         </View>
         <View className="absolute top-32 right-12 items-center">
-          <MaterialCommunityIcons name="package-variant" size={52} color="#3c5a64" />
+          <MaterialCommunityIcons
+            name="package-variant"
+            size={52}
+            color="#3c5a64"
+          />
         </View>
         <View className="absolute top-20 right-32 items-center">
           <MaterialCommunityIcons name="rice" size={44} color="#3c5a64" />
@@ -65,19 +73,35 @@ export function SplashScreen({ progress }: SplashScreenProps) {
           <MaterialCommunityIcons name="sack" size={40} color="#3c5a64" />
         </View>
         <View className="absolute top-1/2 left-1/4 items-center">
-          <MaterialCommunityIcons name="water-boiler" size={44} color="#3c5a64" />
+          <MaterialCommunityIcons
+            name="water-boiler"
+            size={44}
+            color="#3c5a64"
+          />
         </View>
         <View className="absolute top-1/3 left-12 items-center">
-          <MaterialCommunityIcons name="scale-bathroom" size={40} color="#3c5a64" />
+          <MaterialCommunityIcons
+            name="scale-bathroom"
+            size={40}
+            color="#3c5a64"
+          />
         </View>
         <View className="absolute bottom-1/3 right-1/4 items-center">
           <MaterialCommunityIcons name="bowl-mix" size={44} color="#3c5a64" />
         </View>
         <View className="absolute top-2/3 right-1/3 items-center">
-          <MaterialCommunityIcons name="spray-bottle" size={48} color="#3c5a64" />
+          <MaterialCommunityIcons
+            name="spray-bottle"
+            size={48}
+            color="#3c5a64"
+          />
         </View>
         <View className="absolute bottom-24 right-1/3 items-center">
-          <MaterialCommunityIcons name="bag-personal" size={40} color="#3c5a64" />
+          <MaterialCommunityIcons
+            name="bag-personal"
+            size={40}
+            color="#3c5a64"
+          />
         </View>
         <View className="absolute top-1/4 right-1/4 items-center">
           <MaterialCommunityIcons name="cart" size={44} color="#3c5a64" />
@@ -93,7 +117,8 @@ export function SplashScreen({ progress }: SplashScreenProps) {
           }}
         >
           {/* Logo Background */}
-          <View className="h-24 w-24 items-center justify-center rounded-2xl bg-primary shadow-lg"
+          <View
+            className="h-24 w-24 items-center justify-center rounded-2xl bg-primary shadow-lg"
             style={{
               shadowColor: "#3c5a64",
               shadowOpacity: 0.3,
@@ -112,9 +137,7 @@ export function SplashScreen({ progress }: SplashScreenProps) {
 
         {/* Brand Name */}
         <View className="mt-6 items-center">
-          <Text className="text-3xl font-bold text-primary">
-            sKirana
-          </Text>
+          <Text className="text-3xl font-bold text-primary">sKirana</Text>
           <Text className="mt-1 text-sm font-medium text-muted-foreground">
             Your local shop, on your phone
           </Text>

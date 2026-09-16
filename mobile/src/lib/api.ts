@@ -59,9 +59,21 @@ function getErrorMsg(error: unknown) {
   return "Something went wrong!!! Please try again";
 }
 
-export async function apiGet<T>(url: string, config?: AxiosRequestConfig) {
+// One place where a request is made and the server's envelope is unwrapped:
+// every verb below is the same call with a different method.
+async function request<T>(
+  method: "get" | "post" | "put" | "patch" | "delete",
+  url: string,
+  data?: unknown,
+  config?: AxiosRequestConfig,
+) {
   try {
-    const response = await api.get<ApiEnvelope<T>>(url, config);
+    const response = await api.request<ApiEnvelope<T>>({
+      ...config,
+      method,
+      url,
+      ...(data !== undefined ? { data } : {}),
+    });
 
     if (response.data.status === "error" || !response.data.data) {
       throw new Error(response.data.errors?.[0]?.message || "Request failed");
@@ -73,71 +85,26 @@ export async function apiGet<T>(url: string, config?: AxiosRequestConfig) {
   }
 }
 
-export async function apiPost<TResponse, TBody = unknown>(
+export function apiGet<T>(url: string, config?: AxiosRequestConfig) {
+  return request<T>("get", url, undefined, config);
+}
+
+export function apiPost<TResponse, TBody = unknown>(
   url: string,
   body?: TBody,
   config?: AxiosRequestConfig,
 ) {
-  try {
-    const response = await api.post<ApiEnvelope<TResponse>>(url, body, config);
-    if (response.data.status === "error" || !response.data.data) {
-      throw new Error(response.data.errors?.[0]?.message || "Request failed");
-    }
-
-    return response.data.data;
-  } catch (error) {
-    throw new Error(getErrorMsg(error));
-  }
+  return request<TResponse>("post", url, body, config);
 }
 
-export async function apiPut<TResponse, TBody = unknown>(
+export function apiPatch<TResponse, TBody = unknown>(
   url: string,
   body?: TBody,
   config?: AxiosRequestConfig,
 ) {
-  try {
-    const response = await api.put<ApiEnvelope<TResponse>>(url, body, config);
-
-    if (response.data.status === "error" || !response.data.data) {
-      throw new Error(response.data.errors?.[0]?.message || "Request failed");
-    }
-
-    return response.data.data;
-  } catch (error) {
-    throw new Error(getErrorMsg(error));
-  }
+  return request<TResponse>("patch", url, body, config);
 }
 
-export async function apiPatch<TResponse, TBody = unknown>(
-  url: string,
-  body?: TBody,
-  config?: AxiosRequestConfig,
-) {
-  try {
-    const response = await api.patch<ApiEnvelope<TResponse>>(url, body, config);
-
-    if (response.data.status === "error" || !response.data.data) {
-      throw new Error(response.data.errors?.[0]?.message || "Request failed");
-    }
-
-    return response.data.data;
-  } catch (error) {
-    throw new Error(getErrorMsg(error));
-  }
-}
-
-export async function apiDelete<TResponse>(
-  url: string,
-  config?: AxiosRequestConfig,
-) {
-  try {
-    const response = await api.delete<ApiEnvelope<TResponse>>(url, config);
-    if (response.data.status === "error" || !response.data.data) {
-      throw new Error(response.data.errors?.[0]?.message || "Request failed");
-    }
-
-    return response.data.data;
-  } catch (error) {
-    throw new Error(getErrorMsg(error));
-  }
+export function apiDelete<TResponse>(url: string, config?: AxiosRequestConfig) {
+  return request<TResponse>("delete", url, undefined, config);
 }

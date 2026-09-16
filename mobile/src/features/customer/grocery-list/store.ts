@@ -12,6 +12,7 @@ import {
   submitGroceryList,
 } from "./api";
 import { toast } from "@/lib/toast";
+import i18n from "@/lib/i18n";
 import { buildUpiUrl, openUpiPayment } from "@/lib/upi";
 
 const emptyUpi: ShopUpi = { id: "", name: "sKirana" };
@@ -20,6 +21,9 @@ const emptyUpi: ShopUpi = { id: "", name: "sKirana" };
 // is thrown away: it belongs to a superseded refresh, or to the customer who
 // signed out while it was in flight (clear() takes a new ticket too).
 let loadTicket = 0;
+// Bootstrap and the focused tab often ask at the same moment; they share one
+// request instead of making two.
+let inFlight: Promise<void> | null = null;
 
 type CustomerGroceryListStore = {
   items: CustomerGroceryList[];
@@ -51,25 +55,31 @@ export const useCustomerGroceryListStore = create<CustomerGroceryListStore>(
     payingListId: "",
 
     loadLists: async () => {
+      if (inFlight) return inFlight;
       const ticket = ++loadTicket;
-      try {
-        set({ loading: true });
-        const response = await getCustomerGroceryLists();
-        if (ticket !== loadTicket) return;
-        set({
-          items: response?.items ?? [],
-          unseenCount: response?.unseenCount ?? 0,
-          upi: response?.upi ?? emptyUpi,
-          customerPhone: response?.customerPhone ?? "",
-          loading: false,
-        });
-      } catch {
-        if (ticket !== loadTicket) return;
-        // A refresh that failed (offline, server hiccup) is NOT "no orders":
-        // keep what was last loaded, or Home would fall back to "write a
-        // list" and Lists would say nothing was ever sent.
-        set({ loading: false });
-      }
+      inFlight = (async () => {
+        try {
+          set({ loading: true });
+          const response = await getCustomerGroceryLists();
+          if (ticket !== loadTicket) return;
+          set({
+            items: response?.items ?? [],
+            unseenCount: response?.unseenCount ?? 0,
+            upi: response?.upi ?? emptyUpi,
+            customerPhone: response?.customerPhone ?? "",
+            loading: false,
+          });
+        } catch {
+          if (ticket !== loadTicket) return;
+          // A refresh that failed (offline, server hiccup) is NOT "no orders":
+          // keep what was last loaded, or Home would fall back to "write a
+          // list" and Lists would say nothing was ever sent.
+          set({ loading: false });
+        } finally {
+          inFlight = null;
+        }
+      })();
+      return inFlight;
     },
 
     submitList: async (body) => {
@@ -78,16 +88,16 @@ export const useCustomerGroceryListStore = create<CustomerGroceryListStore>(
         const created = await submitGroceryList(body);
         set({ submitting: false });
         toast.success(
-          created?.merged
-            ? "Added to your earlier list (shop hasn't started it yet)"
-            : "List sent to the shop",
+          i18n.t(created?.merged ? "lists.mergedIntoList" : "lists.sentToShop"),
         );
-        await get().loadLists();
+        // Refresh in the background: the draft is cleared as soon as this
+        // returns, so anything typed while the history loads isn't lost.
+        void get().loadLists();
         return true;
       } catch (error) {
         set({ submitting: false });
         const message =
-          error instanceof Error ? error.message : "Failed to send list";
+          error instanceof Error ? error.message : i18n.t("lists.sendFailed");
         toast.error(message);
         return false;
       }
@@ -123,7 +133,7 @@ export const useCustomerGroceryListStore = create<CustomerGroceryListStore>(
             item._id === listId ? updated : item,
           ),
         }));
-        toast.success("Item removed");
+        toast.success(i18n.t("lists.itemRemoved"));
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "Failed to remove item";
@@ -136,11 +146,11 @@ export const useCustomerGroceryListStore = create<CustomerGroceryListStore>(
         set({ payingListId: listId });
         await payGroceryListAtShop(listId);
         set({ payingListId: "" });
-        toast.success("You'll pay at the shop on pickup");
+        toast.success(i18n.t("lists.payAtShopSet"));
         await get().loadLists();
       } catch {
         set({ payingListId: "" });
-        toast.error("Failed to update payment method");
+        toast.error(i18n.t("lists.payFailed"));
       }
     },
 
@@ -151,12 +161,12 @@ export const useCustomerGroceryListStore = create<CustomerGroceryListStore>(
       const { upi } = get();
 
       if (!upi.id) {
-        toast.error("The shop hasn't set up UPI payments yet");
+        toast.error(i18n.t("lists.noUpiSetUp"));
         return;
       }
 
       if (list.totalAmount < 1) {
-        toast.error("This list isn't priced yet");
+        toast.error(i18n.t("lists.notPricedYet"));
         return;
       }
 
@@ -170,7 +180,7 @@ export const useCustomerGroceryListStore = create<CustomerGroceryListStore>(
       const opened = await openUpiPayment(url);
 
       if (!opened) {
-        toast.error("No UPI app found on this phone");
+        toast.error(i18n.t("lists.noUpiApp"));
       }
     },
 

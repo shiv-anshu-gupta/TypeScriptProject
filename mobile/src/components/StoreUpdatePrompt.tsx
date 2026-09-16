@@ -87,7 +87,8 @@ export function StoreUpdatePrompt() {
   if (!isOlder(installed, info.latestVersion)) return null;
 
   // Below minVersion the update is mandatory — no "Later" escape.
-  const forced = Boolean(info.minVersion) && isOlder(installed, info.minVersion);
+  const forced =
+    Boolean(info.minVersion) && isOlder(installed, info.minVersion);
   if (dismissed && !forced) return null;
 
   return (

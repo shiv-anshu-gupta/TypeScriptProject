@@ -18,6 +18,7 @@ import type { RootStackParamList } from "@/navigation/types";
 import { Button } from "@/components/ui/Button";
 import { GoogleAuthButton } from "@/components/GoogleAuthButton";
 import { clerkErrorCode, useSessionGuard } from "@/lib/clerk-session";
+import { stripSpecials } from "@/lib/clean-text";
 import { cn } from "@/lib/utils";
 
 const logo = require("../../../assets/icon.png");
@@ -48,7 +49,8 @@ function CodeBoxes({
   return (
     <View className="flex-row gap-2">
       {Array.from({ length: CODE_LENGTH }, (_, i) => {
-        const current = focused && i === Math.min(value.length, CODE_LENGTH - 1);
+        const current =
+          focused && i === Math.min(value.length, CODE_LENGTH - 1);
         return (
           <View
             key={i}
@@ -110,12 +112,19 @@ export function AuthPanel({ onDone, subtitle, grow }: AuthPanelProps) {
   // effect below is tied to whether this copy is the one on screen.
   const isFocused = useIsFocused();
 
-  const { signIn, setActive: setSignInActive, isLoaded: signInLoaded } =
-    useSignIn();
-  const { signUp, setActive: setSignUpActive, isLoaded: signUpLoaded } =
-    useSignUp();
+  const {
+    signIn,
+    setActive: setSignInActive,
+    isLoaded: signInLoaded,
+  } = useSignIn();
+  const {
+    signUp,
+    setActive: setSignUpActive,
+    isLoaded: signUpLoaded,
+  } = useSignUp();
   const ready = signInLoaded && signUpLoaded;
-  const { activate, clearPending, recoverExisting } = useSessionGuard();
+  const { complete, clearPending, messageForOutcome, recoverExisting } =
+    useSessionGuard();
 
   const [step, setStep] = useState<Step>("email");
   const [mode, setMode] = useState<Mode>("signIn");
@@ -178,7 +187,7 @@ export function AuthPanel({ onDone, subtitle, grow }: AuthPanelProps) {
       case "form_param_format_invalid":
         return t("auth.emailInvalid");
       default:
-        return t("auth.somethingWrong");
+        return t("common.somethingWrong");
     }
   };
 
@@ -186,20 +195,15 @@ export function AuthPanel({ onDone, subtitle, grow }: AuthPanelProps) {
     sessionId: string | null,
     setActive: typeof setSignInActive,
   ) => {
-    if (!sessionId || !setActive) {
-      // Clerk wants something this app doesn't collect; the attempt is spent.
-      setStep("email");
-      setError(t("auth.setupIncomplete"));
-      return;
-    }
-    if (await activate(sessionId, setActive)) {
+    const outcome = await complete(sessionId, setActive);
+    if (outcome === "done") {
       onDone();
       return;
     }
-    // The session was held back and has been cleared, so this attempt is
-    // finished - start again from the email step.
+    // The attempt is spent either way (held back and cleared, or missing
+    // something this app doesn't ask for) - start again from the email step.
     setStep("email");
-    setError(t("auth.accountOnHold"));
+    setError(t(messageForOutcome(outcome)));
   };
 
   // The device already holds a session: an active one means the customer is
@@ -207,6 +211,22 @@ export function AuthPanel({ onDone, subtitle, grow }: AuthPanelProps) {
   const handleExisting = async () => {
     if ((await recoverExisting()) === "signedIn") onDone();
     else setError(t("auth.tryAgain"));
+  };
+
+  // Ask Clerk to email a code for the sign-in attempt in progress. Throws if
+  // this account has no email-code option, so the caller can say so rather
+  // than pretend a code was sent.
+  const sendSignInCode = async () => {
+    const factor = signIn?.supportedFirstFactors?.find(
+      (f) => f.strategy === "email_code",
+    );
+    if (!signIn || !factor || !("emailAddressId" in factor)) {
+      throw new Error("no email_code factor on this account");
+    }
+    await signIn.prepareFirstFactor({
+      strategy: "email_code",
+      emailAddressId: factor.emailAddressId,
+    });
   };
 
   // Email step: find out whether this email already has an account, then send
@@ -222,24 +242,16 @@ export function AuthPanel({ onDone, subtitle, grow }: AuthPanelProps) {
     setError("");
     try {
       try {
-        const attempt = await signIn.create({ identifier: address });
-        const factor = attempt.supportedFirstFactors?.find(
-          (f) => f.strategy === "email_code",
-        );
-        if (!factor || !("emailAddressId" in factor)) {
-          setError(t("auth.somethingWrong"));
-          return;
-        }
-        await signIn.prepareFirstFactor({
-          strategy: "email_code",
-          emailAddressId: factor.emailAddressId,
-        });
+        await signIn.create({ identifier: address });
+        await sendSignInCode();
         setMode("signIn");
       } catch (err) {
         if (clerkErrorCode(err) !== "form_identifier_not_found") throw err;
         // No account yet - create one with this email.
         await signUp.create({ emailAddress: address });
-        await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
+        await signUp.prepareEmailAddressVerification({
+          strategy: "email_code",
+        });
         setMode("signUp");
       }
       setEmail(address);
@@ -274,7 +286,11 @@ export function AuthPanel({ onDone, subtitle, grow }: AuthPanelProps) {
           setSignInActive,
         );
       } else {
-        await signUp.update({ firstName: name.trim() });
+        // Only when it has changed: a retry after a wrong code would
+        // otherwise make an extra round trip before checking the code.
+        if (signUp.firstName !== name.trim()) {
+          await signUp.update({ firstName: name.trim() });
+        }
         const result = await signUp.attemptEmailAddressVerification({
           code: entered,
         });
@@ -299,23 +315,18 @@ export function AuthPanel({ onDone, subtitle, grow }: AuthPanelProps) {
     setBusy(true);
     setError("");
     try {
-      if (mode === "signIn") {
-        const factor = signIn.supportedFirstFactors?.find(
-          (f) => f.strategy === "email_code",
-        );
-        if (factor && "emailAddressId" in factor) {
-          await signIn.prepareFirstFactor({
-            strategy: "email_code",
-            emailAddressId: factor.emailAddressId,
-          });
-        }
-      } else {
-        await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
-      }
+      if (mode === "signIn") await sendSignInCode();
+      else
+        await signUp.prepareEmailAddressVerification({
+          strategy: "email_code",
+        });
       setCode("");
       setResendIn(RESEND_SECONDS);
     } catch (err) {
-      setError(messageFor(err));
+      // Nothing was sent, so the countdown must NOT start - otherwise the
+      // customer waits for an email that was never on its way.
+      if (clerkErrorCode(err) === "session_exists") await handleExisting();
+      else setError(messageFor(err));
     } finally {
       setBusy(false);
     }
@@ -376,7 +387,9 @@ export function AuthPanel({ onDone, subtitle, grow }: AuthPanelProps) {
             <TextInput
               value={name}
               onChangeText={(text) => {
-                setName(text);
+                // The shop sees this name on every order, so it goes through
+                // the same filter as the profile name.
+                setName(stripSpecials(text));
                 if (error) setError("");
               }}
               autoFocus
@@ -444,7 +457,10 @@ export function AuthPanel({ onDone, subtitle, grow }: AuthPanelProps) {
   return (
     <View style={grow ? { flexGrow: 1 } : undefined}>
       <View className="items-center pt-2">
-        <Image source={logo} style={{ width: 72, height: 72, borderRadius: 20 }} />
+        <Image
+          source={logo}
+          style={{ width: 72, height: 72, borderRadius: 20 }}
+        />
         <Text className="mt-5 text-center text-2xl font-bold text-foreground">
           {t("auth.title")}
         </Text>

@@ -1,4 +1,4 @@
-import { ScrollView, Text, View } from "react-native";
+import { ScrollView, Text } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // Plain-language Privacy Policy + Terms tailored to this app's model:
@@ -67,8 +67,9 @@ export function LegalScreen() {
 
       <H>How we use it</H>
       <P>
-        To receive your list, prepare your order, quote a total, and let you know
-        when it is ready to collect. We do not sell your data or use it for ads.
+        To receive your list, prepare your order, quote a total, and let you
+        know when it is ready to collect. We do not sell your data or use it for
+        ads.
       </P>
 
       <H>Payments</H>
@@ -105,10 +106,12 @@ export function LegalScreen() {
 
       <H>Prices are an estimate</H>
       <P>
-        The total shown in the app is a <Text className="font-semibold text-foreground">proforma estimate</Text>{" "}
+        The total shown in the app is a{" "}
+        <Text className="font-semibold text-foreground">proforma estimate</Text>{" "}
         prepared for you by the shop. Prices may vary based on quantity and
         wholesale terms. Your final bill is issued at the shop counter when you
-        collect and pay. Packaged items are never billed above their printed MRP.
+        collect and pay. Packaged items are never billed above their printed
+        MRP.
       </P>
 
       <H>Payment & pickup</H>

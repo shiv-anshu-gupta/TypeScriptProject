@@ -13,7 +13,6 @@ import { updateCustomerProfile } from "@/features/customer/account/api";
 import { useCustomerAccountStore } from "@/features/customer/account/store";
 import { useCustomerDisplayName } from "@/features/customer/account/use-display-name";
 import { releasePushToken } from "@/features/customer/push/registry";
-import { Button } from "@/components/ui/Button";
 import { ProfileAvatar } from "@/components/ProfileAvatar";
 import { ProfileEditSheet } from "@/components/ProfileEditSheet";
 import { AuthView } from "@/components/auth/AuthView";
@@ -28,44 +27,61 @@ const INK = "#1f2a2e";
 const PRIMARY = "#3c5a64";
 const ANDROID_PACKAGE = "com.skirana.app";
 
-// The language switch - under Settings on the Account screen, for signed-in
-// and signed-out customers alike, so anyone can flip हिंदी/English any time.
-function LanguageToggle() {
+// The language switch - one row for both the signed-in settings card and the
+// signed-out one, so the two can never drift apart. It owns its own open
+// state and its own हिंदी/English labels.
+const LANGUAGES: { code: AppLanguage; label: string }[] = [
+  { code: "hi", label: "हिंदी" },
+  { code: "en", label: "English" },
+];
+
+function LanguageRow() {
   const { t, i18n } = useTranslation();
-  const options: { code: AppLanguage; label: string }[] = [
-    { code: "hi", label: "हिंदी" },
-    { code: "en", label: "English" },
-  ];
+  const [open, setOpen] = useState(false);
+  const current = LANGUAGES.find((option) => option.code === i18n.language);
+
   return (
-    <View>
-      <Text className="mb-2 text-lg font-semibold text-foreground">
-        {t("common.language")}
-      </Text>
-      <View className="flex-row gap-2">
-        {options.map((option) => {
-          const active = i18n.language === option.code;
-          return (
-            <Pressable
-              key={option.code}
-              onPress={() => void setAppLanguage(option.code)}
-              className={cn(
-                "flex-1 items-center rounded-xl border py-3",
-                active ? "border-primary bg-primary" : "border-border bg-card",
-              )}
-            >
-              <Text
-                className={cn(
-                  "text-base font-semibold",
-                  active ? "text-primary-foreground" : "text-foreground",
-                )}
-              >
-                {option.label}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
-    </View>
+    <>
+      <MenuRow
+        icon={<Feather name="globe" size={18} color={INK} />}
+        title={t("common.language")}
+        subtitle={current?.label}
+        onPress={() => setOpen((value) => !value)}
+      />
+      {open ? (
+        <View className="gap-2 border-b border-border/60 px-4 pb-4">
+          <Text className="text-lg font-semibold text-foreground">
+            {t("common.language")}
+          </Text>
+          <View className="flex-row gap-2">
+            {LANGUAGES.map((option) => {
+              const active = i18n.language === option.code;
+              return (
+                <Pressable
+                  key={option.code}
+                  onPress={() => void setAppLanguage(option.code)}
+                  className={cn(
+                    "flex-1 items-center rounded-xl border py-3",
+                    active
+                      ? "border-primary bg-primary"
+                      : "border-border bg-card",
+                  )}
+                >
+                  <Text
+                    className={cn(
+                      "text-base font-semibold",
+                      active ? "text-primary-foreground" : "text-foreground",
+                    )}
+                  >
+                    {option.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+      ) : null}
+    </>
   );
 }
 
@@ -150,18 +166,19 @@ function MenuRow({
 }
 
 export function AccountScreen() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const navigation = useNavigation<Nav>();
   const insets = useSafeAreaInsets();
   const { isSignedIn, signOut } = useAuth();
   const { user } = useUser();
-  const [langOpen, setLangOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const { items, customerPhone, loadLists } = useCustomerGroceryListStore(
-    (state) => state,
+  const items = useCustomerGroceryListStore((state) => state.items);
+  const customerPhone = useCustomerGroceryListStore(
+    (state) => state.customerPhone,
   );
+  const loadLists = useCustomerGroceryListStore((state) => state.loadLists);
   // Shared with the Home header's avatar, so an edit here shows there at once.
   const profile = useCustomerAccountStore((state) => state.profile);
   const loadProfile = useCustomerAccountStore((state) => state.loadProfile);
@@ -220,17 +237,7 @@ export function AccountScreen() {
               {t("account.settings")}
             </Text>
             <View className="overflow-hidden rounded-2xl border border-border bg-card">
-              <MenuRow
-                icon={<Feather name="globe" size={18} color={INK} />}
-                title={t("common.language")}
-                subtitle={i18n.language === "hi" ? "हिंदी" : "English"}
-                onPress={() => setLangOpen((open) => !open)}
-              />
-              {langOpen ? (
-                <View className="border-b border-border/60 px-4 pb-4">
-                  <LanguageToggle />
-                </View>
-              ) : null}
+              <LanguageRow />
               <MenuRow
                 icon={<Feather name="file-text" size={18} color={INK} />}
                 title={t("account.terms")}
@@ -375,17 +382,7 @@ export function AccountScreen() {
           subtitle={t("account.notificationsSub")}
           onPress={() => void Linking.openSettings().catch(() => {})}
         />
-        <MenuRow
-          icon={<Feather name="globe" size={18} color={INK} />}
-          title={t("common.language")}
-          subtitle={i18n.language === "hi" ? "हिंदी" : "English"}
-          onPress={() => setLangOpen((open) => !open)}
-        />
-        {langOpen ? (
-          <View className="border-b border-border/60 px-4 pb-4">
-            <LanguageToggle />
-          </View>
-        ) : null}
+        <LanguageRow />
         <MenuRow
           icon={<Feather name="heart" size={18} color={INK} />}
           title={t("account.savedProducts")}

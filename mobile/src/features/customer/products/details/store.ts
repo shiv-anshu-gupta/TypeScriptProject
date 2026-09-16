@@ -3,6 +3,7 @@ import type { CustomerProductDetailsResponse, ProductSize } from "../types";
 import { getCustomerProductDetails } from "../api";
 import { getCoverImage } from "../product-list.shared";
 import { toast } from "@/lib/toast";
+import i18n from "@/lib/i18n";
 import {
   addCustomerWishlist,
   removeCustomerWishlistItem,
@@ -101,7 +102,7 @@ export const useCustomerProductDetailsStore =
       if (!product) return;
 
       if (!isLoaded || !isBootstrapped || !isSignedIn) {
-        toast.error("Sign in to save");
+        toast.error(i18n.t("product.signInToSave"));
         return;
       }
 
@@ -109,7 +110,7 @@ export const useCustomerProductDetailsStore =
         if (isWishlistActive) {
           const response = await removeCustomerWishlistItem(product?._id);
           useCustomerWishlistStore.getState().setItems(response?.items ?? []);
-          toast.success("Removed");
+          toast.success(i18n.t("product.removed"));
           return;
         }
 
@@ -117,9 +118,9 @@ export const useCustomerProductDetailsStore =
           productId: product._id,
         });
         useCustomerWishlistStore.getState().setItems(response?.items ?? []);
-        toast.success("Saved");
+        toast.success(i18n.t("product.saved"));
       } catch {
-        toast.error("Failed to toggle wishlist items");
+        toast.error(i18n.t("product.saveFailed"));
       }
     },
   }));

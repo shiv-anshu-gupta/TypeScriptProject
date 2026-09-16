@@ -3,15 +3,13 @@ import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
-import Svg, {
-  Defs,
-  Path,
-  Text as SvgText,
-  TextPath,
-} from "react-native-svg";
+import Svg, { Defs, Path, Text as SvgText, TextPath } from "react-native-svg";
 
 import { CurvedCaption } from "@/components/CurvedCaption";
-import { useDraftListStore } from "@/features/customer/draft-list/store";
+import {
+  countSendableRows,
+  useDraftListStore,
+} from "@/features/customer/draft-list/store";
 import { useGrocerySheetStore } from "@/features/customer/grocery-sheet/store";
 
 const ACTIVE = "#3c5a64";
@@ -66,9 +64,8 @@ export function CustomTabBar({
   const openSheet = useGrocerySheetStore((store) => store.open);
 
   // Unsent items — badges the centre button so the draft is never forgotten.
-  const draftCount = useDraftListStore(
-    (store) =>
-      store.rows.filter((row) => (row.name ?? "").trim().length > 0).length,
+  const draftCount = useDraftListStore((store) =>
+    countSendableRows(store.rows),
   );
 
   const totalHeight = CURVE_RADIUS + BAR_HEIGHT + insets.bottom;

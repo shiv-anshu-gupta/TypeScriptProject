@@ -39,10 +39,13 @@ export function UpdatePrompt() {
     return () => sub.remove();
   }, []);
 
-  // If a new update arrives after the user tapped "Later", show it again.
+  // If a NEW update arrives after the customer tapped "Later", ask again.
+  // `isUpdatePending` stays true once the first one is downloaded, so the id
+  // of the pending update is what tells them apart.
+  const pendingId = Updates.useUpdates().availableUpdate?.updateId ?? null;
   useEffect(() => {
-    if (isUpdatePending) setDismissed(false);
-  }, [isUpdatePending]);
+    setDismissed(false);
+  }, [pendingId]);
 
   if (!isUpdatePending || dismissed) return null;
 

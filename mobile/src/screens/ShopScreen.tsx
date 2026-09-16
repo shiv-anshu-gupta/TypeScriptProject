@@ -19,7 +19,10 @@ import { useTranslation } from "react-i18next";
 import type { RootStackParamList, TabParamList } from "@/navigation/types";
 import { useCustomerProductList } from "@/features/customer/products/use-customer-collections";
 import { getCoverImage } from "@/features/customer/products/product-list.shared";
-import { useDraftListStore } from "@/features/customer/draft-list/store";
+import {
+  countSendableRows,
+  useDraftListStore,
+} from "@/features/customer/draft-list/store";
 import type { ProductSort } from "@/features/customer/products/types";
 import { ProductCard } from "@/components/ProductCard";
 import { SearchBar } from "@/components/SearchBar";
@@ -180,9 +183,8 @@ export function ShopScreen() {
     tabNavigation.setParams({ openSearch: undefined });
   }, [incomingOpenSearch, startFresh, tabNavigation]);
 
-  const draftCount = useDraftListStore(
-    (state) =>
-      state.rows.filter((row) => (row.name ?? "").trim().length > 0).length,
+  const draftCount = useDraftListStore((state) =>
+    countSendableRows(state.rows),
   );
 
   return (

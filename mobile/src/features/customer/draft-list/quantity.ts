@@ -12,7 +12,10 @@ export function isCountableUnit(unit?: string, unitValue?: number): boolean {
   return unit === "piece" || unit === "dozen" || unit === "pack" || !unit;
 }
 
-export function defaultQuantityValue(unit?: string, unitValue?: number): number {
+export function defaultQuantityValue(
+  unit?: string,
+  unitValue?: number,
+): number {
   if (isCountableUnit(unit, unitValue)) return 1;
   if (unit === "g" || unit === "ml") return 250;
   return 1; // kg, litre

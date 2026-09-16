@@ -22,7 +22,7 @@ export function GoogleAuthButton({ onDone }: GoogleAuthButtonProps) {
   const { t } = useTranslation();
   useWarmUpBrowser();
   const { startSSOFlow } = useSSO();
-  const { activate, recoverExisting } = useSessionGuard();
+  const { complete, messageForOutcome, recoverExisting } = useSessionGuard();
   const [loading, setLoading] = useState(false);
 
   const onPress = async () => {
@@ -37,20 +37,16 @@ export function GoogleAuthButton({ onDone }: GoogleAuthButtonProps) {
 
       // Clerk wasn't ready yet - nothing was attempted.
       if (!authSessionResult) {
-        toast.error(t("auth.somethingWrong"));
+        toast.error(t("common.somethingWrong"));
         return;
       }
       // The customer closed the Google window without choosing an account.
       if (authSessionResult.type !== "success") return;
 
-      if (createdSessionId && setActive) {
-        if (await activate(createdSessionId, setActive)) onDone();
-        else toast.error(t("auth.accountOnHold"));
-      } else {
-        // Google worked, but Clerk wants more before it creates the account
-        // (a required field this app doesn't collect).
-        toast.error(t("auth.setupIncomplete"));
-      }
+      // Same decision as the email flow (useSessionGuard), shown as a toast.
+      const outcome = await complete(createdSessionId, setActive);
+      if (outcome === "done") onDone();
+      else toast.error(t(messageForOutcome(outcome)));
     } catch (error) {
       if (clerkErrorCode(error) === "session_exists") {
         if ((await recoverExisting()) === "signedIn") onDone();

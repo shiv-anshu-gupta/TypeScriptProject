@@ -1,24 +1,14 @@
 // English strings. Keep keys in sync with hi.ts.
 export const en = {
-  lang: {
-    welcome: "Welcome",
-    choosePrompt: "Choose your language",
-    hindi: "हिंदी",
-    english: "English",
-    continue: "Continue",
-    changeLater: "You can change this anytime in Account.",
-  },
   common: {
     clearSearch: "Clear search",
     somethingWrong: "Something went wrong. Please try again.",
     save: "Save",
     cancel: "Cancel",
     close: "Close",
-    back: "Back",
     delete: "Delete",
     remove: "Remove",
     later: "Later",
-    signIn: "Sign in",
     updateNow: "Update now",
     language: "Language",
   },
@@ -83,16 +73,26 @@ export const en = {
     save: "Save & send list",
   },
   lists: {
+    sentToShop: "List sent to the shop",
+    mergedIntoList:
+      "Added to your earlier list - the shop hasn't started it yet",
+    sendFailed: "Couldn't send the list. Please try again.",
+    itemRemoved: "Item removed",
+    payAtShopSet: "You'll pay at the shop when you collect",
+    payFailed: "Couldn't update how you'll pay",
+    noUpiSetUp: "The shop hasn't set up UPI payments yet",
+    notPricedYet: "This list isn't priced yet",
+    noUpiApp: "No UPI app found on this phone",
     title: "My lists",
     listNo: "List #{{code}}",
     itemsCount_one: "{{count}} item",
     itemsCount_other: "{{count}} items",
     newUpdate: "New update",
     waiting: "Waiting for the shop to price your list.",
-    busy:
-      "The shop is a bit busy right now — your list is received, we'll price it very soon.",
+    busy: "The shop is a bit busy right now — your list is received, we'll price it very soon.",
     total: "Total",
-    estimate: "Estimated total — your final bill is issued at the shop counter.",
+    estimate:
+      "Estimated total — your final bill is issued at the shop counter.",
     paymentReceived: "Payment received",
     payUpi: "Pay {{amount}} via UPI",
     payAtShop: "Pay at the shop",
@@ -103,12 +103,10 @@ export const en = {
     removeConfirm: 'Remove "{{name}}" from this list?',
     cancelled: "Cancelled",
     emptySignedOut: "Log in to see the lists you've sent to the shop.",
-    emptyNoLists:
-      "You haven't sent any list yet. Write one on the home page.",
+    emptyNoLists: "You haven't sent any list yet. Write one on the home page.",
     goHome: "Go to home",
     newListLabel: "Your new list",
     notSent: "Not sent",
-    addMore: "Add more from the Shop tab, or edit it on the Home paper.",
     tabs: {
       active: "Active",
       completed: "Completed",
@@ -141,6 +139,8 @@ export const en = {
     addToList: "Add to list",
   },
   product: {
+    shopWillReceive: "Shop will receive:",
+    saveFailed: "Couldn't update your saved items",
     save: "Save to your list of favourites",
     saved: "Saved",
     removed: "Removed",
@@ -161,7 +161,8 @@ export const en = {
   },
   auth: {
     title: "Welcome to sKirana",
-    subtitle: "Log in or create an account to send your list and follow your order.",
+    subtitle:
+      "Log in or create an account to send your list and follow your order.",
     continueGoogle: "Continue with Google",
     or: "or",
     emailLabel: "Email address",
@@ -183,11 +184,13 @@ export const en = {
     resendIn: "Resend code in {{seconds}}s",
     codeWrong: "That code isn't right. Please check and try again.",
     codeExpired: "This code has expired. Tap “Resend code”.",
-    codeDead: "This code can no longer be used. Tap “Resend code” for a new one.",
+    codeDead:
+      "This code can no longer be used. Tap “Resend code” for a new one.",
     tooMany: "Too many tries. Please wait a minute and try again.",
-    setupIncomplete: "We couldn't finish creating your account. Please try “Continue with Google”.",
-    somethingWrong: "Something went wrong. Please try again.",
-    accountOnHold: "Your login couldn't be completed. Please try again - if it keeps happening, contact the shop.",
+    setupIncomplete:
+      "We couldn't finish creating your account. Please try “Continue with Google”.",
+    accountOnHold:
+      "Your login couldn't be completed. Please try again - if it keeps happening, contact the shop.",
     tryAgain: "Please tap once more to log in.",
     googleFailed: "Google sign-in failed",
   },
@@ -222,7 +225,6 @@ export const en = {
     daysValue_other: "{{count}} days",
     notifications: "Notifications",
     notificationsSub: "Order updates",
-    languageSub: "Tap to change",
     help: "Help",
     helpSub: "Chat on WhatsApp",
     rate: "Rate the app",

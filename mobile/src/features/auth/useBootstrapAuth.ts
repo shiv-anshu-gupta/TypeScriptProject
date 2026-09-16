@@ -1,7 +1,7 @@
 import { useAuth } from "@clerk/clerk-expo";
 import { useAuthStore } from "./store";
 import { useEffect } from "react";
-import { getMe, syncUser } from "./api";
+import { syncUser } from "./api";
 import { setApiTokenGetter } from "@/lib/api";
 
 export function useBootstrapAuth() {
@@ -27,10 +27,11 @@ export function useBootstrapAuth() {
       try {
         setLoading();
 
-        await syncUser();
-        const me = await getMe();
+        // /auth/sync answers with the same user record /auth/me would, so
+        // one round trip is enough on launch.
+        const synced = await syncUser();
 
-        setUser(me?.user ?? null);
+        setUser(synced?.user ?? null);
       } catch (error) {
         const errMessage =
           error instanceof Error ? error.message : "Failed to load user";
