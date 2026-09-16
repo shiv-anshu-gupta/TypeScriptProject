@@ -9,22 +9,34 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import {
+  useFocusEffect,
+  useIsFocused,
+  useNavigation,
+  useRoute,
+} from "@react-navigation/native";
+import type { RouteProp } from "@react-navigation/native";
+import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useAuth } from "@clerk/clerk-expo";
 import { useTranslation } from "react-i18next";
 
-import type { RootStackParamList } from "@/navigation/types";
-import { useCustomerGroceryListStore } from "@/features/customer/grocery-list/store";
 import type {
-  CustomerGroceryList,
-  GroceryListStatus,
+  RootStackParamList,
+  TabParamList,
+} from "@/navigation/types";
+import { useCustomerGroceryListStore } from "@/features/customer/grocery-list/store";
+import {
+  ACTIVE_STATUSES,
+  type CustomerGroceryList,
+  type GroceryListStatus,
 } from "@/features/customer/grocery-list/types";
 import { useDraftListStore } from "@/features/customer/draft-list/store";
 import { Button } from "@/components/ui/Button";
 import { AuthView } from "@/components/auth/AuthView";
 import { Badge } from "@/components/ui/Badge";
+import { toast } from "@/lib/toast";
 import { GroceryList } from "@/components/GroceryList";
 import { ChatSheet } from "@/components/ChatSheet";
 import { formatPrice } from "@/lib/utils";
@@ -40,7 +52,9 @@ const BUSY_AFTER_MIN = 30;
 const STATUS_TABS = ["active", "completed", "cancelled"] as const;
 type StatusTab = (typeof STATUS_TABS)[number];
 const STATUS_GROUPS: Record<StatusTab, GroceryListStatus[]> = {
-  active: ["received", "priced", "packing", "packed", "ready"],
+  // The same statuses the Home card counts as in progress, from one place, so
+  // "+N more orders in progress" can never disagree with this tab.
+  active: [...ACTIVE_STATUSES],
   completed: ["completed"],
   cancelled: ["cancelled"],
 };
@@ -125,12 +139,17 @@ function StatusTimeline({ list }: { list: CustomerGroceryList }) {
 
 function ListCard({ list }: { list: CustomerGroceryList }) {
   const { t } = useTranslation();
+  // This tab stays mounted in the background, so without this a shop update
+  // would be marked "seen" (clearing the badge and the New update pill) while
+  // the customer is on another tab and never saw it.
+  const isFocused = useIsFocused();
   const [chatOpen, setChatOpen] = useState(false);
   const { markSeen, payAtShop, payViaUpi, payingListId, removeItem } =
     useCustomerGroceryListStore((state) => state);
 
   const isPriced = list.totalAmount > 0;
   const isPaid = list.paymentStatus === "paid";
+  const isLive = (ACTIVE_STATUSES as readonly string[]).includes(list.status);
   const busy = payingListId === list._id;
 
   // Still "received" (not priced) after BUSY_AFTER_MIN minutes → show the shop
@@ -147,22 +166,38 @@ function ListCard({ list }: { list: CustomerGroceryList }) {
     !isPaid &&
     list.items.length > 1;
 
+  // Removing goes by position, and every removal shifts the positions after
+  // it. So only one removal may be in flight, and the position is re-read from
+  // the list as it stands when the customer confirms - not as it was when the
+  // alert opened.
+  const [removing, setRemoving] = useState(false);
+
   const confirmRemove = (index: number, name: string) => {
+    if (removing) return;
     Alert.alert(t("lists.removeTitle"), t("lists.removeConfirm", { name }), [
       { text: t("common.cancel"), style: "cancel" },
       {
         text: t("common.remove"),
         style: "destructive",
-        onPress: () => void removeItem(list._id, index),
+        onPress: () => {
+          const current = list.items[index];
+          if (!current || current.name !== name) {
+            // The list changed while the question was on screen.
+            toast.error(t("common.somethingWrong"));
+            return;
+          }
+          setRemoving(true);
+          void removeItem(list._id, index).finally(() => setRemoving(false));
+        },
       },
     ]);
   };
 
   useEffect(() => {
-    if (!list.seenByCustomer) {
+    if (isFocused && !list.seenByCustomer) {
       void markSeen(list._id);
     }
-  }, [list._id, list.seenByCustomer, markSeen]);
+  }, [isFocused, list._id, list.seenByCustomer, markSeen]);
 
   return (
     <View className="gap-4 rounded-2xl border border-border bg-card p-4">
@@ -276,8 +311,9 @@ function ListCard({ list }: { list: CustomerGroceryList }) {
         </Text>
       </Pressable>
 
-      {/* Payment — only once priced */}
-      {isPriced ? (
+      {/* Payment — only once priced, and only while the order is still live:
+          a cancelled or finished order must never ask for money again. */}
+      {isPriced && isLive ? (
         isPaid ? (
           <Badge className="border-0 bg-success">
             <Text className="text-xs font-medium text-primary-foreground">
@@ -364,6 +400,18 @@ export function MyListsScreen() {
   );
 
   const [statusTab, setStatusTab] = useState<StatusTab>("active");
+
+  // Home's journey card (and a just-sent list) ask for a particular tab, so
+  // the order they point at is actually on screen. The request is cleared once
+  // applied, leaving the customer free to switch tabs afterwards.
+  const route = useRoute<RouteProp<TabParamList, "Lists">>();
+  const tabNavigation = useNavigation<BottomTabNavigationProp<TabParamList>>();
+  const requestedTab = route.params?.tab;
+  useEffect(() => {
+    if (!requestedTab) return;
+    setStatusTab(requestedTab);
+    tabNavigation.setParams({ tab: undefined });
+  }, [requestedTab, tabNavigation]);
   const visibleItems = items.filter((list) =>
     STATUS_GROUPS[statusTab].includes(list.status),
   );

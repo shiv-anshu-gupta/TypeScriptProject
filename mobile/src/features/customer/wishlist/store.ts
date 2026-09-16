@@ -6,6 +6,11 @@ import {
   removeCustomerWishlistItem,
 } from "./api";
 import { toast } from "@/lib/toast";
+import i18n from "@/lib/i18n";
+
+// Same ticket rule as the grocery-list store: a late answer never overwrites
+// newer state, and a failed load never empties the hearts.
+let loadTicket = 0;
 
 type CustomerWishlistStore = {
   items: CustomerWishlistItem[];
@@ -28,22 +33,26 @@ export const useCustomerWishlistStore = create<CustomerWishlistStore>(
     isOpen: false,
     setOpen: (value) => set({ isOpen: value }),
     setItems: (items) => set({ items }),
-    clear: () => set({ items: [], isOpen: false }),
+    clear: () => {
+      loadTicket++;
+      set({ items: [], isOpen: false });
+    },
     loadWishlist: async () => {
+      const ticket = ++loadTicket;
       try {
         const response = await getCustomerWishlist();
-        set({ items: response.items ?? [] });
+        if (ticket === loadTicket) set({ items: response.items ?? [] });
       } catch {
-        set({ items: [] });
+        // Keep the saved items already on screen.
       }
     },
     removeItem: async (productId) => {
       try {
         const response = await removeCustomerWishlistItem(productId);
         set({ items: response?.items ?? [] });
-        toast.success("Removed from wishlist");
+        toast.success(i18n.t("wishlist.removed"));
       } catch {
-        toast.error("Failed to add items to wishlist");
+        toast.error(i18n.t("common.wishlistFailed"));
       }
     },
     isSaved: (productId) =>

@@ -12,15 +12,25 @@ type CustomerAccountStore = {
   clear: () => void;
 };
 
+// A profile still loading when the customer signs out must not land in the
+// store afterwards - the next person on this phone would see their name,
+// email and mobile number.
+let loadTicket = 0;
+
 export const useCustomerAccountStore = create<CustomerAccountStore>((set) => ({
   profile: null,
   loadProfile: async () => {
+    const ticket = ++loadTicket;
     try {
-      set({ profile: await getCustomerProfile() });
+      const profile = await getCustomerProfile();
+      if (ticket === loadTicket) set({ profile });
     } catch {
       // offline - screens fall back to the sign-in name until the next load
     }
   },
   setProfile: (profile) => set({ profile }),
-  clear: () => set({ profile: null }),
+  clear: () => {
+    loadTicket++;
+    set({ profile: null });
+  },
 }));

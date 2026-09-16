@@ -153,6 +153,7 @@ export function ShopScreen() {
   const tabNavigation = useNavigation<ShopTabNav>();
   const incomingCategory = route.params?.category;
   const incomingOpenSearch = route.params?.openSearch;
+  const incomingBrowseAll = route.params?.browseAll;
 
   useEffect(() => {
     if (!incomingCategory) return;
@@ -160,6 +161,15 @@ export function ShopScreen() {
     setSearchOpen(false);
     tabNavigation.setParams({ category: undefined });
   }, [incomingCategory, startFresh, tabNavigation]);
+
+  // "Show the whole shop" (a banner, or View all): clear whatever category or
+  // search a previous visit left behind.
+  useEffect(() => {
+    if (!incomingBrowseAll) return;
+    startFresh();
+    setSearchOpen(false);
+    tabNavigation.setParams({ browseAll: undefined });
+  }, [incomingBrowseAll, startFresh, tabNavigation]);
 
   // From the Home search bar: search across everything, typing straight away.
   useEffect(() => {

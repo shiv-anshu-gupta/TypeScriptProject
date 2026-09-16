@@ -34,9 +34,11 @@ function stripDangerousChars(s: string): string {
 // English AND Hindi/Devanagari both work), digits, spaces, and the small set of
 // punctuation real product names / quantities use: . , & ' - / ( ) %. Every
 // other "special character" ($ { } < > " ; | = * \ ! @ # ? etc.) is removed.
+// The multiplication sign is allowed too: the app writes pack quantities as
+// "2 × 10 kg", and stripping it left the shop reading "2 10 kg".
 // \p{M} (combining marks) is essential: Hindi vowel signs / matras are marks,
 // not letters — dropping them would mangle Devanagari words (चावल -> चवल).
-const DISALLOWED_SPECIALS = /[^\p{L}\p{M}\p{N}\s.,&'\-/()%]/gu;
+const DISALLOWED_SPECIALS = /[^\p{L}\p{M}\p{N}\s.,&'\-/()%×]/gu;
 
 function stripSpecialChars(s: string): string {
   return s.replace(DISALLOWED_SPECIALS, "");

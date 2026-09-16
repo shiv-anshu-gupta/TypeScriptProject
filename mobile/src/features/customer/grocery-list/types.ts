@@ -1,3 +1,14 @@
+// The statuses an order passes through while it is still in progress, in
+// order. Used by the Home journey card, the Lists "Active" tab and the
+// timeline, so they can never disagree about what counts as active.
+export const ACTIVE_STATUSES = [
+  "received",
+  "priced",
+  "packing",
+  "packed",
+  "ready",
+] as const;
+
 export type GroceryListStatus =
   | "received"
   | "priced"

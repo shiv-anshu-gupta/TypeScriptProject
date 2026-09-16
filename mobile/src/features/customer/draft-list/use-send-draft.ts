@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Keyboard } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -32,6 +32,10 @@ export function useSendDraft() {
   const clearDraft = useDraftListStore((state) => state.clearDraft);
 
   const [phonePromptOpen, setPhonePromptOpen] = useState(false);
+  // True from the first tap until the list is on its way. `submitting` only
+  // covers the POST itself, and send() can await a profile fetch before that -
+  // a second tap in that gap would send the whole list twice.
+  const sending = useRef(false);
 
   const filledRows = rows.filter((row) => (row.name ?? "").trim().length > 0);
 
@@ -52,7 +56,10 @@ export function useSendDraft() {
       // customer just sent.
       Keyboard.dismiss();
       useGrocerySheetStore.getState().close();
-      navigation.navigate("Tabs", { screen: "Lists" });
+      navigation.navigate("Tabs", {
+        screen: "Lists",
+        params: { tab: "active" },
+      });
     }
     return sent;
   };
@@ -75,28 +82,48 @@ export function useSendDraft() {
 
     if (!isSignedIn) {
       toast.error(t("home.signInToSend"));
+      // Put the sheet away first: on Android it is drawn over the whole app,
+      // so the login screen would open behind it and look like nothing
+      // happened.
+      Keyboard.dismiss();
+      useGrocerySheetStore.getState().close();
       navigation.navigate("SignIn");
       return;
     }
 
-    // Make sure we know whether the customer already has a number on file.
-    let phone = useCustomerGroceryListStore.getState().customerPhone;
-    if (phone === null) {
-      await loadLists();
-      phone = useCustomerGroceryListStore.getState().customerPhone;
-    }
+    if (sending.current) return;
+    sending.current = true;
+    try {
+      // Make sure we know whether the customer already has a number on file.
+      let phone = useCustomerGroceryListStore.getState().customerPhone;
+      if (phone === null) {
+        await loadLists();
+        phone = useCustomerGroceryListStore.getState().customerPhone;
+      }
 
-    // First-time sender with no number → ask for it, then submit from the modal.
-    if (!phone) {
-      setPhonePromptOpen(true);
-      return;
-    }
+      // First-time sender with no number → ask for it, then submit from the
+      // modal (which calls submitWithPhone).
+      if (!phone) {
+        setPhonePromptOpen(true);
+        return;
+      }
 
-    await doSubmit();
+      await doSubmit();
+    } finally {
+      sending.current = false;
+    }
   };
 
   // Called by the PhonePrompt modal once a valid number is entered.
-  const submitWithPhone = (phone: string) => doSubmit(phone);
+  const submitWithPhone = async (phone: string) => {
+    if (sending.current) return false;
+    sending.current = true;
+    try {
+      return await doSubmit(phone);
+    } finally {
+      sending.current = false;
+    }
+  };
 
   return {
     filledRows,

@@ -2,6 +2,7 @@ import { Router, type Request, type Response } from "express";
 import multer from "multer";
 import { getDbUserFromReq, requireAdmin } from "../../middleware/auth";
 import { asyncHandler } from "../../utils/asyncHandler";
+import { escapeRegex } from "../../utils/regex";
 import { Category } from "../../models/Category";
 import { ok } from "../../utils/envelope";
 import { requireFound, requireNumber, requireText } from "../../utils/helpers";
@@ -138,7 +139,7 @@ adminProductRouter.get(
     const query: Record<string, unknown> = {};
 
     if (search) {
-      query.title = { $regex: search, $options: "i" };
+      query.title = { $regex: escapeRegex(search), $options: "i" };
     }
 
     const products = await Product.find(query)

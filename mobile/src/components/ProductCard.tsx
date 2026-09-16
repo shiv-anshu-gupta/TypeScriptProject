@@ -84,7 +84,7 @@ export function ProductCard({ product, onPress }: ProductCardProps) {
           onPress={() => void onToggleWishlist()}
           hitSlop={8}
           accessibilityRole="button"
-          accessibilityLabel={t(saved ? "product.removed" : "product.saved")}
+          accessibilityLabel={t(saved ? "product.saved" : "product.save")}
           className="absolute right-2 top-2 h-9 w-9 items-center justify-center rounded-full bg-card/95 active:opacity-80"
           style={{
             elevation: 3,

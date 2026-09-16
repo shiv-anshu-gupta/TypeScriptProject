@@ -1,5 +1,5 @@
-import { useEffect, useRef, type ReactNode } from "react";
-import { ScrollView, View } from "react-native";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { ScrollView, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useKeyboardHeight } from "@/lib/use-keyboard-height";
@@ -20,8 +20,27 @@ type AuthViewProps = {
 export function AuthView({ onDone, header, footer, subtitle }: AuthViewProps) {
   const insets = useSafeAreaInsets();
   const keyboardHeight = useKeyboardHeight();
+  const { height: windowHeight } = useWindowDimensions();
+  const frameRef = useRef<View>(null);
   const scrollRef = useRef<ScrollView>(null);
+  // How far the bottom of this view sits above the bottom of the screen. In a
+  // tab it is the tab bar's height; on the full-screen login it is 0.
+  const [gapBelow, setGapBelow] = useState<number | null>(null);
   const typing = keyboardHeight > 0;
+
+  const measure = useCallback(() => {
+    frameRef.current?.measureInWindow((_x, y, _width, height) => {
+      setGapBelow(Math.max(0, windowHeight - (y + height)));
+    });
+  }, [windowHeight]);
+
+  // Pad by how much the keyboard actually covers THIS view, not by its full
+  // height: padding the tab bar's height as well would scroll the field being
+  // typed in off the top.
+  const overlap =
+    gapBelow === null
+      ? keyboardHeight
+      : Math.max(0, keyboardHeight - gapBelow);
 
   // The keyboard opened: bring the field and its button into view.
   useEffect(() => {
@@ -31,10 +50,15 @@ export function AuthView({ onDone, header, footer, subtitle }: AuthViewProps) {
       60,
     );
     return () => clearTimeout(id);
-  }, [typing, keyboardHeight]);
+  }, [typing, overlap]);
 
   return (
-    <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
+    <View
+      ref={frameRef}
+      onLayout={measure}
+      className="flex-1 bg-background"
+      style={{ paddingTop: insets.top }}
+    >
       <ScrollView
         ref={scrollRef}
         keyboardShouldPersistTaps="handled"
@@ -47,7 +71,7 @@ export function AuthView({ onDone, header, footer, subtitle }: AuthViewProps) {
         contentContainerStyle={{
           flexGrow: 1,
           paddingHorizontal: 24,
-          paddingBottom: (typing ? keyboardHeight : insets.bottom) + 32,
+          paddingBottom: (typing ? overlap : insets.bottom) + 32,
         }}
       >
         {header}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -7,7 +7,11 @@ import {
   View,
 } from "react-native";
 import { Image } from "expo-image";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import {
+  useFocusEffect,
+  useNavigation,
+  useRoute,
+} from "@react-navigation/native";
 import type { RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useAuth } from "@clerk/clerk-expo";
@@ -66,9 +70,15 @@ export function ProductDetailsScreen() {
 
   const [qty, setQty] = useState(1);
 
-  useEffect(() => {
-    void loadProduct(productId);
-  }, [productId, loadProduct]);
+  // Load on arrival, and again when this screen comes back to the front: all
+  // product pages share one store, so after going back from a related product
+  // this screen has to reclaim its own.
+  const loadedId = useCustomerProductDetailsStore((state) => state.productId);
+  useFocusEffect(
+    useCallback(() => {
+      if (loadedId !== productId) void loadProduct(productId);
+    }, [loadedId, productId, loadProduct]),
+  );
 
   const product = data?.product ?? null;
 

@@ -45,6 +45,16 @@ export function quickChips(unit?: string): number[] {
   }
 }
 
+// The most one line may ask for, in the product's OWN unit. One ceiling of
+// 100 used to apply to everything, which made grams unusable: a customer
+// could never order more than 100 g, and the 250 g / 500 g presets silently
+// became 100 g.
+export function maxFor(unit?: string, unitValue?: number): number {
+  if (isCountableUnit(unit, unitValue)) return 100; // 100 packs / pieces
+  if (unit === "g" || unit === "ml") return 5000; // 5 kg / 5 litres, loose
+  return 100; // kg, litre
+}
+
 export function roundValue(n: number): number {
   return Math.round(n * 100) / 100;
 }

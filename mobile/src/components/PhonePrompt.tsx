@@ -13,6 +13,7 @@ import { Feather } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/Button";
+import { useKeyboardHeight } from "@/lib/use-keyboard-height";
 
 type PhonePromptProps = {
   open: boolean;
@@ -48,7 +49,7 @@ export function PhonePrompt({
   // KeyboardAvoidingView is unreliable inside a Modal on Android (the Modal is
   // a separate window that doesn't receive the resize), which is why the input
   // was getting hidden behind the keypad.
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const keyboardHeight = useKeyboardHeight();
 
   useEffect(() => {
     if (open) {
@@ -57,22 +58,6 @@ export function PhonePrompt({
     }
   }, [open]);
 
-  useEffect(() => {
-    const showEvent =
-      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
-    const hideEvent =
-      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
-
-    const showSub = Keyboard.addListener(showEvent, (event) => {
-      setKeyboardHeight(event.endCoordinates?.height ?? 0);
-    });
-    const hideSub = Keyboard.addListener(hideEvent, () => setKeyboardHeight(0));
-
-    return () => {
-      showSub.remove();
-      hideSub.remove();
-    };
-  }, []);
 
   const valid = isValid(value);
 

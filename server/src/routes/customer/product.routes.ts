@@ -1,5 +1,6 @@
 import { Router, type Request, type Response } from "express";
 import { asyncHandler } from "../../utils/asyncHandler";
+import { escapeRegex } from "../../utils/regex";
 import { Category } from "../../models/Category";
 import { ok } from "../../utils/envelope";
 import { Product } from "../../models/Product";
@@ -59,8 +60,10 @@ customerProductRouter.get(
         query.sizes = size;
       }
       if (search) {
-        // Case-insensitive title match, same pattern as the admin search.
-        query.title = { $regex: search, $options: "i" };
+        // Case-insensitive title match. The text is escaped: a customer typing
+        // "(", "*" or "+" would otherwise be an invalid regex (the request
+        // fails and Shop shows "no products") or an expensive one.
+        query.title = { $regex: escapeRegex(search), $options: "i" };
       }
 
       const sortOption: Record<string, 1 | -1> = { createdAt: -1 };

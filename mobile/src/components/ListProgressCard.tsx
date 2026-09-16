@@ -106,7 +106,10 @@ export function ListProgressCard() {
   const openSheet = useGrocerySheetStore((state) => state.open);
   const stage = useListJourney();
 
-  const openLists = () => navigation.navigate("Tabs", { screen: "Lists" });
+  // Always on the Active tab: the order this card names is in progress, and
+  // Lists remembers whichever tab was last used.
+  const openLists = () =>
+    navigation.navigate("Tabs", { screen: "Lists", params: { tab: "active" } });
 
   // Headline, icon and destination for the stage.
   let icon: keyof typeof MaterialCommunityIcons.glyphMap;

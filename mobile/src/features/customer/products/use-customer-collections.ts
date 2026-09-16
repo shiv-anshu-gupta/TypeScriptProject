@@ -24,7 +24,6 @@ const emptyFilters: CustomerProductFilters = {
 export function useCustomerProductList(initialCategory?: string) {
   const [categories, setCategories] = useState<ProductCategory[]>([]);
   const [products, setProducts] = useState<CustomerProduct[]>([]);
-  const [availableColors, setAvailableColors] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
   const [filters, setFilters] = useState<CustomerProductFilters>({
@@ -119,36 +118,26 @@ export function useCustomerProductList(initialCategory?: string) {
   }, []);
 
   useEffect(() => {
-    async function loadColors() {
-      try {
-        const data = await getCustomerProducts();
-        const unique = new Set<string>();
-        (data ?? []).forEach((item) =>
-          item.colors.forEach((color) => unique.add(color)),
-        );
-        setAvailableColors(
-          Array.from(unique).sort((a, b) => a.localeCompare(b)),
-        );
-      } catch {
-        setAvailableColors([]);
-      }
-    }
-    void loadColors();
-  }, []);
+    // Answers can arrive out of order: a broad search ("m") returns more data
+    // and can land after a narrower one ("milk"), and switching categories
+    // quickly does the same. Only the newest request may touch the screen.
+    let current = true;
 
-  useEffect(() => {
     async function loadProducts() {
       setLoading(true);
       try {
         const data = await getCustomerProducts(query);
-        setProducts(data ?? []);
+        if (current) setProducts(data ?? []);
       } catch {
-        setProducts([]);
+        if (current) setProducts([]);
       } finally {
-        setLoading(false);
+        if (current) setLoading(false);
       }
     }
     void loadProducts();
+    return () => {
+      current = false;
+    };
   }, [query]);
 
   return {
@@ -161,7 +150,6 @@ export function useCustomerProductList(initialCategory?: string) {
     setSearch,
     hasActiveFilters,
     changeSort,
-    availableColors,
     toggleFacet,
     clearFilters,
     startFresh,

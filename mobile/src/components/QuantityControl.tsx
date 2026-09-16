@@ -1,19 +1,16 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
 
 import {
   buildQuantityString,
   isCountableUnit,
+  maxFor,
   minFor,
   quickChips,
   roundValue,
   stepFor,
 } from "@/features/customer/draft-list/quantity";
-
-// Hard ceiling on any single line's quantity — a grocery order line never
-// needs more than this, and it stops a stray "1000" from a fat-finger.
-const MAX = 100;
 
 type QuantityControlProps = {
   unit?: string;
@@ -32,11 +29,21 @@ export function QuantityControl({
   const countable = isCountableUnit(unit, unitValue);
   const step = countable ? 1 : stepFor(unit);
   const min = minFor(unit, unitValue);
+  // Ceiling in this product's unit: 100 packs, or 5000 g / ml loose.
+  const max = maxFor(unit, unitValue);
 
   const [text, setText] = useState(String(value));
 
+  // The sheet keeps this component mounted between openings and resets
+  // `value` to the product's default, so the box has to follow - otherwise it
+  // shows the last number while the preview shows the new one, and Add sends
+  // the number the customer can't see.
+  useEffect(() => {
+    setText(String(roundValue(value)));
+  }, [value]);
+
   const commit = (next: number) => {
-    const clamped = roundValue(Math.min(MAX, Math.max(min, next)));
+    const clamped = roundValue(Math.min(max, Math.max(min, next)));
     setText(String(clamped));
     onChange(clamped);
   };
@@ -46,7 +53,7 @@ export function QuantityControl({
 
   // Bounds — disable the stepper button that would go past the limit.
   const atMin = roundValue(value) <= min;
-  const atMax = roundValue(value) >= MAX;
+  const atMax = roundValue(value) >= max;
 
   const chips = countable ? [] : quickChips(unit);
 
@@ -106,11 +113,11 @@ export function QuantityControl({
             <TextInput
               value={text}
               onChangeText={(t) => {
-                // Allow free typing; commit a valid number (capped at MAX).
+                // Allow free typing; commit a valid number (capped for this unit).
                 setText(t);
                 const parsed = Number(t);
                 if (!Number.isNaN(parsed) && parsed > 0) {
-                  onChange(Math.min(MAX, parsed));
+                  onChange(Math.min(max, parsed));
                 }
               }}
               onBlur={() => {

@@ -8,15 +8,34 @@ export function setApiTokenGetter(getter: () => Promise<string | null>) {
   tokenGetter = getter;
 }
 
+// A request that never settles shows a spinner for ever, so give every call
+// an upper bound.
+const REQUEST_TIMEOUT_MS = 20000;
+const TOKEN_TIMEOUT_MS = 8000;
+
 const api = axios.create({
   baseURL: env.backendUrl,
   withCredentials: false,
+  timeout: REQUEST_TIMEOUT_MS,
 });
 
 api.interceptors.request.use(async (config) => {
   if (!tokenGetter) return config;
 
-  const token = await tokenGetter();
+  // The token comes from Clerk, which waits until it has loaded. If Clerk is
+  // slow or failed, public screens (Home, Shop, the update check) must still
+  // load - so give up on the token rather than on the request.
+  let token: string | null = null;
+  try {
+    token = await Promise.race([
+      tokenGetter(),
+      new Promise<null>((resolve) =>
+        setTimeout(() => resolve(null), TOKEN_TIMEOUT_MS),
+      ),
+    ]);
+  } catch (error) {
+    console.warn("[api] continuing without an auth token", error);
+  }
 
   if (token) {
     config.headers = config.headers || {};

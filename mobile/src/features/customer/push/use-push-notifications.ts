@@ -1,41 +1,39 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import * as Notifications from "expo-notifications";
 import { useAuth } from "@clerk/clerk-expo";
 
 import { registerForPushNotificationsAsync } from "@/lib/push";
 import { savePushToken } from "./api";
+import { registeredPushToken, rememberPushToken } from "./registry";
 import { useCustomerGroceryListStore } from "../grocery-list/store";
-import { toast } from "@/lib/toast";
 
 export function usePushNotifications() {
   const { isSignedIn } = useAuth();
   const loadLists = useCustomerGroceryListStore((state) => state.loadLists);
-  const registeredToken = useRef<string | null>(null);
-
-  // Register this device with the backend once the user is signed in.
+  // Register this device with the backend once the user is signed in. The
+  // token is remembered in a module (not a ref), so signing out can hand it
+  // back and the next customer on this phone registers their own.
   useEffect(() => {
-    if (!isSignedIn || registeredToken.current) return;
+    if (!isSignedIn || registeredPushToken()) return;
 
     async function run() {
       const { token, reason } = await registerForPushNotificationsAsync();
 
       if (!token) {
-        // Surface it — a silent failure here means notifications never work.
+        // Logged, not shown: the reasons are for us (emulator, no permission,
+        // missing project id) and a customer can do nothing with them. A
+        // toast on every launch would be noise.
         console.warn("Push registration failed:", reason);
-        toast.error(`Notifications off: ${reason}`);
         return;
       }
 
       try {
         await savePushToken(token);
-        registeredToken.current = token;
-        console.log("Push token registered:", token);
-        toast.success("Notifications enabled");
+        rememberPushToken(token);
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "Failed to save push token";
         console.warn("Saving push token failed:", message);
-        toast.error(`Notifications off: ${message}`);
       }
     }
 

@@ -38,6 +38,19 @@ export function BannerCarousel({ banners }: { banners: CustomerHomeBanner[] }) {
   const [reduceMotion, setReduceMotion] = useState(false);
   const navigation = useNavigation<Nav>();
 
+  // A banner only counts as tappable when THIS build knows what its link
+  // does: a newer server may send a type this app has never heard of, and a
+  // button that does nothing is worse than a picture.
+  const canOpen = (banner: CustomerHomeBanner) => {
+    const type = banner.link?.type;
+    return (
+      type === "writeList" ||
+      type === "shop" ||
+      type === "category" ||
+      type === "product"
+    );
+  };
+
   const open = (banner: CustomerHomeBanner) => {
     const link = banner.link;
     if (!link) return;
@@ -46,7 +59,10 @@ export function BannerCarousel({ banners }: { banners: CustomerHomeBanner[] }) {
         useGrocerySheetStore.getState().open();
         break;
       case "shop":
-        navigation.navigate("Tabs", { screen: "Shop" });
+        navigation.navigate("Tabs", {
+          screen: "Shop",
+          params: { browseAll: true },
+        });
         break;
       case "category":
         navigation.navigate("Tabs", {
@@ -65,6 +81,12 @@ export function BannerCarousel({ banners }: { banners: CustomerHomeBanner[] }) {
   // never be the thing a customer sees on the Home screen.
   const [failed, setFailed] = useState<Set<string>>(() => new Set());
   const visible = banners.filter((banner) => !failed.has(banner._id));
+
+  // Fresh banners from the server mean a fresh chance: an image that failed
+  // on a weak connection is tried again rather than hidden for good.
+  useEffect(() => {
+    setFailed((prev) => (prev.size ? new Set() : prev));
+  }, [banners]);
 
   const many = visible.length > 1;
   const itemWidth = width - SIDE * 2 - (many ? PEEK : 0);
@@ -131,14 +153,15 @@ export function BannerCarousel({ banners }: { banners: CustomerHomeBanner[] }) {
         onScrollBeginDrag={() => {
           dragging.current = true;
         }}
+        // A slow drag ends without momentum (no onMomentumScrollEnd on iOS),
+        // so the flag is cleared here too - otherwise autoplay stops for good.
+        onScrollEndDrag={onSettle}
         onMomentumScrollEnd={onSettle}
         renderItem={({ item }) => (
           <Pressable
             onPress={() => open(item)}
-            disabled={!item.link || item.link.type === "none"}
-            accessibilityRole={
-              item.link && item.link.type !== "none" ? "button" : "image"
-            }
+            disabled={!canOpen(item)}
+            accessibilityRole={canOpen(item) ? "button" : "image"}
             accessibilityLabel={item.title || undefined}
             style={{ width: itemWidth, height: itemHeight }}
             className="overflow-hidden rounded-2xl bg-muted active:opacity-90"

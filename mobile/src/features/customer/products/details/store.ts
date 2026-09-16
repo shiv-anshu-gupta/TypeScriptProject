@@ -11,6 +11,10 @@ import { useCustomerWishlistStore } from "../../wishlist/store";
 
 type CustomerProductDetailsStore = {
   loading: boolean;
+  // Which product the data below belongs to. Product pages stack (tapping a
+  // related product pushes another one), and they all read this single store,
+  // so every screen checks that what's loaded is still its own product.
+  productId: string;
   data: CustomerProductDetailsResponse | null;
   selectedImage: string;
   selectedColor: string;
@@ -30,6 +34,7 @@ type CustomerProductDetailsStore = {
 
 const defaultState = {
   loading: true,
+  productId: "",
   data: null,
   selectedImage: "",
   selectedColor: "",
@@ -41,17 +46,13 @@ export const useCustomerProductDetailsStore =
     ...defaultState,
     loadProduct: async (productId) => {
       if (!productId) {
-        set({
-          loading: false,
-          data: null,
-          selectedImage: "",
-          selectedColor: "",
-          selectedSize: "",
-        });
+        set({ ...defaultState, loading: false });
+        return;
       }
 
       set({
         loading: true,
+        productId,
         data: null,
         selectedImage: "",
         selectedColor: "",
@@ -60,6 +61,9 @@ export const useCustomerProductDetailsStore =
 
       try {
         const response = await getCustomerProductDetails(productId);
+        // Another product page took over while this was loading (or a slow
+        // answer arrived after a newer one) - drop it.
+        if (get().productId !== productId) return;
         const product = response?.product ?? null;
 
         set({
@@ -70,8 +74,10 @@ export const useCustomerProductDetailsStore =
           selectedSize: product?.sizes?.[0] || "",
         });
       } catch {
+        if (get().productId !== productId) return;
         set({
           loading: false,
+          productId,
           data: null,
           selectedImage: "",
           selectedColor: "",

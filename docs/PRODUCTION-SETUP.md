@@ -54,7 +54,9 @@ production on `skirana.com`. No secret values are written here.
 | Vercel server | `CORS_ORIGINS` | old value + `https://www.skirana.com,https://skirana.com` |
 | Vercel server | `ADMIN_EMAILS` | emails that get admin rights on sign-up |
 | Vercel admin | `VITE_CLERK_PUBLISHABLE_KEY` | `pk_live_Y2xlcmsuc2tpcmFuYS5jb20k` |
-| Your PC only | `client/.env`, `server/.env`, `mobile/.env.local` | keep `pk_test` / `sk_test` (live keys don't work on localhost) |
+| Your PC only | `client/.env`, `server/.env`, **`mobile/.env.development.local`** | keep `pk_test` / `sk_test` (live keys don't work on localhost) |
+
+⚠️ In `mobile/`, a test key must go in **`.env.development.local`**, never `.env.local`: Expo reads `.env.local` for production bundles too, so a test key there would be published to every customer. `npm run ota` now refuses to publish unless the key resolves to `pk_live_`.
 
 **Never** paste `sk_live_…` into chat or a screenshot. If it leaks: Clerk → API keys → Add new key → Vercel → Redeploy → delete the old key.
 
@@ -78,7 +80,7 @@ All Clerk records are **DNS only (grey cloud)**. Orange/proxied breaks login.
 - Users don't move between Clerk instances: everyone signs up again. Admin rights come back via `ADMIN_EMAILS`.
 - Vercel values apply only after **Redeploy**; `VITE_` values are baked into the admin build.
 - Changing the app's Clerk key → bump the app version in the same commit (OTA only reaches the same version).
-- Publish OTA updates with `npm run ota -- --message "..."` (from `mobile/`). It adds `--clear-cache`: Metro's cache kept the old `pk_test` key inlined after `.env` changed, and one OTA shipped it to 1.0.2 (Google then said "continue to Clerk").
+- Publish OTA updates with `npm run ota -- --message "..."` (from `mobile/`). It checks the resolved key is `pk_live_` and adds `--clear-cache`: Metro's cache kept the old `pk_test` key inlined after `.env` changed, and one OTA shipped it to 1.0.2 (Google then said "continue to Clerk").
 - Switch app, admin and server keys **together**; mismatched keys = login fails.
 - Cloning an instance doesn't guarantee identical settings: compare `/v1/environment` of both (e.g. `organization_settings.force_organization_selection`).
 - Google Cloud console "Failed to load" → incognito window with one Google account.
@@ -86,10 +88,10 @@ All Clerk records are **DNS only (grey cloud)**. Orange/proxied breaks login.
 
 ## Still to do
 
-- [ ] Clerk production → User & authentication → **Password OFF** (needed for email-code sign-up)
+- [x] Clerk production → User & authentication → **Password OFF** (verified 15 Sept)
 - [ ] Replace the secret key that appeared in a screenshot
-- [ ] Confirm Vercel values saved + both projects redeployed
-- [ ] Clerk production → Organizations **OFF** (step 9)
+- [x] Vercel values saved + both projects redeployed (verified 15 Sept: server on `clerk.skirana.com`, `APP_LATEST_VERSION` 1.0.2)
+- [x] Clerk production → Organizations **OFF** (verified 15 Sept)
 - [ ] Google shows "sKirana" on its login screen (after branding approval)
 - [ ] Test 1.0.2 on phone: Google login, email code, send list → price in admin → price shows in app
 - [ ] Release 1.0.2 to production (India, staged 20%), new store screenshots

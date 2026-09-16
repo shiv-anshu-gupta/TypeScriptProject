@@ -44,7 +44,11 @@ export function HomeScreen() {
   useFocusEffect(
     useCallback(() => {
       if (isSignedIn) void loadLists();
-    }, [isSignedIn, loadLists]),
+      // Banners and categories come from the shop and can change during the
+      // day; this asks for fresh ones (at most once a minute) without
+      // blanking the screen, and retries a first load that failed.
+      void loadHome({ refresh: true });
+    }, [isSignedIn, loadLists, loadHome]),
   );
 
   if (loading) {
@@ -163,7 +167,12 @@ export function HomeScreen() {
             {t("home.newArrivals")}
           </Text>
           <Pressable
-            onPress={() => navigation.navigate("Tabs", { screen: "Shop" })}
+            onPress={() =>
+              navigation.navigate("Tabs", {
+                screen: "Shop",
+                params: { browseAll: true },
+              })
+            }
           >
             <Text className="text-sm font-semibold text-foreground">
               {t("home.viewAll")}

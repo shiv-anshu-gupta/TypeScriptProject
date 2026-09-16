@@ -8,7 +8,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useIsFocused, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useSignIn, useSignUp } from "@clerk/clerk-expo";
 import { Feather } from "@expo/vector-icons";
@@ -76,7 +76,9 @@ function CodeBoxes({
         onBlur={() => setFocused(false)}
         autoFocus={autoFocus}
         keyboardType="number-pad"
-        maxLength={CODE_LENGTH}
+        // Room for a pasted code with spaces or dashes; the digits are taken
+        // out in onChangeText, which keeps at most CODE_LENGTH of them.
+        maxLength={CODE_LENGTH * 4}
         textContentType="oneTimeCode"
         autoComplete="one-time-code"
         caretHidden
@@ -104,6 +106,9 @@ export function AuthPanel({ onDone, subtitle, grow }: AuthPanelProps) {
   const { t } = useTranslation();
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  // The Account and Lists tabs stay mounted after you leave them, so every
+  // effect below is tied to whether this copy is the one on screen.
+  const isFocused = useIsFocused();
 
   const { signIn, setActive: setSignInActive, isLoaded: signInLoaded } =
     useSignIn();
@@ -124,8 +129,17 @@ export function AuthPanel({ onDone, subtitle, grow }: AuthPanelProps) {
   // A session left "pending" by an earlier attempt blocks every new login
   // with "session_exists" - clear it as soon as the login is on screen.
   useEffect(() => {
-    if (ready) void clearPending();
-  }, [ready, clearPending]);
+    if (ready && isFocused) void clearPending();
+  }, [ready, isFocused, clearPending]);
+
+  // Clerk keeps ONE sign-in attempt per device, but this panel is mounted on
+  // the Account tab, the Lists tab and inside the SignIn screen. A copy left
+  // on the code step in a hidden tab would send its code to whichever attempt
+  // another screen started last ("that code isn't right", and Resend mailing
+  // someone else's address), so leaving the screen puts it back to the start.
+  useEffect(() => {
+    if (!isFocused && step === "code") backToEmail();
+  }, [isFocused, step]);
 
   // Resend countdown.
   useEffect(() => {
@@ -134,15 +148,17 @@ export function AuthPanel({ onDone, subtitle, grow }: AuthPanelProps) {
     return () => clearTimeout(id);
   }, [resendIn]);
 
-  // Android back on the code step returns to the email step, not out.
+  // Android back on the code step returns to the email step, not out. Only
+  // while this copy is on screen: a hidden one would swallow the back press
+  // meant for the screen the customer is actually looking at.
   useEffect(() => {
-    if (step !== "code") return;
+    if (step !== "code" || !isFocused) return;
     const sub = BackHandler.addEventListener("hardwareBackPress", () => {
       backToEmail();
       return true;
     });
     return () => sub.remove();
-  }, [step]);
+  }, [step, isFocused]);
 
   // Clerk's own messages are English-only, so the common cases get our own
   // (translated) wording.
@@ -153,8 +169,11 @@ export function AuthPanel({ onDone, subtitle, grow }: AuthPanelProps) {
       case "verification_expired":
         return t("auth.codeExpired");
       case "too_many_requests":
-      case "verification_failed":
         return t("auth.tooMany");
+      // The code itself is burnt after too many wrong tries: waiting doesn't
+      // help, only a new code does.
+      case "verification_failed":
+        return t("auth.codeDead");
       case "form_identifier_invalid":
       case "form_param_format_invalid":
         return t("auth.emailInvalid");
@@ -168,11 +187,19 @@ export function AuthPanel({ onDone, subtitle, grow }: AuthPanelProps) {
     setActive: typeof setSignInActive,
   ) => {
     if (!sessionId || !setActive) {
+      // Clerk wants something this app doesn't collect; the attempt is spent.
+      setStep("email");
       setError(t("auth.setupIncomplete"));
       return;
     }
-    if (await activate(sessionId, setActive)) onDone();
-    else setError(t("auth.accountOnHold"));
+    if (await activate(sessionId, setActive)) {
+      onDone();
+      return;
+    }
+    // The session was held back and has been cleared, so this attempt is
+    // finished - start again from the email step.
+    setStep("email");
+    setError(t("auth.accountOnHold"));
   };
 
   // The device already holds a session: an active one means the customer is
@@ -259,7 +286,9 @@ export function AuthPanel({ onDone, subtitle, grow }: AuthPanelProps) {
     } catch (err) {
       if (clerkErrorCode(err) === "session_exists") await handleExisting();
       else setError(messageFor(err));
-      setCode("");
+      // Only clear what was actually tried: the customer may already have
+      // corrected a digit while the wrong code was being checked.
+      setCode((current) => (current === entered ? "" : current));
     } finally {
       setBusy(false);
     }

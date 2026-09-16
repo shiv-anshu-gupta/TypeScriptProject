@@ -1,4 +1,4 @@
-import type { CustomerGroceryList, GroceryListStatus } from "./types";
+import { ACTIVE_STATUSES, type CustomerGroceryList } from "./types";
 
 // Where the customer is in the write -> send -> get price -> collect journey,
 // so the Home card can show their real progress and point at the next step.
@@ -12,15 +12,10 @@ export type JourneyStage =
   | { kind: "packing"; list: CustomerGroceryList; others: number } // being packed / packed
   | { kind: "ready"; list: CustomerGroceryList; others: number }; // come and collect
 
-// Orders still in progress. Completed and cancelled orders are finished, so
+// Orders still in progress, from the one shared list (types.ts) that the
+// Lists "Active" tab uses too. Completed and cancelled orders are finished, so
 // they are not tracked - with none left the journey starts over at "write".
-const ACTIVE: ReadonlySet<GroceryListStatus> = new Set([
-  "received",
-  "priced",
-  "packing",
-  "packed",
-  "ready",
-]);
+const ACTIVE: ReadonlySet<string> = new Set(ACTIVE_STATUSES);
 
 // Pure decision, kept free of React so it can be reasoned about and tested on
 // its own.

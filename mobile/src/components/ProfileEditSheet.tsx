@@ -13,6 +13,7 @@ import { Feather } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/Button";
+import { useKeyboardHeight } from "@/lib/use-keyboard-height";
 
 type ProfileEditSheetProps = {
   open: boolean;
@@ -20,7 +21,9 @@ type ProfileEditSheetProps = {
   initialName: string;
   initialPhone: string;
   onClose: () => void;
-  onSubmit: (values: { name: string; phone: string }) => void;
+  // `phone` is left out when the customer hasn't given one - the server
+  // rejects an empty number, and the name alone is a valid save.
+  onSubmit: (values: { name: string; phone?: string }) => void;
 };
 
 // Indian mobile: 10 digits starting 6–9 (after stripping +91 / leading 0).
@@ -57,7 +60,7 @@ export function ProfileEditSheet({
   const [touched, setTouched] = useState(false);
   // Measure the keyboard directly and lift the sheet by that much — a
   // KeyboardAvoidingView is unreliable inside a Modal on Android.
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const keyboardHeight = useKeyboardHeight();
 
   // Re-seed from the current values every time it opens.
   useEffect(() => {
@@ -68,25 +71,13 @@ export function ProfileEditSheet({
     }
   }, [open, initialName, initialPhone]);
 
-  useEffect(() => {
-    const showEvent =
-      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
-    const hideEvent =
-      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
-
-    const showSub = Keyboard.addListener(showEvent, (event) => {
-      setKeyboardHeight(event.endCoordinates?.height ?? 0);
-    });
-    const hideSub = Keyboard.addListener(hideEvent, () => setKeyboardHeight(0));
-
-    return () => {
-      showSub.remove();
-      hideSub.remove();
-    };
-  }, []);
 
   const nameOk = name.trim().length > 0;
-  const phoneOk = isValidPhone(phone);
+  // A mobile number is optional here - the server accepts the name on its own.
+  // It only has to be valid IF something was typed, so a customer who hasn't
+  // given their number yet can still fix their name.
+  const phoneEntered = phone.trim().length > 0;
+  const phoneOk = !phoneEntered || isValidPhone(phone);
   const canSave = nameOk && phoneOk && !submitting;
 
   const bottomPad =
@@ -95,7 +86,10 @@ export function ProfileEditSheet({
   const submit = () => {
     setTouched(true);
     if (!canSave) return;
-    onSubmit({ name: name.trim(), phone: normalize(phone) });
+    onSubmit({
+      name: name.trim(),
+      ...(phoneEntered ? { phone: normalize(phone) } : {}),
+    });
   };
 
   return (
@@ -170,7 +164,7 @@ export function ProfileEditSheet({
                 <Feather name="check-circle" size={18} color="#4f7a4d" />
               ) : null}
             </View>
-            {touched && !phoneOk ? (
+            {(touched || phoneEntered) && !phoneOk ? (
               <Text className="text-xs text-destructive">
                 {t("phone.invalid")}
               </Text>
@@ -180,7 +174,9 @@ export function ProfileEditSheet({
           <Button
             label={t("common.save")}
             loading={submitting}
-            disabled={!canSave}
+            // Pressable even when something is wrong: pressing is what shows
+            // the customer WHICH field needs fixing.
+            disabled={submitting}
             onPress={submit}
           />
         </Pressable>

@@ -12,6 +12,7 @@ import { useCustomerGroceryListStore } from "@/features/customer/grocery-list/st
 import { updateCustomerProfile } from "@/features/customer/account/api";
 import { useCustomerAccountStore } from "@/features/customer/account/store";
 import { useCustomerDisplayName } from "@/features/customer/account/use-display-name";
+import { releasePushToken } from "@/features/customer/push/registry";
 import { Button } from "@/components/ui/Button";
 import { ProfileAvatar } from "@/components/ProfileAvatar";
 import { ProfileEditSheet } from "@/components/ProfileEditSheet";
@@ -176,7 +177,14 @@ export function AccountScreen() {
     }, [isSignedIn, loadLists, loadProfile]),
   );
 
-  const saveProfile = async (values: { name: string; phone: string }) => {
+  // Hand this device's push token back before the session ends, so the next
+  // person to use the phone doesn't get this customer's order alerts.
+  const signOutFully = async () => {
+    await releasePushToken();
+    await signOut();
+  };
+
+  const saveProfile = async (values: { name: string; phone?: string }) => {
     try {
       setSaving(true);
       const updated = await updateCustomerProfile(values);
@@ -261,8 +269,8 @@ export function AccountScreen() {
   const months = Math.floor(days / 30);
   const memberValue =
     months >= 1
-      ? t("account.monthsValue", { n: months })
-      : t("account.daysValue", { n: days });
+      ? t("account.monthsValue", { count: months })
+      : t("account.daysValue", { count: days });
 
   const openWhatsapp = () => {
     const number = env.shopWhatsapp;
@@ -408,7 +416,7 @@ export function AccountScreen() {
 
       {/* Sign out */}
       <Pressable
-        onPress={() => void signOut()}
+        onPress={() => void signOutFully()}
         className="items-center rounded-2xl border border-destructive/40 bg-card py-3.5"
       >
         <Text className="text-base font-semibold text-destructive">

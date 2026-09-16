@@ -16,6 +16,11 @@ import { buildUpiUrl, openUpiPayment } from "@/lib/upi";
 
 const emptyUpi: ShopUpi = { id: "", name: "sKirana" };
 
+// Every load takes a ticket. A response whose ticket is no longer the latest
+// is thrown away: it belongs to a superseded refresh, or to the customer who
+// signed out while it was in flight (clear() takes a new ticket too).
+let loadTicket = 0;
+
 type CustomerGroceryListStore = {
   items: CustomerGroceryList[];
   unseenCount: number;
@@ -46,9 +51,11 @@ export const useCustomerGroceryListStore = create<CustomerGroceryListStore>(
     payingListId: "",
 
     loadLists: async () => {
+      const ticket = ++loadTicket;
       try {
         set({ loading: true });
         const response = await getCustomerGroceryLists();
+        if (ticket !== loadTicket) return;
         set({
           items: response?.items ?? [],
           unseenCount: response?.unseenCount ?? 0,
@@ -57,7 +64,11 @@ export const useCustomerGroceryListStore = create<CustomerGroceryListStore>(
           loading: false,
         });
       } catch {
-        set({ items: [], unseenCount: 0, loading: false });
+        if (ticket !== loadTicket) return;
+        // A refresh that failed (offline, server hiccup) is NOT "no orders":
+        // keep what was last loaded, or Home would fall back to "write a
+        // list" and Lists would say nothing was ever sent.
+        set({ loading: false });
       }
     },
 
@@ -163,7 +174,8 @@ export const useCustomerGroceryListStore = create<CustomerGroceryListStore>(
       }
     },
 
-    clear: () =>
+    clear: () => {
+      loadTicket++;
       set({
         items: [],
         unseenCount: 0,
@@ -172,6 +184,7 @@ export const useCustomerGroceryListStore = create<CustomerGroceryListStore>(
         loading: false,
         submitting: false,
         payingListId: "",
-      }),
+      });
+    },
   }),
 );
