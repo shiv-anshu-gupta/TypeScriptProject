@@ -68,6 +68,7 @@ export const hi: Translations = {
     priceNote: "दुकान आपकी लिस्ट का दाम लगाकर वापस भेजेगी",
   },
   phone: {
+    send: "लिस्ट भेजें",
     title: "अपना मोबाइल नंबर डालें",
     placeholder: "10 अंकों का नंबर",
     invalid: "सही 10 अंकों का नंबर डालें",

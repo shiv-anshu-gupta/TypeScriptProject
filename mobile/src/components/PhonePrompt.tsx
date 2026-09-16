@@ -1,18 +1,16 @@
 import { useEffect, useState } from "react";
 import {
-  Keyboard,
+  ActivityIndicator,
   Modal,
-  Platform,
   Pressable,
   Text,
   TextInput,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 
-import { Button } from "@/components/ui/Button";
 import { useKeyboardHeight } from "@/lib/use-keyboard-height";
 import { isValidMobile, normalizeMobile } from "@/lib/phone";
 
@@ -71,18 +69,42 @@ export function PhonePrompt({
         >
           <View className="h-1.5 w-10 self-center rounded-full bg-muted" />
 
-          <View className="flex-row items-start justify-between gap-3">
-            <View className="flex-1">
-              <Text className="text-lg font-semibold text-foreground">
-                {t("phone.title")}
-              </Text>
-            </View>
+          {/* Pinned header: close on the left, the action on the right - the
+              same layout as the list sheet. At the top it stays visible with
+              the keypad open, which a button under the text did not. */}
+          <View className="flex-row items-center gap-3">
             <Pressable
               onPress={onClose}
               hitSlop={8}
-              className="h-8 w-8 items-center justify-center rounded-full bg-secondary"
+              accessibilityRole="button"
+              accessibilityLabel={t("common.close")}
+              className="h-9 w-9 items-center justify-center rounded-full bg-secondary"
             >
-              <Feather name="x" size={16} color="#1f2a2e" />
+              <Feather name="x" size={17} color="#1f2a2e" />
+            </Pressable>
+
+            <Text className="flex-1 text-base font-semibold text-foreground">
+              {t("phone.title")}
+            </Text>
+
+            <Pressable
+              onPress={() => onSubmit(normalizeMobile(value))}
+              disabled={!valid || submitting}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: !valid || submitting }}
+              accessibilityLabel={t("phone.save")}
+              className={`h-10 flex-row items-center gap-1.5 rounded-full px-4 active:opacity-85 ${
+                valid && !submitting ? "bg-primary" : "bg-primary/40"
+              }`}
+            >
+              {submitting ? (
+                <ActivityIndicator size="small" color="#ffffff" />
+              ) : (
+                <MaterialCommunityIcons name="send" size={16} color="#ffffff" />
+              )}
+              <Text className="text-sm font-bold text-primary-foreground">
+                {t("phone.send")}
+              </Text>
             </Pressable>
           </View>
 
@@ -95,6 +117,10 @@ export function PhonePrompt({
               value={value}
               onChangeText={setValue}
               onBlur={() => setTouched(true)}
+              onSubmitEditing={() => {
+                if (valid && !submitting) onSubmit(normalizeMobile(value));
+              }}
+              returnKeyType="send"
               keyboardType="phone-pad"
               maxLength={14}
               autoFocus
@@ -120,13 +146,6 @@ export function PhonePrompt({
               {t("phone.trust")}
             </Text>
           </View>
-
-          <Button
-            label={t("phone.save")}
-            loading={submitting}
-            disabled={!valid}
-            onPress={() => onSubmit(normalizeMobile(value))}
-          />
         </Pressable>
       </Pressable>
     </Modal>

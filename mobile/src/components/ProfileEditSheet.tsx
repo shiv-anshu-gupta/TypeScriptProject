@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import {
-  Keyboard,
+  ActivityIndicator,
   Modal,
-  Platform,
   Pressable,
   Text,
   TextInput,
@@ -12,7 +11,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 
-import { Button } from "@/components/ui/Button";
 import { useKeyboardHeight } from "@/lib/use-keyboard-height";
 import { isValidMobile, normalizeMobile } from "@/lib/phone";
 import { stripSpecials } from "@/lib/clean-text";
@@ -92,16 +90,42 @@ export function ProfileEditSheet({
         >
           <View className="h-1.5 w-10 self-center rounded-full bg-muted" />
 
-          <View className="flex-row items-start justify-between gap-3">
-            <Text className="flex-1 text-lg font-semibold text-foreground">
-              {t("account.editTitle")}
-            </Text>
+          {/* Pinned header: close on the left, Save on the right. At the top
+              it stays visible with the keypad open - a button under the
+              fields ends up behind it. */}
+          <View className="flex-row items-center gap-3">
             <Pressable
               onPress={onClose}
               hitSlop={8}
-              className="h-8 w-8 items-center justify-center rounded-full bg-secondary"
+              accessibilityRole="button"
+              accessibilityLabel={t("common.close")}
+              className="h-9 w-9 items-center justify-center rounded-full bg-secondary"
             >
-              <Feather name="x" size={16} color="#1f2a2e" />
+              <Feather name="x" size={17} color="#1f2a2e" />
+            </Pressable>
+
+            <Text className="flex-1 text-base font-semibold text-foreground">
+              {t("account.editTitle")}
+            </Text>
+
+            <Pressable
+              onPress={submit}
+              disabled={submitting}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: submitting }}
+              accessibilityLabel={t("common.save")}
+              className={`h-10 flex-row items-center gap-1.5 rounded-full px-4 active:opacity-85 ${
+                canSave ? "bg-primary" : "bg-primary/40"
+              }`}
+            >
+              {submitting ? (
+                <ActivityIndicator size="small" color="#ffffff" />
+              ) : (
+                <Feather name="check" size={16} color="#ffffff" />
+              )}
+              <Text className="text-sm font-bold text-primary-foreground">
+                {t("common.save")}
+              </Text>
             </Pressable>
           </View>
 
@@ -154,15 +178,6 @@ export function ProfileEditSheet({
               </Text>
             ) : null}
           </View>
-
-          <Button
-            label={t("common.save")}
-            loading={submitting}
-            // Pressable even when something is wrong: pressing is what shows
-            // the customer WHICH field needs fixing.
-            disabled={submitting}
-            onPress={submit}
-          />
         </Pressable>
       </Pressable>
     </Modal>

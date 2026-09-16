@@ -66,6 +66,7 @@ export const en = {
     priceNote: "The shop will price your list and send it back",
   },
   phone: {
+    send: "Send list",
     title: "Enter your mobile number",
     placeholder: "10-digit number",
     invalid: "Enter a valid 10-digit number",
