@@ -15,6 +15,7 @@ import { cn, formatPrice } from "@/lib/utils";
 import { shareList } from "@/lib/share-list";
 import { translateItems } from "@/lib/translate";
 import GroceryListChat from "./grocery-list-chat";
+import GroceryListPhotos from "./grocery-list-photos";
 import PriceCalculator from "./price-calculator";
 
 // Strip "special characters" from item name / quantity — keep letters (English
@@ -226,6 +227,11 @@ function GroceryListCard({
   // Cancelled or completed lists are finished — nothing further to do.
   const isClosed = list.status === "cancelled" || list.status === "completed";
 
+  // A customer can send only photos (a handwritten list) with no typed items,
+  // so the items block has to cope with being empty.
+  const photos = list.photos ?? [];
+  const hasItems = list.items.length > 0;
+
   return (
     <Card className={cardClass}>
       <CardHeader className={headerRowClass}>
@@ -248,7 +254,7 @@ function GroceryListCard({
             <p className={metaClass}>{list.customerEmail}</p>
           ) : null}
           <p className={metaClass}>
-            {list.totalItems} item{list.totalItems > 1 ? "s" : ""} ·{" "}
+            {list.totalItems === 1 ? "1 item" : `${list.totalItems} items`} ·{" "}
             {new Date(list.updatedAt ?? list.createdAt).toLocaleString()}
           </p>
           {list.updatedAt &&
@@ -285,232 +291,248 @@ function GroceryListCard({
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {/* Packing progress — tick each item as it's packed so none is missed */}
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-medium text-muted-foreground">
-            Items — tick as you pack
-          </span>
-          <span
-            className={
-              allPacked
-                ? "text-xs font-semibold text-green-600"
-                : "text-xs font-medium text-muted-foreground"
-            }
+        {/* Photos sit above the items so they're read before any pricing —
+            on a photo-only list they ARE the order. */}
+        {photos.length ? (
+          <GroceryListPhotos photos={photos} listCode={list.code} />
+        ) : null}
+
+        {hasItems ? (
+          <>
+          {/* Packing progress — tick each item as it's packed so none is missed */}
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-muted-foreground">
+              Items — tick as you pack
+            </span>
+            <span
+              className={
+                allPacked
+                  ? "text-xs font-semibold text-green-600"
+                  : "text-xs font-medium text-muted-foreground"
+              }
+            >
+              {allPacked
+                ? "✓ All packed"
+                : `${packedCount}/${list.items.length} packed`}
+            </span>
+          </div>
+
+          {/* Show every item in BOTH Hindi and English (auto-detected), so any
+              worker can read it whatever language the customer sent. */}
+          <button
+            type="button"
+            onClick={() => setShowBoth((v) => !v)}
+            className={cn(
+              "flex items-center gap-1.5 self-start rounded-full border px-2.5 py-1 text-xs transition-colors",
+              showBoth
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-border text-muted-foreground hover:border-primary/50",
+            )}
           >
-            {allPacked
-              ? "✓ All packed"
-              : `${packedCount}/${list.items.length} packed`}
-          </span>
-        </div>
+            <Languages className="h-3.5 w-3.5" />
+            {showBoth ? "हिंदी + English ✓" : "Show हिंदी + English"}
+          </button>
 
-        {/* Show every item in BOTH Hindi and English (auto-detected), so any
-            worker can read it whatever language the customer sent. */}
-        <button
-          type="button"
-          onClick={() => setShowBoth((v) => !v)}
-          className={cn(
-            "flex items-center gap-1.5 self-start rounded-full border px-2.5 py-1 text-xs transition-colors",
-            showBoth
-              ? "border-primary bg-primary text-primary-foreground"
-              : "border-border text-muted-foreground hover:border-primary/50",
-          )}
-        >
-          <Languages className="h-3.5 w-3.5" />
-          {showBoth ? "हिंदी + English ✓" : "Show हिंदी + English"}
-        </button>
+          <div className="space-y-2">
+            {list.items.map((item, index) => {
+              const isPacked = packed.has(index);
+              const isUnavailable = item.available === false;
 
-        <div className="space-y-2">
-          {list.items.map((item, index) => {
-            const isPacked = packed.has(index);
-            const isUnavailable = item.available === false;
+              // Inline edit form for this row's name / quantity.
+              if (editingIndex === index) {
+                return (
+                  <div
+                    key={`${list._id}-${index}`}
+                    className="flex flex-wrap items-center gap-2 border-b border-border/40 pb-2 last:border-0 last:pb-0"
+                  >
+                    <span className={itemIndexClass}>{index + 1}.</span>
+                    <Input
+                      autoFocus
+                      placeholder="Item name"
+                      maxLength={60}
+                      className="min-w-0 flex-1"
+                      value={editName}
+                      onChange={(event) => setEditName(stripSpecials(event.target.value))}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault();
+                          submitEdit();
+                        }
+                      }}
+                    />
+                    <Input
+                      placeholder="Qty"
+                      maxLength={12}
+                      className="w-20"
+                      value={editQty}
+                      onChange={(event) => setEditQty(stripSpecials(event.target.value))}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault();
+                          submitEdit();
+                        }
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      disabled={saving || editName.trim().length < MIN_NAME_LEN}
+                      onClick={submitEdit}
+                    >
+                      Save
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      onClick={cancelEdit}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                );
+              }
 
-            // Inline edit form for this row's name / quantity.
-            if (editingIndex === index) {
               return (
                 <div
                   key={`${list._id}-${index}`}
-                  className="flex flex-wrap items-center gap-2 border-b border-border/40 pb-2 last:border-0 last:pb-0"
+                  className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-border/40 pb-2 last:border-0 last:pb-0"
                 >
-                  <span className={itemIndexClass}>{index + 1}.</span>
-                  <Input
-                    autoFocus
-                    placeholder="Item name"
-                    maxLength={60}
-                    className="min-w-0 flex-1"
-                    value={editName}
-                    onChange={(event) => setEditName(stripSpecials(event.target.value))}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") {
-                        event.preventDefault();
-                        submitEdit();
-                      }
-                    }}
-                  />
-                  <Input
-                    placeholder="Qty"
-                    maxLength={12}
-                    className="w-20"
-                    value={editQty}
-                    onChange={(event) => setEditQty(stripSpecials(event.target.value))}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") {
-                        event.preventDefault();
-                        submitEdit();
-                      }
-                    }}
-                  />
-                  <Button
-                    type="button"
-                    size="sm"
-                    disabled={saving || editName.trim().length < MIN_NAME_LEN}
-                    onClick={submitEdit}
-                  >
-                    Save
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    onClick={cancelEdit}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              );
-            }
-
-            return (
-              <div
-                key={`${list._id}-${index}`}
-                className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-border/40 pb-2 last:border-0 last:pb-0"
-              >
-                {/* Name group — full width on mobile so controls wrap below */}
-                <div className="flex min-w-0 basis-full items-start gap-2 sm:flex-1 sm:basis-auto">
-                  <button
-                    type="button"
-                    onClick={() => togglePacked(index)}
-                    aria-label={isPacked ? "Mark not packed" : "Mark packed"}
-                    className={cn(
-                      "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors",
-                      isPacked
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-input bg-background hover:border-primary/60",
-                    )}
-                  >
-                    {isPacked ? <Check className="h-3.5 w-3.5" /> : null}
-                  </button>
-                  <span className={cn(itemIndexClass, "mt-0.5")}>
-                    {index + 1}.
-                  </span>
-                  <span
-                    className={cn(
-                      "min-w-0 flex-1 break-words text-sm text-foreground",
-                      (isPacked || isUnavailable) &&
-                        "text-muted-foreground line-through",
-                    )}
-                  >
-                    {item.name}
-                    {showBoth
-                      ? (() => {
-                          const orig = item.name.trim().toLowerCase();
-                          const forms = [hiNames[index], enNames[index]]
-                            .filter((v): v is string => Boolean(v))
-                            .filter(
-                              (v, i, a) =>
-                                a.findIndex(
-                                  (x) => x.toLowerCase() === v.toLowerCase(),
-                                ) === i,
-                            )
-                            .filter((v) => v.trim().toLowerCase() !== orig);
-                          return forms.length ? (
-                            <span className="ml-2 font-medium text-primary">
-                              → {forms.join(" · ")}
-                            </span>
-                          ) : null;
-                        })()
-                      : null}
-                  </span>
-                </div>
-
-                {/* Controls group — qty, price, out-of-stock */}
-                <div className="ml-7 flex flex-shrink-0 flex-wrap items-center gap-2 sm:ml-0">
-                  <span className="w-12 shrink-0 text-sm text-muted-foreground sm:w-14">
-                    {item.quantity || "—"}
-                  </span>
-                  {isUnavailable ? (
-                    <span className="text-xs font-semibold text-destructive">
-                      Out of stock
+                  {/* Name group — full width on mobile so controls wrap below */}
+                  <div className="flex min-w-0 basis-full items-start gap-2 sm:flex-1 sm:basis-auto">
+                    <button
+                      type="button"
+                      onClick={() => togglePacked(index)}
+                      aria-label={isPacked ? "Mark not packed" : "Mark packed"}
+                      className={cn(
+                        "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors",
+                        isPacked
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-input bg-background hover:border-primary/60",
+                      )}
+                    >
+                      {isPacked ? <Check className="h-3.5 w-3.5" /> : null}
+                    </button>
+                    <span className={cn(itemIndexClass, "mt-0.5")}>
+                      {index + 1}.
                     </span>
-                  ) : (
-                    <div className="flex items-center gap-1">
-                      <Input
-                        type="number"
-                        min={0}
-                        inputMode="numeric"
-                        placeholder="Rate"
-                        title="Price per unit — auto-fills the total (rate × qty)"
-                        className="w-16"
-                        value={rate[index] ?? ""}
-                        onChange={(event) =>
-                          onRateChange(index, event.target.value)
+                    <span
+                      className={cn(
+                        "min-w-0 flex-1 break-words text-sm text-foreground",
+                        (isPacked || isUnavailable) &&
+                          "text-muted-foreground line-through",
+                      )}
+                    >
+                      {item.name}
+                      {showBoth
+                        ? (() => {
+                            const orig = item.name.trim().toLowerCase();
+                            const forms = [hiNames[index], enNames[index]]
+                              .filter((v): v is string => Boolean(v))
+                              .filter(
+                                (v, i, a) =>
+                                  a.findIndex(
+                                    (x) => x.toLowerCase() === v.toLowerCase(),
+                                  ) === i,
+                              )
+                              .filter((v) => v.trim().toLowerCase() !== orig);
+                            return forms.length ? (
+                              <span className="ml-2 font-medium text-primary">
+                                → {forms.join(" · ")}
+                              </span>
+                            ) : null;
+                          })()
+                        : null}
+                    </span>
+                  </div>
+
+                  {/* Controls group — qty, price, out-of-stock */}
+                  <div className="ml-7 flex flex-shrink-0 flex-wrap items-center gap-2 sm:ml-0">
+                    <span className="w-12 shrink-0 text-sm text-muted-foreground sm:w-14">
+                      {item.quantity || "—"}
+                    </span>
+                    {isUnavailable ? (
+                      <span className="text-xs font-semibold text-destructive">
+                        Out of stock
+                      </span>
+                    ) : (
+                      <div className="flex items-center gap-1">
+                        <Input
+                          type="number"
+                          min={0}
+                          inputMode="numeric"
+                          placeholder="Rate"
+                          title="Price per unit — auto-fills the total (rate × qty)"
+                          className="w-16"
+                          value={rate[index] ?? ""}
+                          onChange={(event) =>
+                            onRateChange(index, event.target.value)
+                          }
+                        />
+                        <span className="text-xs text-muted-foreground">=</span>
+                        <Input
+                          type="number"
+                          min={0}
+                          inputMode="numeric"
+                          placeholder="Total"
+                          title="Line total"
+                          className="w-20"
+                          value={draft[index] ?? ""}
+                          onChange={(event) =>
+                            onPriceChange(index, event.target.value)
+                          }
+                        />
+                        <PriceCalculator
+                          quantity={item.quantity}
+                          onResult={(value) => onPriceChange(index, value)}
+                        />
+                      </div>
+                    )}
+                    {!isClosed ? (
+                      <button
+                        type="button"
+                        disabled={saving}
+                        onClick={() =>
+                          startEdit(index, item.name, item.quantity)
                         }
-                      />
-                      <span className="text-xs text-muted-foreground">=</span>
-                      <Input
-                        type="number"
-                        min={0}
-                        inputMode="numeric"
-                        placeholder="Total"
-                        title="Line total"
-                        className="w-20"
-                        value={draft[index] ?? ""}
-                        onChange={(event) =>
-                          onPriceChange(index, event.target.value)
-                        }
-                      />
-                      <PriceCalculator
-                        quantity={item.quantity}
-                        onResult={(value) => onPriceChange(index, value)}
-                      />
-                    </div>
-                  )}
-                  {!isClosed ? (
+                        title="Edit item name / quantity"
+                        className="flex shrink-0 items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground transition-colors hover:border-primary/50 disabled:opacity-50"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                        Edit
+                      </button>
+                    ) : null}
                     <button
                       type="button"
                       disabled={saving}
-                      onClick={() =>
-                        startEdit(index, item.name, item.quantity)
+                      onClick={() => onToggleAvailable(index, isUnavailable)}
+                      title={
+                        isUnavailable
+                          ? "Mark back in stock"
+                          : "Mark out of stock (customer is notified)"
                       }
-                      title="Edit item name / quantity"
-                      className="flex shrink-0 items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground transition-colors hover:border-primary/50 disabled:opacity-50"
+                      className={cn(
+                        "shrink-0 rounded-md border px-2 py-1 text-xs transition-colors disabled:opacity-50",
+                        isUnavailable
+                          ? "border-border text-muted-foreground hover:border-primary/50"
+                          : "border-destructive/40 text-destructive hover:bg-destructive/5",
+                      )}
                     >
-                      <Pencil className="h-3.5 w-3.5" />
-                      Edit
+                      {isUnavailable ? "Restore" : "Out of stock"}
                     </button>
-                  ) : null}
-                  <button
-                    type="button"
-                    disabled={saving}
-                    onClick={() => onToggleAvailable(index, isUnavailable)}
-                    title={
-                      isUnavailable
-                        ? "Mark back in stock"
-                        : "Mark out of stock (customer is notified)"
-                    }
-                    className={cn(
-                      "shrink-0 rounded-md border px-2 py-1 text-xs transition-colors disabled:opacity-50",
-                      isUnavailable
-                        ? "border-border text-muted-foreground hover:border-primary/50"
-                        : "border-destructive/40 text-destructive hover:bg-destructive/5",
-                    )}
-                  >
-                    {isUnavailable ? "Restore" : "Out of stock"}
-                  </button>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+          </>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            {photos.length
+              ? "No typed items — the customer sent photos instead. Read the photos above, then add each item below to price it."
+              : "No items in this list yet."}
+          </p>
+        )}
 
         {/* Shop adds an item the customer told them later / in person */}
         {list.status !== "cancelled" && list.status !== "completed" ? (

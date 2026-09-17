@@ -22,6 +22,13 @@
           "color": "#3c5a64",
           "defaultChannel": "default"
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "sKirana needs this only to attach a photo to your list.",
+          "cameraPermission": "sKirana uses the camera so you can photograph your list instead of typing it."
+        }
       ]
     ],
     "ios": {

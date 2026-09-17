@@ -1,5 +1,6 @@
 import { apiGet, apiPatch, apiPost } from "@/lib/api";
 import type {
+  UploadedPhoto,
   ChatMessage,
   ChatMessagesResponse,
   CustomerGroceryList,
@@ -14,6 +15,28 @@ export async function submitGroceryList(body: SubmitGroceryListBody) {
     CustomerGroceryList & { merged?: boolean },
     SubmitGroceryListBody
   >("/customer/grocery-lists", body);
+}
+
+// Upload the photos picked for a list. Sent as a file upload; the server
+// answers with the addresses to send back with the list itself.
+export async function uploadListPhotos(uris: string[]) {
+  const form = new FormData();
+  uris.forEach((uri, index) => {
+    const extension = uri.split(".").pop()?.toLowerCase();
+    const type = extension === "png" ? "image/png" : "image/jpeg";
+    form.append("photos", {
+      uri,
+      name: `list-photo-${index + 1}.${extension === "png" ? "png" : "jpg"}`,
+      type,
+      // React Native's FormData takes this shape, which TypeScript's DOM
+      // definition of FormData doesn't know about.
+    } as unknown as Blob);
+  });
+
+  return apiPost<{ photos: UploadedPhoto[] }, FormData>(
+    "/customer/grocery-lists/photos",
+    form,
+  );
 }
 
 export async function getCustomerGroceryLists() {

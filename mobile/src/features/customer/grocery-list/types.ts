@@ -29,10 +29,18 @@ export type GroceryListItem = {
   available?: boolean;
 };
 
+// A photo the customer sent with the list. Only the address comes back; the
+// file itself lives on Cloudinary.
+export type GroceryListPhoto = {
+  url: string;
+};
+
 export type CustomerGroceryList = {
   _id: string;
   code: string;
   items: GroceryListItem[];
+  // Missing on lists sent before photos existed.
+  photos?: GroceryListPhoto[];
   totalItems: number;
   totalAmount: number;
   status: GroceryListStatus;
@@ -60,11 +68,18 @@ export type CustomerGroceryListsResponse = {
   customerPhone: string;
 };
 
+// What the photo upload answers with, and what goes back with the list.
+export type UploadedPhoto = {
+  url: string;
+  publicId: string;
+};
+
 export type SubmitGroceryListBody = {
   items: Array<{
     name: string;
     quantity: string;
   }>;
+  photos?: UploadedPhoto[];
   note?: string;
   phone?: string;
 };

@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 
 import { GroceryListEditor } from "@/components/GroceryListEditor";
 import { SendListButton } from "@/components/SendListButton";
+import { DraftPhotos } from "@/components/DraftPhotos";
 
 // The draft list as shown inline on the Lists tab: the written lines plus one
 // to continue on, with a full-width Send button under it. The list sheet uses
@@ -13,6 +14,7 @@ export function GroceryList() {
   return (
     <View className="gap-3">
       <GroceryListEditor compact />
+      <DraftPhotos />
       <View className="mx-3 gap-3">
         <SendListButton variant="block" />
         <Text className="text-center text-xs font-medium text-muted-foreground">

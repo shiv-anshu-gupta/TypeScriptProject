@@ -26,6 +26,7 @@ export function SendListButton({ variant }: SendListButtonProps) {
   const { t } = useTranslation();
   const {
     filledRows,
+    photoCount,
     submitting,
     send,
     phonePromptOpen,
@@ -33,6 +34,8 @@ export function SendListButton({ variant }: SendListButtonProps) {
     submitWithPhone,
   } = useSendDraft();
   const count = filledRows.length;
+  // A list with only photos is still sendable.
+  const canSend = count > 0 || photoCount > 0;
 
   const onSend = () => {
     Keyboard.dismiss(); // let the customer see it sending
@@ -44,14 +47,14 @@ export function SendListButton({ variant }: SendListButtonProps) {
       {variant === "pill" ? (
         <Pressable
           onPress={onSend}
-          disabled={!count || submitting}
+          disabled={!canSend || submitting}
           accessibilityRole="button"
-          accessibilityState={{ disabled: !count || submitting }}
+          accessibilityState={{ disabled: !canSend || submitting }}
           accessibilityLabel={
             count ? t("home.sendItems", { count }) : t("home.sendList")
           }
           className={`h-10 flex-row items-center gap-1.5 rounded-full pl-3.5 active:opacity-85 ${
-            count ? "bg-primary pr-1.5" : "bg-primary/40 pr-3.5"
+            canSend ? "bg-primary pr-1.5" : "bg-primary/40 pr-3.5"
           }`}
         >
           {submitting ? (
@@ -75,7 +78,7 @@ export function SendListButton({ variant }: SendListButtonProps) {
           label={count ? t("home.sendItems", { count }) : t("home.sendList")}
           size="lg"
           loading={submitting}
-          disabled={!count}
+          disabled={!canSend}
           icon={
             !submitting && (
               <MaterialCommunityIcons name="send" size={20} color="#ffffff" />

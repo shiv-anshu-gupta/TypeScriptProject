@@ -82,8 +82,23 @@ AppState.addEventListener("change", (state) => {
   if (state !== "active") writeNow();
 });
 
+// A photo picked on the phone but not yet sent. Only the local file is kept:
+// it is uploaded when the list is sent, so a photo is never uploaded for a
+// list the customer decides not to send.
+export type DraftPhoto = {
+  // Unique per pick, so removing the right one never depends on the file name.
+  id: string;
+  uri: string;
+};
+
+// Kept in step with the server (MAX_LIST_PHOTOS).
+export const MAX_DRAFT_PHOTOS = 3;
+
 type DraftListStore = {
   rows: DraftRow[];
+  // Not saved to disk: these point at files in the app's cache, which Android
+  // may clear. A photo is picked and sent in the same sitting.
+  photos: DraftPhoto[];
   hydrated: boolean;
   nextId: number;
   hydrate: () => Promise<void>;
@@ -96,11 +111,15 @@ type DraftListStore = {
   ensureRows: (count: number) => void;
   addProduct: (name: string, unit?: string, unitValue?: number) => void;
   addProductWithQuantity: (name: string, quantity: string) => void;
+  // Photos of a handwritten list, or of the packet the customer wants.
+  addPhotos: (uris: string[]) => void;
+  removePhoto: (id: string) => void;
   clearDraft: () => void;
 };
 
 export const useDraftListStore = create<DraftListStore>((set, get) => ({
   rows: makeInitialRows(),
+  photos: [],
   hydrated: false,
   nextId: INITIAL_ROWS + 1,
 
@@ -268,9 +287,23 @@ export const useDraftListStore = create<DraftListStore>((set, get) => ({
     set({ rows: padded, nextId: counter });
   },
 
+  addPhotos: (uris) =>
+    set((state) => {
+      const room = MAX_DRAFT_PHOTOS - state.photos.length;
+      if (room <= 0) return state;
+      const added = uris.slice(0, room).map((uri) => ({
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        uri,
+      }));
+      return { photos: [...state.photos, ...added] };
+    }),
+
+  removePhoto: (id) =>
+    set((state) => ({ photos: state.photos.filter((p) => p.id !== id) })),
+
   clearDraft: () => {
     const rows = makeInitialRows();
     persist(rows);
-    set({ rows, nextId: INITIAL_ROWS + 1 });
+    set({ rows, photos: [], nextId: INITIAL_ROWS + 1 });
   },
 }));

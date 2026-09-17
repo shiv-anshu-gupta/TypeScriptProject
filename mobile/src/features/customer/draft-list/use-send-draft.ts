@@ -7,6 +7,8 @@ import { useTranslation } from "react-i18next";
 
 import type { RootStackParamList } from "@/navigation/types";
 import { useCustomerGroceryListStore } from "../grocery-list/store";
+import { uploadListPhotos } from "../grocery-list/api";
+import type { UploadedPhoto } from "../grocery-list/types";
 import { isSendableRow, useDraftListStore } from "./store";
 import { useGrocerySheetStore } from "../grocery-sheet/store";
 import { toast } from "@/lib/toast";
@@ -29,9 +31,13 @@ export function useSendDraft() {
   const loadLists = useCustomerGroceryListStore((state) => state.loadLists);
 
   const rows = useDraftListStore((state) => state.rows);
+  const photos = useDraftListStore((state) => state.photos);
   const clearDraft = useDraftListStore((state) => state.clearDraft);
 
   const [phonePromptOpen, setPhonePromptOpen] = useState(false);
+  // True while photos are on their way up, so the button keeps spinning
+  // through both steps of a send.
+  const [uploading, setUploading] = useState(false);
   // True from the first tap until the list is on its way. `submitting` only
   // covers the POST itself, and send() can await a profile fetch before that -
   // a second tap in that gap would send the whole list twice.
@@ -40,11 +46,29 @@ export function useSendDraft() {
   const filledRows = rows.filter(isSendableRow);
 
   const doSubmit = async (phone?: string) => {
+    // Photos are uploaded only now, when the list is really being sent, and
+    // only their addresses travel with it.
+    let uploaded: UploadedPhoto[] = [];
+    if (photos.length) {
+      try {
+        setUploading(true);
+        const response = await uploadListPhotos(photos.map((p) => p.uri));
+        uploaded = response?.photos ?? [];
+      } catch (error) {
+        console.warn("[send] photo upload failed", error);
+        toast.error(t("photos.uploadFailed"));
+        return false;
+      } finally {
+        setUploading(false);
+      }
+    }
+
     const sent = await submitList({
       items: filledRows.map((row) => ({
         name: row.name.trim(),
         quantity: (row.quantity ?? "").trim(),
       })),
+      ...(uploaded.length ? { photos: uploaded } : {}),
       ...(phone ? { phone } : {}),
     });
 
@@ -65,7 +89,9 @@ export function useSendDraft() {
   };
 
   const send = async () => {
-    if (!filledRows.length) {
+    // A photo of a handwritten list is an order on its own, so either one is
+    // enough to send.
+    if (!filledRows.length && !photos.length) {
       toast.error(t("home.writeAtLeastOne"));
       return;
     }
@@ -127,7 +153,8 @@ export function useSendDraft() {
 
   return {
     filledRows,
-    submitting,
+    photoCount: photos.length,
+    submitting: submitting || uploading,
     send,
     phonePromptOpen,
     closePhonePrompt: () => setPhonePromptOpen(false),
