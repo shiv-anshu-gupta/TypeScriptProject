@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import { StyleSheet, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { NavigationContainer } from "@react-navigation/native";
 import { ClerkProvider, useAuth } from "@clerk/clerk-expo";
@@ -120,17 +121,24 @@ export default function App() {
         tokenCache={tokenCache}
       >
         <SafeAreaProvider>
-          <NavigationContainer>
-            <Bootstrap />
-            <RootNavigator />
-            {/* Slides up over everything when the centre tab button is tapped */}
-            <GroceryListSheet />
-            <UpdatePrompt />
-            {/* Play Store (native release) update prompt — on top of the OTA one */}
-            <StoreUpdatePrompt />
-            <Toaster />
-            <StatusBar style="dark" />
-          </NavigationContainer>
+          {/* Every sheet in the app is presented through this provider, which
+              is what lets one sheet open on top of another. */}
+          <BottomSheetModalProvider>
+            <NavigationContainer>
+              <Bootstrap />
+              <RootNavigator />
+              {/* Slides up over everything when the centre tab button is tapped */}
+              <GroceryListSheet />
+              <UpdatePrompt />
+              {/* Play Store (native release) update prompt — on top of the OTA one */}
+              <StoreUpdatePrompt />
+              <StatusBar style="dark" />
+            </NavigationContainer>
+          </BottomSheetModalProvider>
+          {/* Above the sheets, not inside them: a sheet is drawn over the
+              whole app, and a message the customer must read ("8 items added
+              - please check them") is worth nothing behind it. */}
+          <Toaster />
         </SafeAreaProvider>
       </ClerkProvider>
       {isSplashVisible ? (

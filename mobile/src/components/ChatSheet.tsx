@@ -1,13 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  FlatList,
-  Modal,
-  Pressable,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
@@ -18,7 +10,12 @@ import {
   sendGroceryListMessage,
 } from "@/features/customer/grocery-list/api";
 import { toast } from "@/lib/toast";
-import { useKeyboardHeight } from "@/lib/use-keyboard-height";
+import {
+  Sheet,
+  SheetFlatList,
+  SheetTextInput,
+  type SheetFlatListRef,
+} from "@/components/ui/Sheet";
 
 // Poll for new messages only while the sheet is open — never in the background.
 const POLL_MS = 5000;
@@ -64,11 +61,10 @@ function Bubble({ message }: { message: ChatMessage }) {
   );
 }
 
-// A bottom-sheet chat tied to one order. Slides up over the Lists screen, so
-// the customer never leaves the page. Flex-based layout keeps the composer
-// above the keyboard on both platforms.
+// A chat tied to one order, in a sheet over the Lists screen, so the customer
+// never leaves the page. Pull it down to close; the composer rides above the
+// keyboard.
 export function ChatSheet({ open, listId, code, onClose }: ChatSheetProps) {
-  const keyboardHeight = useKeyboardHeight();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
@@ -77,7 +73,7 @@ export function ChatSheet({ open, listId, code, onClose }: ChatSheetProps) {
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
 
-  const listRef = useRef<FlatList<ChatMessage>>(null);
+  const listRef = useRef<SheetFlatListRef>(null);
 
   const load = useCallback(
     async (silent = false) => {
@@ -142,124 +138,100 @@ export function ChatSheet({ open, listId, code, onClose }: ChatSheetProps) {
   };
 
   return (
-    <Modal
-      visible={open}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}
-      statusBarTranslucent
-    >
-      {/* Lift by the measured keyboard height: a KeyboardAvoidingView is
-          unreliable inside a Modal on Android, which is what the other sheets
-          in this app ran into. */}
-      <View style={{ flex: 1, paddingBottom: keyboardHeight }}>
-        {/* Tap the dimmed area above the sheet to close */}
-        <Pressable
-          onPress={onClose}
-          className="bg-black/40"
-          style={{ flex: 1 }}
-        />
-
-        <View
-          className="rounded-t-3xl border border-border bg-background"
-          style={{ flex: 6 }}
-        >
-          {/* Grab handle */}
-          <View className="items-center pt-3">
-            <View className="h-1.5 w-10 rounded-full bg-muted" />
-          </View>
-
-          {/* Header */}
-          <View className="flex-row items-center gap-3 px-5 pb-3 pt-2">
-            <View className="h-10 w-10 items-center justify-center rounded-full bg-secondary">
-              <MaterialCommunityIcons
-                name="storefront"
-                size={20}
-                color="#3c5a64"
-              />
-            </View>
-            <View className="flex-1">
-              <Text className="text-base font-semibold text-foreground">
-                {t("lists.messageShop")}
-              </Text>
-              <Text className="text-xs text-muted-foreground">
-                {t("chat.aboutOrder", { code })}
-              </Text>
-            </View>
-            <Pressable
-              onPress={onClose}
-              hitSlop={8}
-              className="h-8 w-8 items-center justify-center rounded-full bg-secondary"
-            >
-              <Feather name="x" size={16} color="#1f2a2e" />
-            </Pressable>
-          </View>
-
-          <View className="h-px bg-border" />
-
-          {/* Conversation */}
-          {loading && !messages.length ? (
-            <View className="flex-1 items-center justify-center">
-              <ActivityIndicator color="#3c5a64" />
-            </View>
-          ) : (
-            <FlatList
-              ref={listRef}
-              data={messages}
-              keyExtractor={(m) => m._id}
-              className="flex-1"
-              contentContainerStyle={{
-                padding: 16,
-                gap: 10,
-                flexGrow: 1,
-              }}
-              onContentSizeChange={() =>
-                listRef.current?.scrollToEnd({ animated: true })
-              }
-              showsVerticalScrollIndicator={false}
-              ListEmptyComponent={
-                <View className="flex-1 items-center justify-center gap-3 py-12">
-                  <Feather name="message-circle" size={38} color="#ada291" />
-                  <Text className="px-8 text-center text-sm text-muted-foreground">
-                    {t("chat.empty")}
-                  </Text>
-                </View>
-              }
-              renderItem={({ item }) => <Bubble message={item} />}
+    <Sheet open={open} onClose={onClose} snapPoints={["85%"]} bare>
+      <View style={{ flex: 1 }}>
+        {/* Header */}
+        <View className="flex-row items-center gap-3 px-5 pb-3 pt-2">
+          <View className="h-10 w-10 items-center justify-center rounded-full bg-secondary">
+            <MaterialCommunityIcons
+              name="storefront"
+              size={20}
+              color="#3c5a64"
             />
-          )}
-
-          {/* Composer */}
-          <View
-            className="flex-row items-end gap-2 border-t border-border px-3 pt-2"
-            style={{ paddingBottom: Math.max(insets.bottom, 10) }}
+          </View>
+          <View className="flex-1">
+            <Text className="text-base font-semibold text-foreground">
+              {t("lists.messageShop")}
+            </Text>
+            <Text className="text-xs text-muted-foreground">
+              {t("chat.aboutOrder", { code })}
+            </Text>
+          </View>
+          <Pressable
+            onPress={onClose}
+            hitSlop={8}
+            className="h-8 w-8 items-center justify-center rounded-full bg-secondary"
           >
-            <TextInput
-              value={text}
-              onChangeText={setText}
-              placeholder={t("chat.placeholder")}
-              placeholderTextColor="#ada291"
-              multiline
-              className="max-h-28 flex-1 rounded-2xl border border-border bg-card px-4 py-2.5 text-base text-foreground"
-            />
-            <Pressable
-              onPress={() => void onSend()}
-              disabled={!text.trim() || sending}
-              className={
-                !text.trim() || sending
-                  ? "h-11 w-11 items-center justify-center rounded-full bg-muted"
-                  : "h-11 w-11 items-center justify-center rounded-full bg-primary"
-              }
-            >
-              {sending ? (
-                <ActivityIndicator size="small" color="#ffffff" />
-              ) : (
-                <Feather name="send" size={18} color="#ffffff" />
-              )}
-            </Pressable>
+            <Feather name="x" size={16} color="#1f2a2e" />
+          </Pressable>
+        </View>
+
+        <View className="h-px bg-border" />
+
+        {/* Conversation */}
+        {loading && !messages.length ? (
+          <View className="flex-1 items-center justify-center">
+            <ActivityIndicator color="#3c5a64" />
           </View>
+        ) : (
+          <SheetFlatList
+            ref={listRef}
+            data={messages}
+            keyExtractor={(m) => m._id}
+            className="flex-1"
+            contentContainerStyle={{
+              padding: 16,
+              gap: 10,
+              flexGrow: 1,
+            }}
+            onContentSizeChange={() =>
+              listRef.current?.scrollToEnd({ animated: true })
+            }
+            showsVerticalScrollIndicator={false}
+            ListEmptyComponent={
+              <View className="flex-1 items-center justify-center gap-3 py-12">
+                <Feather name="message-circle" size={38} color="#ada291" />
+                <Text className="px-8 text-center text-sm text-muted-foreground">
+                  {t("chat.empty")}
+                </Text>
+              </View>
+            }
+            renderItem={({ item }: { item: ChatMessage }) => (
+              <Bubble message={item} />
+            )}
+          />
+        )}
+
+        {/* Composer */}
+        <View
+          className="flex-row items-end gap-2 border-t border-border px-3 pt-2"
+          style={{ paddingBottom: Math.max(insets.bottom, 10) }}
+        >
+          <SheetTextInput
+            value={text}
+            onChangeText={setText}
+            placeholder={t("chat.placeholder")}
+            placeholderTextColor="#ada291"
+            multiline
+            className="max-h-28 flex-1 rounded-2xl border border-border bg-card px-4 py-2.5 text-base text-foreground"
+          />
+          <Pressable
+            onPress={() => void onSend()}
+            disabled={!text.trim() || sending}
+            className={
+              !text.trim() || sending
+                ? "h-11 w-11 items-center justify-center rounded-full bg-muted"
+                : "h-11 w-11 items-center justify-center rounded-full bg-primary"
+            }
+          >
+            {sending ? (
+              <ActivityIndicator size="small" color="#ffffff" />
+            ) : (
+              <Feather name="send" size={18} color="#ffffff" />
+            )}
+          </Pressable>
         </View>
       </View>
-    </Modal>
+    </Sheet>
   );
 }
