@@ -138,7 +138,7 @@ export function ChatSheet({ open, listId, code, onClose }: ChatSheetProps) {
   };
 
   return (
-    <Sheet open={open} onClose={onClose} snapPoints={["85%"]} bare>
+    <Sheet open={open} onClose={onClose} height="85%" bare>
       <View style={{ flex: 1 }}>
         {/* Header */}
         <View className="flex-row items-center gap-3 px-5 pb-3 pt-2">

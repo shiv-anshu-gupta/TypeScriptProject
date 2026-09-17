@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import { StyleSheet, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
+import { PortalProvider } from "@gorhom/portal";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { NavigationContainer } from "@react-navigation/native";
 import { ClerkProvider, useAuth } from "@clerk/clerk-expo";
@@ -121,9 +121,9 @@ export default function App() {
         tokenCache={tokenCache}
       >
         <SafeAreaProvider>
-          {/* Every sheet in the app is presented through this provider, which
-              is what lets one sheet open on top of another. */}
-          <BottomSheetModalProvider>
+          {/* Every sheet in the app is drawn through this host, which is what
+              lets one sheet open on top of another. */}
+          <PortalProvider>
             <NavigationContainer>
               <Bootstrap />
               <RootNavigator />
@@ -134,7 +134,7 @@ export default function App() {
               <StoreUpdatePrompt />
               <StatusBar style="dark" />
             </NavigationContainer>
-          </BottomSheetModalProvider>
+          </PortalProvider>
           {/* Above the sheets, not inside them: a sheet is drawn over the
               whole app, and a message the customer must read ("8 items added
               - please check them") is worth nothing behind it. */}

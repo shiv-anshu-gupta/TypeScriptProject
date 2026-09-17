@@ -35,17 +35,16 @@ const FOCUS_MARGIN = 20; // keep the line being typed in this far from the edges
 const SCROLL_FOCUSED_LINE_FROM_JS = Platform.OS === "ios";
 
 // Nearly full screen: the point of this sheet is to be a sheet of paper.
-const SHEET_HEIGHT = ["93%"];
+const SHEET_HEIGHT = "93%";
 
 // The list sheet, opened by "Write list" and the centre tab button.
 //
-// It is the shared <Sheet>, so it is dragged down to close like every other
-// sheet, and the keyboard is the library's problem rather than ours - it used
-// to be ~120 lines here of measuring the keypad and animating the sheet's
-// bottom edge, because Android edge-to-edge (the RN 0.81 default) no longer
-// resizes the window. What stays here is only what is specific to writing a
-// list: Send pinned in the header, the paper filling the page with blank
-// lines, and keeping the line being typed in on screen.
+// It is the shared <Sheet> now, so it is dragged down to close like every
+// other sheet, and the keyboard is handled there - it used to be ~120 lines
+// here, because Android edge-to-edge (the RN 0.81 default) no longer resizes
+// the window for the keypad. What stays here is only what is specific to
+// writing a list: Send pinned in the header, the paper filling the page with
+// blank lines, and keeping the line being typed in on screen.
 export function GroceryListSheet() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -107,7 +106,7 @@ export function GroceryListSheet() {
   }, []);
 
   return (
-    <Sheet open={isOpen} onClose={handleClose} snapPoints={SHEET_HEIGHT} bare>
+    <Sheet open={isOpen} onClose={handleClose} height={SHEET_HEIGHT} bare>
       <View style={{ flex: 1 }}>
         {/* Pinned header: close on the left, Send on the right - the familiar
             compose layout - so Send is never out of reach. */}
@@ -155,7 +154,7 @@ export function GroceryListSheet() {
           showsVerticalScrollIndicator={false}
           // The scroll offset only feeds the JS scroll-into-view, so it is
           // tracked only where that runs - Android scrolls with no JS work.
-          // (The sheet sets the throttle itself; it owns this scroller.)
+          scrollEventThrottle={SCROLL_FOCUSED_LINE_FROM_JS ? 32 : undefined}
           onScroll={
             SCROLL_FOCUSED_LINE_FROM_JS
               ? (event) => {

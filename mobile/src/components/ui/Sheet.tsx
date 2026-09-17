@@ -1,12 +1,22 @@
-import { useCallback, useEffect, useMemo, useRef, type ReactNode } from "react";
-import { BackHandler, StyleSheet } from "react-native";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import {
-  BottomSheetBackdrop,
-  BottomSheetModal,
-  BottomSheetScrollView,
-  BottomSheetView,
-  type BottomSheetBackdropProps,
-} from "@gorhom/bottom-sheet";
+  BackHandler,
+  Keyboard,
+  Platform,
+  Pressable,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+} from "react-native";
+import { Portal } from "@gorhom/portal";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import Animated, {
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // The ONE sheet in the app: everything that slides up from the bottom - the
@@ -15,59 +25,112 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 // looks, how it closes, and how it behaves with the keyboard, so they can
 // never drift apart.
 //
-// Built on @gorhom/bottom-sheet, which brings the thing we could not get from
-// a plain <Modal>: you can DRAG IT DOWN to close. Before this, a customer had
-// to find the ✕ or tap the strip of screen above the sheet, which is not how a
-// phone is meant to feel. Dragging works because the library runs the gesture
-// on the UI thread (react-native-gesture-handler + reanimated, both already in
-// the app), so the sheet follows the finger instead of lagging behind it.
+// The point of it is the thing a plain <Modal> cannot do: PULL IT DOWN to
+// close. Before this, a customer had to find the small ✕ or tap the strip of
+// screen above the sheet. The drag runs on the UI thread (gesture-handler +
+// reanimated), so the sheet follows the finger instead of lagging behind it.
 //
-// Sheets can also sit on top of each other now (Send inside the list sheet
-// opens the phone prompt) - a <Modal> inside a <Modal> was unreliable on
-// Android, which is what forced the old hand-written sheet.
+// Why this is hand-written rather than @gorhom/bottom-sheet: that library is
+// written for Reanimated 3, and on Reanimated 4 - which Expo SDK 54 requires -
+// its sheets simply never open. We tried it; they didn't.
+//
+// Sheets are drawn through a portal at the app root, so one can sit on top of
+// another (Send inside the list sheet opens the phone prompt) - a <Modal>
+// inside a <Modal> was unreliable on Android, which is what forced each screen
+// to hand-roll its own sheet before.
 
 const SHEET_BACKGROUND = "#F0F4EC"; // background
 const SHEET_BORDER = "#e6dcc9"; // border
 // Deliberately darker than the old `bg-muted` bar, which was nearly invisible
-// against the sand ground: the handle is now the app's one hint that a sheet
-// can be pulled down, so it has to be seen.
+// against the sand ground: the handle is the app's one hint that a sheet can
+// be pulled down, so it has to be seen.
 const HANDLE = "#c9bfa9";
+
+const OPEN_MS = 260;
+const CLOSE_MS = 200;
+// Let go past this far down, or flick faster than this, and the sheet goes.
+const CLOSE_DISTANCE = 110;
+const CLOSE_VELOCITY = 900;
 
 type SheetProps = {
   open: boolean;
   onClose: () => void;
   children: ReactNode;
-  // Fixed heights, e.g. ["92%"]. Leave it out and the sheet takes the height
-  // of its content.
-  snapPoints?: (string | number)[];
-  // Put the content in a scroller. Needed for anything taller than the sheet
-  // (the list paper, a chat) so scrolling inside doesn't drag the sheet down.
-  scroll?: boolean;
-  // Space under the content, on top of the phone's own bottom inset.
-  bottomPadding?: number;
+  // A fixed height, as a share of the screen ("93%"). Leave it out and the
+  // sheet is as tall as its content.
+  height?: `${number}%`;
   // The content owns its own edges - no side padding, no bottom inset added.
   // For sheets whose insides go right up to the edge: the list paper, a chat
   // with a composer pinned to the bottom.
   bare?: boolean;
+  // Space under the content, on top of the phone's own bottom inset.
+  bottomPadding?: number;
 };
 
 export function Sheet({
   open,
   onClose,
   children,
-  snapPoints,
-  scroll = false,
-  bottomPadding = 16,
+  height,
   bare = false,
+  bottomPadding = 16,
 }: SheetProps) {
-  const sheet = useRef<BottomSheetModal>(null);
   const insets = useSafeAreaInsets();
+  const { height: screenHeight } = useWindowDimensions();
 
-  // `open` is the truth; the sheet is told to follow it.
+  // Kept mounted until the closing slide has finished, so it slides out
+  // instead of vanishing.
+  const [mounted, setMounted] = useState(false);
+  const translateY = useSharedValue(screenHeight);
+  const dragStart = useSharedValue(0);
+  // How far the keyboard pushes the sheet's bottom edge up.
+  const [keyboardLift, setKeyboardLift] = useState(0);
+
+  const unmount = useCallback(() => setMounted(false), []);
+
   useEffect(() => {
-    if (open) sheet.current?.present();
-    else sheet.current?.dismiss();
-  }, [open]);
+    if (open) {
+      setMounted(true);
+      translateY.value = withTiming(0, { duration: OPEN_MS });
+      return;
+    }
+    if (!mounted) return;
+    translateY.value = withTiming(
+      screenHeight,
+      { duration: CLOSE_MS },
+      (done) => {
+        "worklet";
+        if (done) runOnJS(unmount)();
+      },
+    );
+  }, [open, mounted, screenHeight, translateY, unmount]);
+
+  // The sheet's bottom edge rides on top of the keyboard, so nothing inside -
+  // no line, no button - is ever left under it.
+  useEffect(() => {
+    if (!mounted) return;
+    const showEvent =
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent =
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+
+    const show = Keyboard.addListener(showEvent, (event) => {
+      const reported = event.endCoordinates?.height ?? 0;
+      // React Native on Android reports the keyboard with the navigation bar
+      // SUBTRACTED. This edge-to-edge window draws behind the nav bar, so the
+      // keyboard actually covers `reported + nav bar`; adding the inset back
+      // is exact, and self-correcting (without edge-to-edge it is 0).
+      setKeyboardLift(
+        Platform.OS === "android" ? reported + insets.bottom : reported,
+      );
+    });
+    const hide = Keyboard.addListener(hideEvent, () => setKeyboardLift(0));
+
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, [mounted, insets.bottom]);
 
   // Android's back button closes the top sheet, like every other screen.
   useEffect(() => {
@@ -79,101 +142,147 @@ export function Sheet({
     return () => sub.remove();
   }, [open, onClose]);
 
-  // A drag-to-close, a tap on the backdrop and a ✕ all end up here, so the
-  // screen that opened the sheet always learns it is shut.
-  const handleDismiss = useCallback(() => {
-    if (open) onClose();
-  }, [open, onClose]);
+  // Drag down to dismiss. Dragging UP does nothing - the sheet is already as
+  // tall as it gets - so the gesture only ever follows the finger downwards.
+  // Built fresh for each place it is attached: one Gesture cannot be shared
+  // between two detectors.
+  const makeDrag = () =>
+    Gesture.Pan()
+      .onStart(() => {
+        "worklet";
+        dragStart.value = translateY.value;
+      })
+      .onUpdate((event) => {
+        "worklet";
+        translateY.value = Math.max(0, dragStart.value + event.translationY);
+      })
+      .onEnd((event) => {
+        "worklet";
+        const far = translateY.value > CLOSE_DISTANCE;
+        const flicked = event.velocityY > CLOSE_VELOCITY;
+        if (far || flicked) {
+          runOnJS(onClose)();
+          return;
+        }
+        // Not far enough: settle back, with a little weight to it.
+        translateY.value = withSpring(0, { damping: 20, stiffness: 220 });
+      });
 
-  const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop
-        {...props}
-        appearsOnIndex={0}
-        disappearsOnIndex={-1}
-        opacity={0.5}
-        pressBehavior="close"
-      />
-    ),
-    [],
-  );
+  const sheetStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }],
+  }));
 
-  const contentStyle = useMemo(
-    () => ({
-      paddingHorizontal: bare ? 0 : 20,
-      paddingBottom: bare ? 0 : insets.bottom + bottomPadding,
-      // At a fixed height the content has to fill the sheet; when the sheet is
-      // sized to its content, it must NOT (flex: 1 would collapse it).
-      ...(snapPoints ? { flex: 1 } : null),
-    }),
-    [bare, bottomPadding, insets.bottom, snapPoints],
-  );
+  // The backdrop fades with the sheet, so a half-dragged sheet shows a
+  // half-lit screen behind it - the app feels attached to the finger.
+  const backdropStyle = useAnimatedStyle(() => ({
+    opacity: Math.max(0, 1 - translateY.value / screenHeight) * 0.5,
+  }));
 
-  const Content = scroll ? BottomSheetScrollView : BottomSheetView;
+  const contentStyle = {
+    flex: height ? 1 : 0,
+    paddingHorizontal: bare ? 0 : 20,
+    paddingBottom: bare ? 0 : insets.bottom + bottomPadding,
+  } as const;
+
+  if (!mounted) return null;
 
   return (
-    <BottomSheetModal
-      ref={sheet}
-      snapPoints={snapPoints}
-      // Without snap points the sheet is exactly as tall as what's inside it.
-      enableDynamicSizing={!snapPoints}
-      enablePanDownToClose
-      onDismiss={handleDismiss}
-      backdropComponent={renderBackdrop}
-      backgroundStyle={styles.background}
-      handleIndicatorStyle={styles.handle}
-      // The sheet rides above the keyboard while it is typed in, and settles
-      // back when the keypad closes. `adjustResize` is what makes this work on
-      // Android now that the window itself no longer resizes (edge-to-edge).
-      keyboardBehavior="interactive"
-      keyboardBlurBehavior="restore"
-      android_keyboardInputMode="adjustResize"
-    >
-      {scroll ? (
-        <BottomSheetScrollView
-          style={styles.scroll}
-          contentContainerStyle={contentStyle}
-          keyboardShouldPersistTaps="always"
+    <Portal>
+      <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+        <Animated.View style={[StyleSheet.absoluteFill, backdropStyle]}>
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={onClose}
+            accessibilityRole="button"
+            accessibilityLabel="Close"
+            className="bg-black"
+          />
+        </Animated.View>
+
+        <Animated.View
+          style={[
+            styles.sheet,
+            {
+              bottom: keyboardLift,
+              // A tall sheet is pinned top AND bottom, so the keyboard takes
+              // height off the BOTTOM of it: pinning only the bottom would
+              // push its header - and Send - off the top of the screen. A
+              // short sheet has no top to pin; it just rides up.
+              ...(height
+                ? {
+                    top:
+                      screenHeight - (screenHeight * parseFloat(height)) / 100,
+                  }
+                : { maxHeight: screenHeight - insets.top - 24 }),
+            },
+            sheetStyle,
+          ]}
         >
-          {children}
-        </BottomSheetScrollView>
-      ) : (
-        <BottomSheetView style={contentStyle}>{children}</BottomSheetView>
-      )}
-    </BottomSheetModal>
+          {/* The grab bar, always draggable. */}
+          <GestureDetector gesture={makeDrag()}>
+            <View style={styles.handleArea}>
+              <View style={styles.handle} />
+            </View>
+          </GestureDetector>
+
+          {height ? (
+            // A tall sheet scrolls inside itself, so only the grab bar pulls
+            // it down - otherwise a scroll and a drag would fight each other.
+            <View style={contentStyle}>{children}</View>
+          ) : (
+            // A short sheet has nothing to scroll, so the whole of it follows
+            // the finger. (A pan only starts once the finger MOVES, so taps on
+            // the buttons and fields inside still land.)
+            <GestureDetector gesture={makeDrag()}>
+              <View style={contentStyle}>{children}</View>
+            </GestureDetector>
+          )}
+        </Animated.View>
+      </View>
+    </Portal>
   );
 }
 
 const styles = StyleSheet.create({
-  background: {
+  sheet: {
+    position: "absolute",
+    left: 0,
+    right: 0,
     backgroundColor: SHEET_BACKGROUND,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     borderWidth: 1,
     borderColor: SHEET_BORDER,
+    overflow: "hidden",
+    elevation: 16,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: -4 },
+  },
+  handleArea: {
+    alignItems: "center",
+    paddingTop: 10,
+    paddingBottom: 8,
   },
   handle: {
-    backgroundColor: HANDLE,
     width: 44,
     height: 5,
-  },
-  scroll: {
-    flex: 1,
+    borderRadius: 999,
+    backgroundColor: HANDLE,
   },
 });
 
-// Re-exported so a sheet's own text inputs come from the same place as the
-// sheet itself. These know they are inside a sheet, so focusing one lifts the
-// sheet instead of leaving the field under the keypad.
-export { BottomSheetTextInput as SheetTextInput } from "@gorhom/bottom-sheet";
-
-// A list inside a sheet has to be this one: it tells the sheet when the list
-// is scrolled to the top, which is what lets a downward drag there close the
-// sheet instead of fighting the list.
-export { BottomSheetFlatList as SheetFlatList } from "@gorhom/bottom-sheet";
-export type { BottomSheetFlatListMethods as SheetFlatListRef } from "@gorhom/bottom-sheet";
-
-// The same for a sheet that scrolls its own content (the list paper), when it
-// needs to stay in charge of layout rather than hand it to `scroll`.
-export { BottomSheetScrollView as SheetScrollView } from "@gorhom/bottom-sheet";
-export type { BottomSheetScrollViewMethods as SheetScrollViewRef } from "@gorhom/bottom-sheet";
+// A sheet's insides are ordinary React Native: no special input or list is
+// needed. They are re-exported here so a sheet is built out of one import,
+// and so the pieces can gain sheet-specific behaviour later without every
+// screen changing.
+export {
+  TextInput as SheetTextInput,
+  FlatList as SheetFlatList,
+  ScrollView as SheetScrollView,
+} from "react-native";
+export type {
+  FlatList as SheetFlatListRef,
+  ScrollView as SheetScrollViewRef,
+} from "react-native";
