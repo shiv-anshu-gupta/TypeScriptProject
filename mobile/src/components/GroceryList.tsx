@@ -14,9 +14,13 @@ export function GroceryList() {
   return (
     <View className="gap-3">
       <GroceryListEditor compact />
-      <ScanListPhoto />
       <View className="mx-3 gap-3">
-        <SendListButton variant="block" />
+        <View className="flex-row items-center gap-2">
+          <ScanListPhoto />
+          <View className="flex-1">
+            <SendListButton variant="block" />
+          </View>
+        </View>
         <Text className="text-center text-xs font-medium text-muted-foreground">
           {t("home.priceNote")}
         </Text>

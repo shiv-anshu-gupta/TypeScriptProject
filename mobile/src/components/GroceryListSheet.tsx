@@ -135,13 +135,10 @@ export function GroceryListSheet() {
             </Text>
           </View>
 
-          <SendListButton variant="pill" />
-        </View>
-
-        {/* Photograph the paper instead of typing it out - right under the
-            header, where it is seen before the first line is written. */}
-        <View className="border-b border-border/60 py-3">
+          {/* Photograph the paper instead of typing it: beside Send, where
+              the eye already is, and costing no room on the page. */}
           <ScanListPhoto />
+          <SendListButton variant="pill" />
         </View>
 
         <SheetScrollView

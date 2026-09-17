@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ActivityIndicator, Alert, Linking, Pressable, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Linking, Pressable } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Feather } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
@@ -11,13 +11,16 @@ import {
 import { readListPhotos } from "@/features/customer/grocery-list/api";
 import { toast } from "@/lib/toast";
 
-// "Write it from a photo" - for customers who would rather not type.
+// The camera beside Send: photograph the paper instead of typing it out.
 //
 // The photo is only a way of writing: it is sent up, read, and gone. What
 // comes back is TEXT, written onto the same paper as everything else, in
 // ordinary editable lines - so if the reader mistook a word, the customer
 // fixes it right there before the shop ever sees the list. Nothing about the
 // photo is kept, on the phone or on the server.
+//
+// It is one icon on purpose: this sits in a row with Send, and the list
+// itself - the paper - is what the screen is for.
 export function ScanListPhoto() {
   const { t } = useTranslation();
   const addScannedLines = useDraftListStore((state) => state.addScannedLines);
@@ -33,7 +36,10 @@ export function ScanListPhoto() {
     }
     Alert.alert(t("photos.cameraDenied"), t("photos.openSettings"), [
       { text: t("common.cancel"), style: "cancel" },
-      { text: t("photos.settings"), onPress: () => void Linking.openSettings() },
+      {
+        text: t("photos.settings"),
+        onPress: () => void Linking.openSettings(),
+      },
     ]);
   };
 
@@ -77,6 +83,7 @@ export function ScanListPhoto() {
     if (!uris.length) return; // cancelled, or permission refused
 
     setReading(true);
+    toast.info(t("photos.reading"));
     try {
       const answer = await readListPhotos(uris.slice(0, MAX_PHOTOS_PER_SCAN));
 
@@ -113,29 +120,21 @@ export function ScanListPhoto() {
   };
 
   return (
-    <View className="gap-1.5 px-4">
-      <Pressable
-        onPress={start}
-        disabled={reading}
-        accessibilityRole="button"
-        accessibilityLabel={t("photos.add")}
-        accessibilityState={{ disabled: reading, busy: reading }}
-        className="h-12 flex-row items-center justify-center gap-2 rounded-2xl border border-dashed border-primary/50 bg-secondary active:opacity-80"
-        style={{ opacity: reading ? 0.7 : 1 }}
-      >
-        {reading ? (
-          <ActivityIndicator size="small" color="#3c5a64" />
-        ) : (
-          <Feather name="camera" size={18} color="#3c5a64" />
-        )}
-        <Text className="text-sm font-bold text-primary">
-          {reading ? t("photos.reading") : t("photos.add")}
-        </Text>
-      </Pressable>
-
-      <Text className="text-[11px] leading-4 text-muted-foreground">
-        {reading ? t("photos.readingHint") : t("photos.hint")}
-      </Text>
-    </View>
+    <Pressable
+      onPress={start}
+      disabled={reading}
+      hitSlop={6}
+      accessibilityRole="button"
+      accessibilityLabel={t("photos.add")}
+      accessibilityState={{ disabled: reading, busy: reading }}
+      className="h-10 w-10 items-center justify-center rounded-full border border-primary/40 bg-accent active:opacity-80"
+      style={{ opacity: reading ? 0.6 : 1 }}
+    >
+      {reading ? (
+        <ActivityIndicator size="small" color="#3c5a64" />
+      ) : (
+        <Feather name="camera" size={18} color="#3c5a64" />
+      )}
+    </Pressable>
   );
 }
