@@ -1,10 +1,18 @@
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import {
+  Component,
+  useCallback,
+  useEffect,
+  useState,
+  type ErrorInfo,
+  type ReactNode,
+} from "react";
 import {
   BackHandler,
   Keyboard,
   Platform,
   Pressable,
   StyleSheet,
+  Text,
   useWindowDimensions,
   View,
 } from "react-native";
@@ -225,22 +233,56 @@ export function Sheet({
             </View>
           </GestureDetector>
 
-          {height ? (
-            // A tall sheet scrolls inside itself, so only the grab bar pulls
-            // it down - otherwise a scroll and a drag would fight each other.
-            <View style={contentStyle}>{children}</View>
-          ) : (
-            // A short sheet has nothing to scroll, so the whole of it follows
-            // the finger. (A pan only starts once the finger MOVES, so taps on
-            // the buttons and fields inside still land.)
-            <GestureDetector gesture={makeDrag()}>
+          <SheetContentGuard onClose={onClose}>
+            {height ? (
+              // A tall sheet scrolls inside itself, so only the grab bar pulls
+              // it down - otherwise a scroll and a drag would fight each other.
               <View style={contentStyle}>{children}</View>
-            </GestureDetector>
-          )}
+            ) : (
+              // A short sheet has nothing to scroll, so the whole of it follows
+              // the finger. (A pan only starts once the finger MOVES, so taps on
+              // the buttons and fields inside still land.)
+              <GestureDetector gesture={makeDrag()}>
+                <View style={contentStyle}>{children}</View>
+              </GestureDetector>
+            )}
+          </SheetContentGuard>
         </Animated.View>
       </View>
     </Portal>
   );
+}
+
+// A sheet is drawn over the whole app, so an error inside one used to take
+// the app with it: the screen went black and the customer had to kill it from
+// the task switcher. Now the sheet says what went wrong and can be closed,
+// and the app behind it is untouched.
+type GuardProps = { children: ReactNode; onClose: () => void };
+
+class SheetContentGuard extends Component<GuardProps, { message: string }> {
+  state = { message: "" };
+
+  static getDerivedStateFromError(error: unknown) {
+    return { message: (error as Error)?.message || "Something went wrong" };
+  }
+
+  componentDidCatch(error: unknown, info: ErrorInfo) {
+    console.error("[sheet] content failed to render", error, info);
+  }
+
+  render() {
+    if (!this.state.message) return this.props.children;
+
+    return (
+      <View style={styles.failure}>
+        <Text style={styles.failureTitle}>This didn't open properly</Text>
+        <Text style={styles.failureBody}>{this.state.message}</Text>
+        <Pressable onPress={this.props.onClose} style={styles.failureButton}>
+          <Text style={styles.failureButtonText}>Close</Text>
+        </Pressable>
+      </View>
+    );
+  }
 }
 
 const styles = StyleSheet.create({
@@ -270,6 +312,34 @@ const styles = StyleSheet.create({
     height: 5,
     borderRadius: 999,
     backgroundColor: HANDLE,
+  },
+  failure: {
+    gap: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 24,
+  },
+  failureTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#1f2a2e",
+  },
+  failureBody: {
+    fontSize: 13,
+    lineHeight: 19,
+    color: "#6f6857",
+  },
+  failureButton: {
+    marginTop: 8,
+    alignSelf: "flex-start",
+    borderRadius: 999,
+    backgroundColor: "#3c5a64",
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+  },
+  failureButtonText: {
+    color: "#ffffff",
+    fontSize: 14,
+    fontWeight: "700",
   },
 });
 

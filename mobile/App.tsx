@@ -121,10 +121,13 @@ export default function App() {
         tokenCache={tokenCache}
       >
         <SafeAreaProvider>
-          {/* Every sheet in the app is drawn through this host, which is what
-              lets one sheet open on top of another. */}
-          <PortalProvider>
-            <NavigationContainer>
+          <NavigationContainer>
+            {/* Every sheet is drawn through this host, which is what lets one
+                sheet open on top of another. It sits INSIDE the navigation
+                container on purpose: a sheet's contents are ordinary screens'
+                code - the list sheet's Send button navigates to the Lists tab -
+                and outside this container that code has no navigation to use. */}
+            <PortalProvider>
               <Bootstrap />
               <RootNavigator />
               {/* Slides up over everything when the centre tab button is tapped */}
@@ -133,8 +136,8 @@ export default function App() {
               {/* Play Store (native release) update prompt — on top of the OTA one */}
               <StoreUpdatePrompt />
               <StatusBar style="dark" />
-            </NavigationContainer>
-          </PortalProvider>
+            </PortalProvider>
+          </NavigationContainer>
           {/* Above the sheets, not inside them: a sheet is drawn over the
               whole app, and a message the customer must read ("8 items added
               - please check them") is worth nothing behind it. */}
