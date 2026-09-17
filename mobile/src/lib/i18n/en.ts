@@ -106,6 +106,8 @@ export const en = {
     listNo: "List #{{code}}",
     itemsCount_one: "{{count}} item",
     itemsCount_other: "{{count}} items",
+    photosCount_one: "{{count}} photo",
+    photosCount_other: "{{count}} photos",
     newUpdate: "New update",
     waiting: "Waiting for the shop to price your list.",
     busy: "The shop is a bit busy right now — your list is received, we'll price it very soon.",

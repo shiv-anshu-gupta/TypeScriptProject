@@ -212,7 +212,10 @@ function ListCard({ list }: { list: CustomerGroceryList }) {
             {t("lists.listNo", { code: list.code })}
           </Text>
           <Text className="mt-0.5 text-xs text-muted-foreground">
-            {t("lists.itemsCount", { count: list.totalItems })}
+            {/* A photo-only order has no typed items - count the photos. */}
+            {list.totalItems > 0
+              ? t("lists.itemsCount", { count: list.totalItems })
+              : t("lists.photosCount", { count: list.photos?.length ?? 0 })}
           </Text>
         </View>
         {!list.seenByCustomer ? (

@@ -257,7 +257,14 @@ function GroceryListCard({
             <p className={metaClass}>{list.customerEmail}</p>
           ) : null}
           <p className={metaClass}>
-            {list.totalItems === 1 ? "1 item" : `${list.totalItems} items`} ·{" "}
+            {/* A photo-only order carries no typed items yet — say so, rather
+                than reading "0 items" as if the customer sent nothing. */}
+            {list.totalItems === 0
+              ? `${list.photos?.length ?? 0} photo${(list.photos?.length ?? 0) === 1 ? "" : "s"}, no typed items`
+              : list.totalItems === 1
+                ? "1 item"
+                : `${list.totalItems} items`}{" "}
+            ·{" "}
             {new Date(list.updatedAt ?? list.createdAt).toLocaleString()}
           </p>
           {list.updatedAt &&

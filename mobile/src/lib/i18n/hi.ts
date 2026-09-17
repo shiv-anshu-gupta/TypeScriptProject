@@ -109,6 +109,8 @@ export const hi: Translations = {
     listNo: "लिस्ट #{{code}}",
     itemsCount_one: "{{count}} आइटम",
     itemsCount_other: "{{count}} आइटम",
+    photosCount_one: "{{count}} फ़ोटो",
+    photosCount_other: "{{count}} फ़ोटो",
     newUpdate: "नया अपडेट",
     waiting: "दुकान द्वारा दाम लगाने का इंतज़ार है।",
     busy: "दुकान अभी थोड़ी व्यस्त है — आपकी लिस्ट मिल गई है, हम जल्द ही दाम भेज देंगे।",

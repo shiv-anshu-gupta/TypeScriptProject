@@ -131,7 +131,9 @@ const GroceryListSchema = new Schema<GroceryList>(
     totalItems: {
       type: Number,
       required: true,
-      min: 1,
+      // A photo of a handwritten list is an order with no typed items yet —
+      // the shop reads the photo and adds them — so 0 is legitimate here.
+      min: 0,
     },
     totalAmount: {
       type: Number,
