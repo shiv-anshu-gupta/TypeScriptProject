@@ -3,8 +3,10 @@ import type {
   AddGroceryListItemBody,
   AdminConversationsResponse,
   AdminGroceryListsResponse,
+  BulkAddItemsBody,
   ChatMessage,
   ChatMessagesResponse,
+  ParsePhotosResponse,
   SetGroceryListPricesBody,
   UpdateGroceryListStatusBody,
 } from "./types";
@@ -67,6 +69,24 @@ export async function addAdminGroceryListItem(
 ) {
   return apiPost<AdminGroceryListsResponse, AddGroceryListItemBody>(
     `/admin/grocery-lists/${listId}/items`,
+    body,
+  );
+}
+
+// AI reads the list's photos and suggests items — read-only on the server;
+// the shopkeeper's confirm (bulk add below) is the only write.
+export async function parseAdminGroceryListPhotos(listId: string) {
+  return apiPost<ParsePhotosResponse>(
+    `/admin/grocery-lists/${listId}/parse-photos`,
+  );
+}
+
+export async function addAdminGroceryListItemsBulk(
+  listId: string,
+  body: BulkAddItemsBody,
+) {
+  return apiPost<AdminGroceryListsResponse, BulkAddItemsBody>(
+    `/admin/grocery-lists/${listId}/items/bulk`,
     body,
   );
 }

@@ -16,6 +16,7 @@ import { shareList } from "@/lib/share-list";
 import { translateItems } from "@/lib/translate";
 import GroceryListChat from "./grocery-list-chat";
 import GroceryListPhotos from "./grocery-list-photos";
+import PhotoItemSuggestions from "./photo-item-suggestions";
 import PriceCalculator from "./price-calculator";
 
 // Strip "special characters" from item name / quantity — keep letters (English
@@ -91,6 +92,7 @@ type GroceryListCardProps = {
   onMarkPaid: () => void;
   onToggleAvailable: (index: number, available: boolean) => void;
   onAddItem: (name: string, quantity: string) => void;
+  onAddItems: (items: Array<{ name: string; quantity: string }>) => Promise<void>;
   onEditItem: (index: number, name: string, quantity: string) => void;
 };
 
@@ -107,6 +109,7 @@ function GroceryListCard({
   onMarkPaid,
   onToggleAvailable,
   onAddItem,
+  onAddItems,
   onEditItem,
 }: GroceryListCardProps) {
   const [newName, setNewName] = useState("");
@@ -294,7 +297,19 @@ function GroceryListCard({
         {/* Photos sit above the items so they're read before any pricing —
             on a photo-only list they ARE the order. */}
         {photos.length ? (
-          <GroceryListPhotos photos={photos} listCode={list.code} />
+          <>
+            <GroceryListPhotos photos={photos} listCode={list.code} />
+            {/* AI turns the photos into item suggestions the shopkeeper
+                reviews — only their confirm writes to the list. Hidden once
+                the order is closed. */}
+            {list.status !== "cancelled" && list.status !== "completed" ? (
+              <PhotoItemSuggestions
+                listId={list._id}
+                saving={saving}
+                onConfirm={onAddItems}
+              />
+            ) : null}
+          </>
         ) : null}
 
         {hasItems ? (

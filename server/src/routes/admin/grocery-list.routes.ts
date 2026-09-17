@@ -13,12 +13,14 @@ import {
 import { Message, MessageDocument } from "../../models/Message";
 import {
   cleanField,
+  cleanItems,
   MAX_ITEMS_PER_LIST,
   MAX_NAME_LEN,
   MAX_QTY_LEN,
   MIN_NAME_LEN,
 } from "../../utils/sanitizeItem";
 import { notifyUser } from "../../utils/push";
+import { parseGroceryListPhotos } from "../../services/photo-list-parser";
 
 // What the customer's phone shows when the shop moves the list along.
 const statusNotification: Record<AdminGroceryListStatus, string> = {
@@ -473,6 +475,108 @@ adminGroceryListRouter.post(
       foundList.user,
       `Item added · #${code}`,
       `The shop added "${name}" to your order.`,
+      { listId: String(foundList._id), type: "item_added" },
+    );
+
+    res.json(ok({ items: await getAllGroceryLists() }));
+  }),
+);
+
+// AI reads the customer's handwritten-list photos and returns item
+// SUGGESTIONS. Nothing is written here — the shopkeeper reviews, edits and
+// confirms them in the admin panel, and only that confirm (the bulk add
+// below) touches the list. Human stays in the loop because a wrong item
+// becomes a wrong bill.
+adminGroceryListRouter.post(
+  "/grocery-lists/:listId/parse-photos",
+  asyncHandler(async (req: Request, res: Response) => {
+    const listId = String(req.params.listId || "").trim();
+    requireText(listId, "List id is required");
+
+    const list = await GroceryList.findById(listId);
+    const foundList = requireFound(list, "List not found", 404);
+
+    if (foundList.status === "cancelled" || foundList.status === "completed") {
+      throw new AppError(400, "This order is already closed");
+    }
+
+    const photoUrls = (foundList.photos ?? []).map(
+      (photo: { url: string }) => photo.url,
+    );
+    if (!photoUrls.length) {
+      throw new AppError(400, "This list has no photos to read");
+    }
+
+    const parsed = await parseGroceryListPhotos(photoUrls);
+
+    if (!parsed.readable) {
+      throw new AppError(
+        422,
+        "The photos could not be read as a grocery list. Add the items by hand, or ask the customer for a clearer photo.",
+      );
+    }
+
+    res.json(ok({ suggestions: parsed.items }));
+  }),
+);
+
+// Shop confirms a reviewed batch of items (from the photo reader, but works
+// for any bulk add). Same sanitizing and limits as the single-item route;
+// the customer gets ONE notification for the whole batch, not one per item.
+adminGroceryListRouter.post(
+  "/grocery-lists/:listId/items/bulk",
+  asyncHandler(async (req: Request, res: Response) => {
+    const listId = String(req.params.listId || "").trim();
+    requireText(listId, "List id is required");
+
+    const incoming = cleanItems(req.body.items);
+    if (!incoming.length) {
+      throw new AppError(400, "No valid items to add");
+    }
+
+    const list = await GroceryList.findById(listId);
+    const foundList = requireFound(list, "List not found", 404);
+
+    if (foundList.status === "cancelled" || foundList.status === "completed") {
+      throw new AppError(400, "This order is already closed");
+    }
+
+    if (foundList.items.length + incoming.length > MAX_ITEMS_PER_LIST) {
+      throw new AppError(
+        400,
+        `A list can hold at most ${MAX_ITEMS_PER_LIST} items — this would make ${
+          foundList.items.length + incoming.length
+        }.`,
+      );
+    }
+
+    const items: GroceryListItem[] = [
+      ...foundList.items.map((it: GroceryListItem) => ({
+        name: it.name,
+        quantity: it.quantity,
+        rate: it.rate ?? 0,
+        price: it.price,
+        available: it.available !== false,
+      })),
+      ...incoming.map((it) => ({
+        name: it.name,
+        quantity: it.quantity,
+        rate: 0,
+        price: 0,
+        available: true,
+      })),
+    ];
+
+    foundList.set("items", items);
+    foundList.totalItems = items.length;
+    foundList.seenByCustomer = false;
+    await foundList.save();
+
+    const code = String(foundList._id).slice(-8).toUpperCase();
+    await notifyUser(
+      foundList.user,
+      `Items added · #${code}`,
+      `The shop added ${incoming.length} item${incoming.length > 1 ? "s" : ""} from your list to your order.`,
       { listId: String(foundList._id), type: "item_added" },
     );
 

@@ -92,6 +92,23 @@ export type AddGroceryListItemBody = {
   quantity: string;
 };
 
+// One item the AI photo reader suggests from a handwritten-list photo.
+// Suggestions are a draft: the shopkeeper reviews and confirms before any of
+// them reach the list.
+export type ParsedPhotoItem = {
+  name: string;
+  quantity: string;
+  confidence: "high" | "medium" | "low";
+};
+
+export type ParsePhotosResponse = {
+  suggestions: ParsedPhotoItem[];
+};
+
+export type BulkAddItemsBody = {
+  items: Array<{ name: string; quantity: string }>;
+};
+
 export type UpdateGroceryListStatusBody = {
   status: Exclude<GroceryListStatus, "received" | "priced">;
 };
