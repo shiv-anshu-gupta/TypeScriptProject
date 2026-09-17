@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 // EDIT THESE for the real shop before publishing:
 const SHOP_NAME = "sKirana";
 const CONTACT_EMAIL = "shivanshu2019gupta@gmail.com";
-const LAST_UPDATED = "July 2026";
+const LAST_UPDATED = "September 2026";
 
 function H({ children }: { children: string }) {
   return (
@@ -54,15 +54,44 @@ export function LegalScreen() {
       </P>
 
       <H>What we collect</H>
-      <P>• Your email (used to sign in to your account).</P>
       <P>
-        • Any name, phone number or address you choose to add (so we can prepare
-        and identify your order).
+        • Your name and email address, from Google sign-in or the email code you
+        sign in with.
       </P>
-      <P>• The grocery lists you send us and their status.</P>
       <P>
-        We only collect what we need to serve your order. We do not track your
-        location in the background.
+        • Your mobile number, which we ask for the first time you send a list, so
+        the shop can call you about your order. You can change it in your
+        account.
+      </P>
+      <P>
+        • The grocery lists you send, their status, and the messages you exchange
+        with the shop about an order.
+      </P>
+      <P>
+        • A notification token for your phone, so we can tell you when your list
+        is priced or ready. You can turn notifications off in your phone's
+        settings.
+      </P>
+      <P>
+        We do not access your location, contacts or microphone, and the app
+        contains no advertising or analytics tools.
+      </P>
+
+      <H>Photos of your list</H>
+      <P>
+        If you choose to photograph your handwritten list, the app uses your
+        camera — or a photo you pick from your gallery — only at that moment.
+      </P>
+      <P>
+        The photo is sent securely to our server and read by Google's Gemini AI
+        service, which turns it into text. The items appear in your list for you
+        to check and correct before you send it. We do not keep the photo: it is
+        not saved on our server, in our database, or with your order.
+      </P>
+      <P>
+        Google processes the photo under its own terms, and may keep it for a
+        limited time and use it to improve its services. Please photograph only
+        your grocery list, not anything personal.
       </P>
 
       <H>How we use it</H>
@@ -82,16 +111,38 @@ export function LegalScreen() {
       <H>Who can see your data</H>
       <P>
         Only the shop, to fulfil your order. You can only see your own lists —
-        not other customers'. We use trusted providers to run the app (sign-in,
-        image hosting and database), who process data only on our behalf.
+        not other customers'.
       </P>
+      <P>
+        When you send a list or a message, the shop is alerted with your name,
+        mobile number and order number — in the shop's own app and in its private
+        Telegram chat.
+      </P>
+      <P>
+        We use trusted providers to run the app, who process data to provide
+        their service: Clerk (sign-in), MongoDB Atlas (database), Vercel
+        (hosting), Cloudinary (product pictures), Expo and Google Firebase (phone
+        notifications), Telegram (shop alerts) and Google Gemini (reading photos
+        of lists).
+      </P>
+
+      <H>How long we keep it</H>
+      <P>
+        Your account, lists and messages are kept while your account is active,
+        so you can see your past orders. Photos of lists are never kept. When you
+        ask us to delete your account, we delete it within 7 days and remove it
+        from backups within 30 days.
+      </P>
+
+      <H>Children</H>
+      <P>{SHOP_NAME} is meant for adults. It is not intended for anyone under 18.</P>
 
       <H>Your rights</H>
       <P>
         You can ask us to show, correct or delete your data, or close your
-        account, at any time — just contact us at {CONTACT_EMAIL}. You agree to
-        this policy when you create an account, and you can withdraw consent by
-        deleting your account.
+        account, at any time — email {CONTACT_EMAIL} (how deletion works:
+        skirana.com/delete-account). You agree to this policy when you create an
+        account, and you can withdraw consent by deleting your account.
       </P>
 
       <H>Contact</H>

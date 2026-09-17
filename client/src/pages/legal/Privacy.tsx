@@ -5,7 +5,7 @@
 // EDIT THESE for the real shop before publishing:
 const SHOP_NAME = "sKirana";
 const CONTACT_EMAIL = "shivanshu2019gupta@gmail.com";
-const LAST_UPDATED = "July 2026";
+const LAST_UPDATED = "September 2026";
 
 function Section({
   title,
@@ -47,15 +47,46 @@ export default function PrivacyPage() {
       </Section>
 
       <Section title="What we collect">
-        <p>• Your email (used to sign in to your account).</p>
         <p>
-          • Any name, phone number or address you choose to add (so we can
-          prepare and identify your order).
+          • Your name and email address, from Google sign-in or the email code
+          you sign in with.
         </p>
-        <p>• The grocery lists you send us and their status.</p>
         <p>
-          We only collect what we need to serve your order. We do not track your
-          location in the background.
+          • Your mobile number, which we ask for the first time you send a list,
+          so the shop can call you about your order. You can change it in your
+          account.
+        </p>
+        <p>
+          • The grocery lists you send, their status, and the messages you
+          exchange with the shop about an order.
+        </p>
+        <p>
+          • A notification token for your phone, so we can tell you when your
+          list is priced or ready. You can turn notifications off in your phone's
+          settings.
+        </p>
+        <p>
+          We do not access your location, contacts or microphone, and the app
+          contains no advertising or analytics tools.
+        </p>
+      </Section>
+
+      <Section title="Photos of your list">
+        <p>
+          If you choose to photograph your handwritten list, the app uses your
+          camera — or a photo you pick from your gallery — only at that moment.
+        </p>
+        <p>
+          The photo is sent securely to our server and read by Google&apos;s
+          Gemini AI service, which turns it into text. The items appear in your
+          list for you to check and correct before you send it. We do not keep
+          the photo: it is not saved on our server, in our database, or with
+          your order.
+        </p>
+        <p>
+          Google processes the photo under its own terms, and may keep it for a
+          limited time and use it to improve its services. Please photograph
+          only your grocery list, not anything personal.
         </p>
       </Section>
 
@@ -78,20 +109,50 @@ export default function PrivacyPage() {
       <Section title="Who can see your data">
         <p>
           Only the shop, to fulfil your order. You can only see your own lists —
-          not other customers'. We use trusted providers to run the app
-          (sign-in, image hosting and database), who process data only on our
-          behalf.
+          not other customers&apos;.
+        </p>
+        <p>
+          When you send a list or a message, the shop is alerted with your name,
+          mobile number and order number — in the shop&apos;s own app and in
+          its private Telegram chat.
+        </p>
+        <p>
+          We use trusted providers to run the app, who process data to provide
+          their service: Clerk (sign-in), MongoDB Atlas (database), Vercel
+          (hosting), Cloudinary (product pictures), Expo and Google Firebase
+          (phone notifications), Telegram (shop alerts) and Google Gemini
+          (reading photos of lists).
+        </p>
+      </Section>
+
+      <Section title="How long we keep it">
+        <p>
+          Your account, lists and messages are kept while your account is
+          active, so you can see your past orders. Photos of lists are never
+          kept. When you ask us to delete your account, we delete it within 7
+          days and remove it from backups within 30 days.
+        </p>
+      </Section>
+
+      <Section title="Children">
+        <p>
+          {SHOP_NAME} is meant for adults. It is not intended for anyone under
+          18.
         </p>
       </Section>
 
       <Section title="Your rights">
         <p>
           You can ask us to show, correct or delete your data, or close your
-          account, at any time — just contact us at{" "}
+          account, at any time — email{" "}
           <a className="underline" href={`mailto:${CONTACT_EMAIL}`}>
             {CONTACT_EMAIL}
+          </a>{" "}
+          (how deletion works:{" "}
+          <a className="underline" href="/delete-account">
+            skirana.com/delete-account
           </a>
-          . You agree to this policy when you create an account, and you can
+          ). You agree to this policy when you create an account, and you can
           withdraw consent by deleting your account.
         </p>
       </Section>
