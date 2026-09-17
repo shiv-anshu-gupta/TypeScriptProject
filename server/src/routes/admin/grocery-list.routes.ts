@@ -69,6 +69,8 @@ function mapGroceryList(item: GroceryListDocument) {
       price: listItem.price,
       available: listItem.available !== false,
     })),
+    // Photos the customer sent with the list (a handwritten note, a packet).
+    photos: (item.photos ?? []).map((photo) => ({ url: photo.url })),
     totalItems: item.totalItems,
     totalAmount: item.totalAmount,
     status: item.status,

@@ -1,15 +1,24 @@
-import { Router, type Request, type Response } from "express";
+import {
+  Router,
+  type NextFunction,
+  type Request,
+  type Response,
+} from "express";
 import crypto from "crypto";
 import { getDbUserFromReq, requireAuth } from "../../middleware/auth";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { ok } from "../../utils/envelope";
 import { requireFound, requireText } from "../../utils/helpers";
 import { AppError } from "../../utils/AppError";
+import multer from "multer";
 import {
   GroceryList,
   GroceryListDocument,
   GroceryListItem,
+  type GroceryListPhoto,
+  MAX_LIST_PHOTOS,
 } from "../../models/GroceryList";
+import { uploadManyBuffersToCloudinary } from "../../utils/cloudinary";
 import { Message, MessageDocument } from "../../models/Message";
 import {
   cleanField,
@@ -34,6 +43,7 @@ function mapGroceryList(item: GroceryListDocument) {
       price: listItem.price,
       available: listItem.available !== false,
     })),
+    photos: (item.photos ?? []).map((photo) => ({ url: photo.url })),
     totalItems: item.totalItems,
     totalAmount: item.totalAmount,
     status: item.status,
@@ -64,6 +74,76 @@ export const customerGroceryListRouter = Router();
 
 customerGroceryListRouter.use(requireAuth);
 
+const PHOTO_FOLDER = "ecommerce-monster-video/list-photos";
+const MAX_PHOTO_BYTES = 6 * 1024 * 1024;
+const PHOTO_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+
+const uploadPhotos = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_PHOTO_BYTES, files: MAX_LIST_PHOTOS },
+  fileFilter: (_req, file, done) => {
+    if (PHOTO_TYPES.has(file.mimetype)) done(null, true);
+    else done(new AppError(400, "Send a JPG, PNG or WebP photo"));
+  },
+});
+
+// Multer reports its limits as its own error type; turn those into a clear 400.
+function acceptPhotos(req: Request, res: Response, next: NextFunction) {
+  uploadPhotos.array("photos", MAX_LIST_PHOTOS)(req, res, (err: unknown) => {
+    if (err instanceof multer.MulterError) {
+      return next(
+        new AppError(
+          400,
+          err.code === "LIMIT_FILE_SIZE"
+            ? "Each photo must be under 6 MB"
+            : `Send at most ${MAX_LIST_PHOTOS} photos`,
+        ),
+      );
+    }
+    next(err);
+  });
+}
+
+// The app uploads the photos first and sends what comes back with the list.
+// Only images this server put on Cloudinary are accepted there, so a list can
+// never be made to point at some other address.
+function cleanPhotos(raw: unknown): GroceryListPhoto[] {
+  const list = Array.isArray(raw) ? raw : [];
+  const photos: GroceryListPhoto[] = [];
+
+  for (const entry of list.slice(0, MAX_LIST_PHOTOS)) {
+    const item = (entry ?? {}) as Record<string, unknown>;
+    const url = cleanField(item.url, 300);
+    const publicId = cleanField(item.publicId, 200);
+    if (!publicId.startsWith(`${PHOTO_FOLDER}/`)) continue;
+    if (!/^https:\/\/res\.cloudinary\.com\//.test(url)) continue;
+    photos.push({ url, publicId });
+  }
+
+  return photos;
+}
+
+// Upload the photos for a list. Returns what to send back with the list.
+customerGroceryListRouter.post(
+  "/grocery-lists/photos",
+  acceptPhotos,
+  asyncHandler(async (req: Request, res: Response) => {
+    await getDbUserFromReq(req);
+    const files = (req.files || []) as Express.Multer.File[];
+
+    if (!files.length) {
+      throw new AppError(400, "Choose at least one photo");
+    }
+
+    const uploaded = await uploadManyBuffersToCloudinary(
+      files.map((file) => file.buffer),
+      PHOTO_FOLDER,
+    );
+
+    res.json(ok({ photos: uploaded }));
+  }),
+);
+
 // Submit a new grocery list (item + quantity only, no prices)
 customerGroceryListRouter.post(
   "/grocery-lists",
@@ -92,8 +172,12 @@ customerGroceryListRouter.post(
       available: true,
     }));
 
-    if (!items.length) {
-      throw new AppError(400, "Add at least one item to your list");
+    const photos = cleanPhotos(req.body.photos);
+
+    // A photo of a handwritten list is an order in itself, so either one is
+    // enough - but not neither.
+    if (!items.length && !photos.length) {
+      throw new AppError(400, "Add at least one item, or send a photo");
     }
 
     // If the customer already has a not-yet-priced list from the SAME shopping
@@ -132,6 +216,13 @@ customerGroceryListRouter.post(
 
       mergeTarget.set("items", mergedItems);
       mergeTarget.totalItems = mergedItems.length;
+
+      if (photos.length) {
+        mergeTarget.set(
+          "photos",
+          [...(mergeTarget.photos ?? []), ...photos].slice(0, MAX_LIST_PHOTOS),
+        );
+      }
       if (!mergeTarget.customerPhone && customerPhone) {
         mergeTarget.customerPhone = customerPhone;
       }
@@ -170,6 +261,7 @@ customerGroceryListRouter.post(
       customerEmail: dbUser.email || "",
       customerPhone,
       items,
+      photos,
       totalItems: items.length,
       totalAmount: 0,
       status: "received",

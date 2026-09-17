@@ -23,12 +23,23 @@ export type GroceryListItem = {
   available: boolean; // false = shop marked it out of stock
 };
 
+// A photo the customer sent with their list: a handwritten note, or the
+// packet of what they want. Stored on Cloudinary like every other image.
+export type GroceryListPhoto = {
+  url: string;
+  publicId: string;
+};
+
+// How many photos one list may carry.
+export const MAX_LIST_PHOTOS = 3;
+
 export type GroceryList = {
   user: Types.ObjectId;
   customerName: string;
   customerEmail: string;
   customerPhone: string;
   items: GroceryListItem[];
+  photos: GroceryListPhoto[];
   totalItems: number;
   totalAmount: number; // 0 until priced
   status: GroceryListStatus;
@@ -103,6 +114,18 @@ const GroceryListSchema = new Schema<GroceryList>(
     },
     items: {
       type: [GroceryListItemSchema],
+      default: [],
+    },
+    photos: {
+      type: [
+        new Schema<GroceryListPhoto>(
+          {
+            url: { type: String, required: true, trim: true },
+            publicId: { type: String, required: true, trim: true },
+          },
+          { _id: false },
+        ),
+      ],
       default: [],
     },
     totalItems: {
