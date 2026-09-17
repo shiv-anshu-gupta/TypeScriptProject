@@ -26,7 +26,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "sKirana needs this only to attach a photo to your list.",
+          "photosPermission": "sKirana reads a photo of your list to write the items for you. The photo is not saved.",
           "cameraPermission": "sKirana uses the camera so you can photograph your list instead of typing it.",
           "microphonePermission": false
         }
