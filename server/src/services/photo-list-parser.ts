@@ -8,9 +8,13 @@ import {
   MIN_NAME_LEN,
 } from "../utils/sanitizeItem";
 
-// Reads a customer's handwritten grocery-list photo(s) and returns the items
-// as structured suggestions. The output is ALWAYS a draft the shopkeeper
-// reviews and confirms in the admin panel — nothing here writes to the list.
+// Reads a photo of a handwritten grocery list and returns the items as text.
+//
+// The photo is NEVER stored: its bytes arrive in the request, go straight to
+// the model, and are gone when the response is written. What the customer
+// keeps is the TEXT — written onto their list, where they can fix anything
+// the model misread before the shop ever sees it. That is the whole point:
+// the paper is only a way of typing quickly, so there is nothing to save.
 //
 // Provider: Google Gemini via the plain REST endpoint (free tier friendly,
 // no extra SDK). The whole provider surface is this one file, so swapping to
@@ -19,18 +23,32 @@ import {
 const GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models";
 const DEFAULT_MODEL = "gemini-3.6-flash";
 
-// The shop's photos live on Cloudinary; refuse to fetch anything else even
-// though the URLs come from our own database (defence in depth, not paranoia).
-const PHOTO_HOST = "res.cloudinary.com";
+const MODEL_TIMEOUT_MS = 45_000;
 
-const PHOTO_FETCH_TIMEOUT_MS = 20_000;
-const MODEL_TIMEOUT_MS = 60_000;
+// Guard rails for the free tier (~10-15 requests/minute), now that customers
+// reach the model directly and not one shopkeeper at one desk:
+//   - a per-customer gap, so a double tap or an impatient retry costs nothing
+//   - a whole-server ceiling per minute, so a busy evening can't burn the
+//     quota (or, later, the bill) in one go
+// Both are best-effort: serverless runs several instances, each with its own
+// memory, so treat these as a brake, never as a security boundary.
+// Measured from the moment the previous read FINISHED - a read takes about
+// ten seconds, so a gap timed from its start would already be over by the
+// time the customer could tap again, and would brake nothing.
+const USER_GAP_MS = 5_000;
+const GLOBAL_LIMIT_PER_MIN = 12;
+const readingNow = new Set<string>();
+const finishedAtByUser = new Map<string, number>();
+let windowStartedAt = 0;
+let callsInWindow = 0;
 
-// The free tier allows ~10-15 requests/minute. One admin clicking a button
-// can't exceed that, but a stuck double-click or two open tabs could — a
-// minimum gap between calls keeps the quota (and the bill, later) safe.
-const MIN_GAP_MS = 4_000;
-let lastCallAt = 0;
+// Drop callers we haven't seen for a while, so the map can't grow for ever.
+function forgetOldCallers(now: number) {
+  if (finishedAtByUser.size < 500) return;
+  for (const [key, at] of finishedAtByUser) {
+    if (now - at > 60_000) finishedAtByUser.delete(key);
+  }
+}
 
 export type ParsedPhotoItem = {
   name: string;
@@ -43,13 +61,9 @@ export type ParsedPhotoList = {
   items: ParsedPhotoItem[];
 };
 
-export function isPhotoParserConfigured(): boolean {
-  return Boolean(process.env.GEMINI_API_KEY);
-}
-
 // What the model must return. Never trust model output: this is validated
 // with zod AND each field is passed through the same sanitizer that guards
-// hand-typed items before anything reaches the admin UI.
+// hand-typed items before anything reaches the customer's list.
 const modelOutputSchema = z.object({
   readable: z.boolean(),
   items: z
@@ -85,7 +99,7 @@ const responseSchema = {
 };
 
 const SYSTEM_INSTRUCTION = [
-  "You read photos of handwritten Indian grocery (kirana) lists for a shopkeeper.",
+  "You read photos of handwritten Indian grocery (kirana) lists.",
   "Lists mix Hindi (Devanagari), Hinglish and English, written quickly.",
   "Extract every distinct item exactly once.",
   "- name: the item as the customer wrote it (keep their script and wording,",
@@ -100,52 +114,74 @@ const SYSTEM_INSTRUCTION = [
   "empty items array.",
 ].join("\n");
 
-async function fetchPhotoAsBase64(
-  url: string,
-): Promise<{ mimeType: string; data: string }> {
-  const parsed = new URL(url);
-  if (parsed.protocol !== "https:" || parsed.hostname !== PHOTO_HOST) {
-    throw new AppError(400, "Only photos stored by the app can be read");
-  }
+// The photo as it came off the phone. Held only for this one call.
+export type PhotoToRead = {
+  mimeType: string;
+  buffer: Buffer;
+};
 
-  const response = await fetch(url, {
-    signal: AbortSignal.timeout(PHOTO_FETCH_TIMEOUT_MS),
-  });
-  if (!response.ok) {
-    throw new AppError(
-      502,
-      "A photo could not be downloaded — it may have been deleted. Refresh and try again.",
-    );
-  }
-
-  const mimeType = response.headers.get("content-type") || "image/jpeg";
-  const buffer = Buffer.from(await response.arrayBuffer());
-  return { mimeType, data: buffer.toString("base64") };
-}
-
-// One request carries ALL the photos of a list: the model sees them together
-// (a list can continue across two photos) and it costs one quota unit.
+// One request carries every photo of the same list: the model sees them
+// together (a list can run onto a second page) and it costs one quota unit.
+// `callerKey` is the customer, so one impatient person cannot lock out the
+// rest of the shop's customers.
 export async function parseGroceryListPhotos(
-  photoUrls: string[],
+  photosToRead: PhotoToRead[],
+  callerKey: string,
 ): Promise<ParsedPhotoList> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new AppError(
       503,
-      "Photo reading is not set up on the server (GEMINI_API_KEY missing). Add the items by hand.",
+      "Reading photos isn't switched on yet. Please type the items instead.",
     );
   }
 
   const now = Date.now();
-  if (now - lastCallAt < MIN_GAP_MS) {
-    throw new AppError(429, "Please wait a few seconds and try again.");
-  }
-  lastCallAt = now;
 
+  if (readingNow.has(callerKey)) {
+    throw new AppError(429, "Your photo is still being read — one moment.");
+  }
+
+  const finishedAt = finishedAtByUser.get(callerKey) ?? 0;
+  if (now - finishedAt < USER_GAP_MS) {
+    throw new AppError(429, "Just a moment before the next photo.");
+  }
+
+  if (now - windowStartedAt > 60_000) {
+    windowStartedAt = now;
+    callsInWindow = 0;
+  }
+  if (callsInWindow >= GLOBAL_LIMIT_PER_MIN) {
+    throw new AppError(
+      503,
+      "A lot of lists are being read right now. Try again in a minute, or type the items.",
+    );
+  }
+  callsInWindow += 1;
+  readingNow.add(callerKey);
+
+  try {
+    return await readWithModel(photosToRead, apiKey);
+  } finally {
+    const doneAt = Date.now();
+    readingNow.delete(callerKey);
+    finishedAtByUser.set(callerKey, doneAt);
+    forgetOldCallers(doneAt);
+  }
+}
+
+// The call itself. Everything above is only about who may make it.
+async function readWithModel(
+  photosToRead: PhotoToRead[],
+  apiKey: string,
+): Promise<ParsedPhotoList> {
   const model = process.env.GEMINI_MODEL || DEFAULT_MODEL;
   const startedAt = Date.now();
 
-  const photos = await Promise.all(photoUrls.map(fetchPhotoAsBase64));
+  const photos = photosToRead.map((photo) => ({
+    mimeType: photo.mimeType,
+    data: photo.buffer.toString("base64"),
+  }));
 
   let response: Response;
   try {
@@ -178,7 +214,12 @@ export async function parseGroceryListPhotos(
         },
       }),
     });
-  } catch {
+  } catch (error) {
+    // The customer gets a plain sentence; the log keeps the real reason
+    // (DNS, socket reset, our own 45s timeout), or we are left guessing.
+    console.error(
+      `[photo-parser] could not reach the model: ${(error as Error)?.message ?? error}`,
+    );
     throw new AppError(
       503,
       "Could not reach the photo-reading service. Check the internet and try again.",
@@ -188,7 +229,7 @@ export async function parseGroceryListPhotos(
   if (response.status === 429) {
     throw new AppError(
       503,
-      "The photo reader is busy (free limit reached). Try again in a minute, or add the items by hand.",
+      "The photo reader is busy right now. Try again in a minute, or type the items.",
     );
   }
   if (!response.ok) {
@@ -197,7 +238,7 @@ export async function parseGroceryListPhotos(
     );
     throw new AppError(
       503,
-      "The photo reader had a problem. Try again, or add the items by hand.",
+      "The photo could not be read just now. Try again, or type the items.",
     );
   }
 
@@ -215,12 +256,12 @@ export async function parseGroceryListPhotos(
     );
     throw new AppError(
       503,
-      "The photo reader returned an unusable answer. Try again, or add the items by hand.",
+      "The photo could not be read just now. Try again, or type the items.",
     );
   }
 
   // Same last line of defence as hand-typed items — the model's text goes
-  // through the identical allowlist sanitizer before the admin UI sees it.
+  // through the identical allowlist sanitizer before the list sees it.
   const items: ParsedPhotoItem[] = parsed.items
     .map((item) => ({
       name: cleanField(item.name, MAX_NAME_LEN, true),

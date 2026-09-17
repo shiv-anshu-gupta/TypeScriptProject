@@ -24,18 +24,6 @@ export function buildListShareText(
     lines.push(`${index + 1}. ${name}${qty}${price}`);
   });
 
-  // An order can be photos only (a handwritten list the customer sent). Say
-  // so, or the shared text reads like an order with nothing in it.
-  const photoCount = list.photos?.length ?? 0;
-  if (photoCount) {
-    if (!list.items.length) {
-      lines.push(`(No typed items - ${photoCount} photo${photoCount > 1 ? "s" : ""} sent in the app)`);
-    } else {
-      lines.push("");
-      lines.push(`+ ${photoCount} photo${photoCount > 1 ? "s" : ""} in the app`);
-    }
-  }
-
   if (list.totalAmount > 0) {
     lines.push("");
     lines.push(`Total: ${formatPrice(list.totalAmount)}`);

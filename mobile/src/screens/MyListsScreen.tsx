@@ -36,7 +36,6 @@ import {
 import { Button } from "@/components/ui/Button";
 import { AuthView } from "@/components/auth/AuthView";
 import { Badge } from "@/components/ui/Badge";
-import { ListPhotos } from "@/components/ListPhotos";
 import { toast } from "@/lib/toast";
 import { GroceryList } from "@/components/GroceryList";
 import { ChatSheet } from "@/components/ChatSheet";
@@ -212,10 +211,7 @@ function ListCard({ list }: { list: CustomerGroceryList }) {
             {t("lists.listNo", { code: list.code })}
           </Text>
           <Text className="mt-0.5 text-xs text-muted-foreground">
-            {/* A photo-only order has no typed items - count the photos. */}
-            {list.totalItems > 0
-              ? t("lists.itemsCount", { count: list.totalItems })
-              : t("lists.photosCount", { count: list.photos?.length ?? 0 })}
+            {t("lists.itemsCount", { count: list.totalItems })}
           </Text>
         </View>
         {!list.seenByCustomer ? (
@@ -226,9 +222,6 @@ function ListCard({ list }: { list: CustomerGroceryList }) {
           </Badge>
         ) : null}
       </View>
-
-      {/* What the customer photographed, above the items they typed */}
-      <ListPhotos photos={list.photos ?? []} />
 
       {/* Items — price column only once the shop has priced it */}
       <View className="gap-1.5">

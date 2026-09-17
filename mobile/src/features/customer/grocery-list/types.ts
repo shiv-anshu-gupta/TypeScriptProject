@@ -29,18 +29,10 @@ export type GroceryListItem = {
   available?: boolean;
 };
 
-// A photo the customer sent with the list. Only the address comes back; the
-// file itself lives on Cloudinary.
-export type GroceryListPhoto = {
-  url: string;
-};
-
 export type CustomerGroceryList = {
   _id: string;
   code: string;
   items: GroceryListItem[];
-  // Missing on lists sent before photos existed.
-  photos?: GroceryListPhoto[];
   totalItems: number;
   totalAmount: number;
   status: GroceryListStatus;
@@ -68,10 +60,20 @@ export type CustomerGroceryListsResponse = {
   customerPhone: string;
 };
 
-// What the photo upload answers with, and what goes back with the list.
-export type UploadedPhoto = {
-  url: string;
-  publicId: string;
+// One item read off a photo of a handwritten list. It is a SUGGESTION: it
+// lands on the customer's own list, in an editable line, so they can correct
+// anything the reader misheard before the shop sees it.
+export type ScannedItem = {
+  name: string;
+  quantity: string;
+  confidence: "high" | "medium" | "low";
+};
+
+export type ReadPhotoResponse = {
+  // False when the photo held no readable list at all (a blurry snap, a
+  // picture of something else).
+  readable: boolean;
+  items: ScannedItem[];
 };
 
 export type SubmitGroceryListBody = {
@@ -79,7 +81,6 @@ export type SubmitGroceryListBody = {
     name: string;
     quantity: string;
   }>;
-  photos?: UploadedPhoto[];
   note?: string;
   phone?: string;
 };

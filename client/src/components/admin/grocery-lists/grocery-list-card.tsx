@@ -15,8 +15,6 @@ import { cn, formatPrice } from "@/lib/utils";
 import { shareList } from "@/lib/share-list";
 import { translateItems } from "@/lib/translate";
 import GroceryListChat from "./grocery-list-chat";
-import GroceryListPhotos from "./grocery-list-photos";
-import PhotoItemSuggestions from "./photo-item-suggestions";
 import PriceCalculator from "./price-calculator";
 
 // Strip "special characters" from item name / quantity — keep letters (English
@@ -92,7 +90,6 @@ type GroceryListCardProps = {
   onMarkPaid: () => void;
   onToggleAvailable: (index: number, available: boolean) => void;
   onAddItem: (name: string, quantity: string) => void;
-  onAddItems: (items: Array<{ name: string; quantity: string }>) => Promise<void>;
   onEditItem: (index: number, name: string, quantity: string) => void;
 };
 
@@ -109,7 +106,6 @@ function GroceryListCard({
   onMarkPaid,
   onToggleAvailable,
   onAddItem,
-  onAddItems,
   onEditItem,
 }: GroceryListCardProps) {
   const [newName, setNewName] = useState("");
@@ -230,9 +226,6 @@ function GroceryListCard({
   // Cancelled or completed lists are finished — nothing further to do.
   const isClosed = list.status === "cancelled" || list.status === "completed";
 
-  // A customer can send only photos (a handwritten list) with no typed items,
-  // so the items block has to cope with being empty.
-  const photos = list.photos ?? [];
   const hasItems = list.items.length > 0;
 
   return (
@@ -257,14 +250,7 @@ function GroceryListCard({
             <p className={metaClass}>{list.customerEmail}</p>
           ) : null}
           <p className={metaClass}>
-            {/* A photo-only order carries no typed items yet — say so, rather
-                than reading "0 items" as if the customer sent nothing. */}
-            {list.totalItems === 0
-              ? `${list.photos?.length ?? 0} photo${(list.photos?.length ?? 0) === 1 ? "" : "s"}, no typed items`
-              : list.totalItems === 1
-                ? "1 item"
-                : `${list.totalItems} items`}{" "}
-            ·{" "}
+            {list.totalItems === 1 ? "1 item" : `${list.totalItems} items`} ·{" "}
             {new Date(list.updatedAt ?? list.createdAt).toLocaleString()}
           </p>
           {list.updatedAt &&
@@ -301,24 +287,6 @@ function GroceryListCard({
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {/* Photos sit above the items so they're read before any pricing —
-            on a photo-only list they ARE the order. */}
-        {photos.length ? (
-          <>
-            <GroceryListPhotos photos={photos} listCode={list.code} />
-            {/* AI turns the photos into item suggestions the shopkeeper
-                reviews — only their confirm writes to the list. Hidden once
-                the order is closed. */}
-            {list.status !== "cancelled" && list.status !== "completed" ? (
-              <PhotoItemSuggestions
-                listId={list._id}
-                saving={saving}
-                onConfirm={onAddItems}
-              />
-            ) : null}
-          </>
-        ) : null}
-
         {hasItems ? (
           <>
           {/* Packing progress — tick each item as it's packed so none is missed */}
@@ -550,9 +518,7 @@ function GroceryListCard({
           </>
         ) : (
           <p className="text-sm text-muted-foreground">
-            {photos.length
-              ? "No typed items — the customer sent photos instead. Read the photos above, then add each item below to price it."
-              : "No items in this list yet."}
+            No items in this list yet.
           </p>
         )}
 

@@ -23,15 +23,9 @@ export type GroceryListItem = {
   available: boolean; // false = shop marked it out of stock
 };
 
-// A photo the customer sent with their list: a handwritten note, or the
-// packet of what they want. Stored on Cloudinary like every other image.
-export type GroceryListPhoto = {
-  url: string;
-  publicId: string;
-};
-
-// How many photos one list may carry.
-export const MAX_LIST_PHOTOS = 3;
+// A list holds no photos. A customer may photograph their handwritten paper,
+// but that photo is read into items the moment it is taken and then thrown
+// away - so what is stored is the text they checked, never the image.
 
 export type GroceryList = {
   user: Types.ObjectId;
@@ -39,7 +33,6 @@ export type GroceryList = {
   customerEmail: string;
   customerPhone: string;
   items: GroceryListItem[];
-  photos: GroceryListPhoto[];
   totalItems: number;
   totalAmount: number; // 0 until priced
   status: GroceryListStatus;
@@ -116,24 +109,10 @@ const GroceryListSchema = new Schema<GroceryList>(
       type: [GroceryListItemSchema],
       default: [],
     },
-    photos: {
-      type: [
-        new Schema<GroceryListPhoto>(
-          {
-            url: { type: String, required: true, trim: true },
-            publicId: { type: String, required: true, trim: true },
-          },
-          { _id: false },
-        ),
-      ],
-      default: [],
-    },
     totalItems: {
       type: Number,
       required: true,
-      // A photo of a handwritten list is an order with no typed items yet —
-      // the shop reads the photo and adds them — so 0 is legitimate here.
-      min: 0,
+      min: 1,
     },
     totalAmount: {
       type: Number,

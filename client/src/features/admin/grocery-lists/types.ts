@@ -18,12 +18,6 @@ export type AdminGroceryListItem = {
   available?: boolean;
 };
 
-// A photo the customer attached to the list — a snap of a handwritten list or
-// of the packet they want. Cloudinary https url, up to 3 per list.
-export type GroceryListPhoto = {
-  url: string;
-};
-
 export type AdminConversation = {
   listId: string;
   code: string;
@@ -49,9 +43,6 @@ export type AdminGroceryList = {
   customerEmail: string;
   customerPhone: string;
   items: AdminGroceryListItem[];
-  // Optional: lists sent before photos existed come back without the field,
-  // so never index into it without a fallback.
-  photos?: GroceryListPhoto[];
   totalItems: number;
   totalAmount: number;
   status: GroceryListStatus;
@@ -90,23 +81,6 @@ export type SetGroceryListPricesBody = {
 export type AddGroceryListItemBody = {
   name: string;
   quantity: string;
-};
-
-// One item the AI photo reader suggests from a handwritten-list photo.
-// Suggestions are a draft: the shopkeeper reviews and confirms before any of
-// them reach the list.
-export type ParsedPhotoItem = {
-  name: string;
-  quantity: string;
-  confidence: "high" | "medium" | "low";
-};
-
-export type ParsePhotosResponse = {
-  suggestions: ParsedPhotoItem[];
-};
-
-export type BulkAddItemsBody = {
-  items: Array<{ name: string; quantity: string }>;
 };
 
 export type UpdateGroceryListStatusBody = {

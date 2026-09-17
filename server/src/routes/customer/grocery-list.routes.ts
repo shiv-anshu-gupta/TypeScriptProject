@@ -15,10 +15,8 @@ import {
   GroceryList,
   GroceryListDocument,
   GroceryListItem,
-  type GroceryListPhoto,
-  MAX_LIST_PHOTOS,
 } from "../../models/GroceryList";
-import { uploadManyBuffersToCloudinary } from "../../utils/cloudinary";
+import { parseGroceryListPhotos } from "../../services/photo-list-parser";
 import { Message, MessageDocument } from "../../models/Message";
 import {
   cleanField,
@@ -43,7 +41,6 @@ function mapGroceryList(item: GroceryListDocument) {
       price: listItem.price,
       available: listItem.available !== false,
     })),
-    photos: (item.photos ?? []).map((photo) => ({ url: photo.url })),
     totalItems: item.totalItems,
     totalAmount: item.totalAmount,
     status: item.status,
@@ -74,13 +71,17 @@ export const customerGroceryListRouter = Router();
 
 customerGroceryListRouter.use(requireAuth);
 
-const PHOTO_FOLDER = "ecommerce-monster-video/list-photos";
+// A photo of a handwritten list is read and thrown away in the same request:
+// it is held in memory only (never on disk, never on Cloudinary, never in the
+// database), because what the customer keeps is the TEXT it becomes on their
+// list — where they can correct anything the reader got wrong.
 const MAX_PHOTO_BYTES = 6 * 1024 * 1024;
+const MAX_PHOTOS_PER_READ = 3;
 const PHOTO_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
-const uploadPhotos = multer({
+const receivePhotos = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: MAX_PHOTO_BYTES, files: MAX_LIST_PHOTOS },
+  limits: { fileSize: MAX_PHOTO_BYTES, files: MAX_PHOTOS_PER_READ },
   fileFilter: (_req, file, done) => {
     if (PHOTO_TYPES.has(file.mimetype)) done(null, true);
     else done(new AppError(400, "Send a JPG, PNG or WebP photo"));
@@ -89,14 +90,14 @@ const uploadPhotos = multer({
 
 // Multer reports its limits as its own error type; turn those into a clear 400.
 function acceptPhotos(req: Request, res: Response, next: NextFunction) {
-  uploadPhotos.array("photos", MAX_LIST_PHOTOS)(req, res, (err: unknown) => {
+  receivePhotos.array("photos", MAX_PHOTOS_PER_READ)(req, res, (err: unknown) => {
     if (err instanceof multer.MulterError) {
       return next(
         new AppError(
           400,
           err.code === "LIMIT_FILE_SIZE"
             ? "Each photo must be under 6 MB"
-            : `Send at most ${MAX_LIST_PHOTOS} photos`,
+            : `Send at most ${MAX_PHOTOS_PER_READ} photos at a time`,
         ),
       );
     }
@@ -104,43 +105,29 @@ function acceptPhotos(req: Request, res: Response, next: NextFunction) {
   });
 }
 
-// The app uploads the photos first and sends what comes back with the list.
-// Only images this server put on Cloudinary are accepted there, so a list can
-// never be made to point at some other address.
-function cleanPhotos(raw: unknown): GroceryListPhoto[] {
-  const list = Array.isArray(raw) ? raw : [];
-  const photos: GroceryListPhoto[] = [];
-
-  for (const entry of list.slice(0, MAX_LIST_PHOTOS)) {
-    const item = (entry ?? {}) as Record<string, unknown>;
-    const url = cleanField(item.url, 300);
-    const publicId = cleanField(item.publicId, 200);
-    if (!publicId.startsWith(`${PHOTO_FOLDER}/`)) continue;
-    if (!/^https:\/\/res\.cloudinary\.com\//.test(url)) continue;
-    photos.push({ url, publicId });
-  }
-
-  return photos;
-}
-
-// Upload the photos for a list. Returns what to send back with the list.
+// Read a photo of the customer's handwritten list and hand back the items as
+// text, for the app to write onto their list. Nothing is stored: the photo
+// lives only in this request's memory, and the customer is the one who checks
+// and corrects what the reader made of it before the shop ever sees it.
 customerGroceryListRouter.post(
-  "/grocery-lists/photos",
+  "/grocery-lists/read-photo",
   acceptPhotos,
   asyncHandler(async (req: Request, res: Response) => {
-    await getDbUserFromReq(req);
+    const dbUser = await getDbUserFromReq(req);
     const files = (req.files || []) as Express.Multer.File[];
 
     if (!files.length) {
       throw new AppError(400, "Choose at least one photo");
     }
 
-    const uploaded = await uploadManyBuffersToCloudinary(
-      files.map((file) => file.buffer),
-      PHOTO_FOLDER,
+    const parsed = await parseGroceryListPhotos(
+      files.map((file) => ({ mimeType: file.mimetype, buffer: file.buffer })),
+      String(dbUser._id),
     );
 
-    res.json(ok({ photos: uploaded }));
+    // Say plainly that nothing was found, rather than returning an empty list
+    // the app would have to guess about.
+    res.json(ok({ readable: parsed.readable, items: parsed.items }));
   }),
 );
 
@@ -172,12 +159,10 @@ customerGroceryListRouter.post(
       available: true,
     }));
 
-    const photos = cleanPhotos(req.body.photos);
-
-    // A photo of a handwritten list is an order in itself, so either one is
-    // enough - but not neither.
-    if (!items.length && !photos.length) {
-      throw new AppError(400, "Add at least one item, or send a photo");
+    // A list is its items. A photo is only a faster way to write them down:
+    // by the time a list is sent, the customer has already checked the text.
+    if (!items.length) {
+      throw new AppError(400, "Add at least one item");
     }
 
     // If the customer already has a not-yet-priced list from the SAME shopping
@@ -217,12 +202,6 @@ customerGroceryListRouter.post(
       mergeTarget.set("items", mergedItems);
       mergeTarget.totalItems = mergedItems.length;
 
-      if (photos.length) {
-        mergeTarget.set(
-          "photos",
-          [...(mergeTarget.photos ?? []), ...photos].slice(0, MAX_LIST_PHOTOS),
-        );
-      }
       if (!mergeTarget.customerPhone && customerPhone) {
         mergeTarget.customerPhone = customerPhone;
       }
@@ -261,7 +240,6 @@ customerGroceryListRouter.post(
       customerEmail: dbUser.email || "",
       customerPhone,
       items,
-      photos,
       totalItems: items.length,
       totalAmount: 0,
       status: "received",

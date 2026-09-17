@@ -6,7 +6,6 @@ import type {
 } from "./types";
 import {
   addAdminGroceryListItem,
-  addAdminGroceryListItemsBulk,
   getAdminGroceryLists,
   markAdminGroceryListPaid,
   setAdminGroceryListItemAvailability,
@@ -240,38 +239,6 @@ export function useAdminGroceryLists() {
     }
   }
 
-  // Add a reviewed batch of items in one request (the AI photo reader's
-  // confirmed suggestions). One request, one customer notification.
-  async function addItemsBulk(
-    listId: string,
-    items: Array<{ name: string; quantity: string }>,
-  ) {
-    const cleaned = items
-      .map((item) => ({ name: item.name.trim(), quantity: item.quantity.trim() }))
-      .filter((item) => item.name);
-    if (!cleaned.length) return;
-    try {
-      setSavingListId(listId);
-      const response = await addAdminGroceryListItemsBulk(listId, {
-        items: cleaned,
-      });
-      setLists((response ?? { items: [] }).items);
-      // drop stale drafts so the new items' inputs seed fresh
-      setPriceDrafts((prev) => {
-        const next = { ...prev };
-        delete next[listId];
-        return next;
-      });
-      setRateDrafts((prev) => {
-        const next = { ...prev };
-        delete next[listId];
-        return next;
-      });
-    } finally {
-      setSavingListId("");
-    }
-  }
-
   // Edit an existing item's name / quantity (price drafts kept — same count).
   async function editItem(
     listId: string,
@@ -360,7 +327,6 @@ export function useAdminGroceryLists() {
     markPaid,
     setItemAvailability,
     addItem,
-    addItemsBulk,
     editItem,
   };
 }

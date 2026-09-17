@@ -26,7 +26,7 @@ import {
   ROW_HEIGHT,
 } from "@/components/GroceryListEditor";
 import { SendListButton } from "@/components/SendListButton";
-import { DraftPhotos } from "@/components/DraftPhotos";
+import { ScanListPhoto } from "@/components/ScanListPhoto";
 
 const SCROLL_PAD_TOP = 12; // space above the paper inside the scroll area
 const FOCUS_MARGIN = 20; // keep the line being typed in this far from the edges
@@ -278,10 +278,10 @@ export function GroceryListSheet() {
             <SendListButton variant="pill" />
           </View>
 
-          {/* Photograph the list instead of typing it - right under the
+          {/* Photograph the paper instead of typing it out - right under the
               header, where it is seen before the first line is written. */}
           <View className="border-b border-border/60 py-3">
-            <DraftPhotos />
+            <ScanListPhoto />
           </View>
 
           <ScrollView

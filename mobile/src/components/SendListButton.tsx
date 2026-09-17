@@ -26,7 +26,6 @@ export function SendListButton({ variant }: SendListButtonProps) {
   const { t } = useTranslation();
   const {
     filledRows,
-    photoCount,
     submitting,
     send,
     phonePromptOpen,
@@ -34,8 +33,7 @@ export function SendListButton({ variant }: SendListButtonProps) {
     submitWithPhone,
   } = useSendDraft();
   const count = filledRows.length;
-  // A list with only photos is still sendable.
-  const canSend = count > 0 || photoCount > 0;
+  const canSend = count > 0;
 
   const onSend = () => {
     Keyboard.dismiss(); // let the customer see it sending

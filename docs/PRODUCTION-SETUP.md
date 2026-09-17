@@ -53,6 +53,7 @@ production on `skirana.com`. No secret values are written here.
 | Vercel server | `APP_LATEST_VERSION` | `1.0.2` |
 | Vercel server | `CORS_ORIGINS` | old value + `https://www.skirana.com,https://skirana.com` |
 | Vercel server | `ADMIN_EMAILS` | emails that get admin rights on sign-up |
+| Vercel server | `GEMINI_API_KEY` | reads a photo of a handwritten list into items. Without it the app says "reading photos isn't switched on" and the customer types instead — nothing else breaks. |
 | Vercel admin | `VITE_CLERK_PUBLISHABLE_KEY` | `pk_live_Y2xlcmsuc2tpcmFuYS5jb20k` |
 | Your PC only | `client/.env`, `server/.env`, **`mobile/.env.development.local`** | keep `pk_test` / `sk_test` (live keys don't work on localhost) |
 
@@ -97,3 +98,5 @@ All Clerk records are **DNS only (grey cloud)**. Orange/proxied breaks login.
 - [ ] Release 1.0.2 to production (India, staged 20%), new store screenshots
 - [ ] Later: phone OTP login (VerifyNow) + update privacy policy (still says email sign-in)
 - [ ] Delete the 3 broken seed banners (Admin → Settings → Banners)
+- [ ] Add `GEMINI_API_KEY` on the Vercel server project + Redeploy (photo → items)
+- [ ] If reading a photo times out in production: Vercel → server project → Settings → Functions → raise **Max Duration** (a read takes ~10-20s)

@@ -82,23 +82,17 @@ AppState.addEventListener("change", (state) => {
   if (state !== "active") writeNow();
 });
 
-// A photo picked on the phone but not yet sent. Only the local file is kept:
-// it is uploaded when the list is sent, so a photo is never uploaded for a
-// list the customer decides not to send.
-export type DraftPhoto = {
-  // Unique per pick, so removing the right one never depends on the file name.
-  id: string;
-  uri: string;
+// One line read off a photo of the customer's handwritten list.
+export type ScannedLine = {
+  name: string;
+  quantity: string;
 };
 
-// Kept in step with the server (MAX_LIST_PHOTOS).
-export const MAX_DRAFT_PHOTOS = 3;
+// How many photos may be read in one go (kept in step with the server).
+export const MAX_PHOTOS_PER_SCAN = 3;
 
 type DraftListStore = {
   rows: DraftRow[];
-  // Not saved to disk: these point at files in the app's cache, which Android
-  // may clear. A photo is picked and sent in the same sitting.
-  photos: DraftPhoto[];
   hydrated: boolean;
   nextId: number;
   hydrate: () => Promise<void>;
@@ -111,15 +105,14 @@ type DraftListStore = {
   ensureRows: (count: number) => void;
   addProduct: (name: string, unit?: string, unitValue?: number) => void;
   addProductWithQuantity: (name: string, quantity: string) => void;
-  // Photos of a handwritten list, or of the packet the customer wants.
-  addPhotos: (uris: string[]) => void;
-  removePhoto: (id: string) => void;
+  // Write what a photo of the handwritten list was read as onto the paper,
+  // in ordinary editable lines. Returns how many lines it wrote.
+  addScannedLines: (lines: ScannedLine[]) => number;
   clearDraft: () => void;
 };
 
 export const useDraftListStore = create<DraftListStore>((set, get) => ({
   rows: makeInitialRows(),
-  photos: [],
   hydrated: false,
   nextId: INITIAL_ROWS + 1,
 
@@ -287,23 +280,57 @@ export const useDraftListStore = create<DraftListStore>((set, get) => ({
     set({ rows: padded, nextId: counter });
   },
 
-  addPhotos: (uris) =>
-    set((state) => {
-      const room = MAX_DRAFT_PHOTOS - state.photos.length;
-      if (room <= 0) return state;
-      const added = uris.slice(0, room).map((uri) => ({
-        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        uri,
-      }));
-      return { photos: [...state.photos, ...added] };
-    }),
+  // What a photo was read as goes onto the paper exactly like typed lines -
+  // same rows, same editing - because the reader can misread a word and the
+  // customer must be able to fix it before the list is sent. Nothing about
+  // the photo is kept once this has run.
+  addScannedLines: (lines) => {
+    let written = 0;
 
-  removePhoto: (id) =>
-    set((state) => ({ photos: state.photos.filter((p) => p.id !== id) })),
+    set((state) => {
+      let counter = state.nextId;
+      const takeId = () => counter++;
+      let rows = state.rows;
+
+      for (const line of lines) {
+        const name = stripSpecials(line.name).trim();
+        if (!name) continue;
+        const quantity = stripSpecials(line.quantity ?? "").trim();
+
+        // The same item written twice (on the paper, or already typed) should
+        // not become two lines - fill in the quantity instead.
+        const existing = rows.find(
+          (row) => row.name.trim().toLowerCase() === name.toLowerCase(),
+        );
+        if (existing) {
+          if (quantity && !existing.quantity.trim()) {
+            rows = rows.map((row) =>
+              row.id === existing.id ? { ...row, quantity } : row,
+            );
+          }
+          continue;
+        }
+
+        const firstBlank = rows.find((row) => !isRowFilled(row));
+        rows = firstBlank
+          ? rows.map((row) =>
+              row.id === firstBlank.id ? { ...row, name, quantity } : row,
+            )
+          : [...rows, { id: takeId(), name, quantity }];
+        written += 1;
+      }
+
+      const next = withTrailingBlank(rows, takeId);
+      persist(next);
+      return { rows: next, nextId: counter };
+    });
+
+    return written;
+  },
 
   clearDraft: () => {
     const rows = makeInitialRows();
     persist(rows);
-    set({ rows, photos: [], nextId: INITIAL_ROWS + 1 });
+    set({ rows, nextId: INITIAL_ROWS + 1 });
   },
 }));

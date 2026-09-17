@@ -1,6 +1,6 @@
 import { apiGet, apiPatch, apiPost } from "@/lib/api";
 import type {
-  UploadedPhoto,
+  ReadPhotoResponse,
   ChatMessage,
   ChatMessagesResponse,
   CustomerGroceryList,
@@ -17,9 +17,15 @@ export async function submitGroceryList(body: SubmitGroceryListBody) {
   >("/customer/grocery-lists", body);
 }
 
-// Upload the photos picked for a list. Sent as a file upload; the server
-// answers with the addresses to send back with the list itself.
-export async function uploadListPhotos(uris: string[]) {
+// Reading a photo means a call to a vision model on the server; that takes
+// several seconds, well past the ordinary request timeout.
+const READ_PHOTO_TIMEOUT_MS = 60000;
+
+// Send a photo of a handwritten list up to be READ, and get the items back as
+// text for the customer's own list. The photo is not stored anywhere - not on
+// the server, not in the order - so this is the only moment it exists beyond
+// the phone.
+export async function readListPhotos(uris: string[]) {
   const form = new FormData();
   uris.forEach((uri, index) => {
     const extension = uri.split(".").pop()?.toLowerCase();
@@ -33,9 +39,10 @@ export async function uploadListPhotos(uris: string[]) {
     } as unknown as Blob);
   });
 
-  return apiPost<{ photos: UploadedPhoto[] }, FormData>(
-    "/customer/grocery-lists/photos",
+  return apiPost<ReadPhotoResponse, FormData>(
+    "/customer/grocery-lists/read-photo",
     form,
+    { timeout: READ_PHOTO_TIMEOUT_MS },
   );
 }
 
