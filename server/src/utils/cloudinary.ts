@@ -76,7 +76,7 @@ export async function uploadManyBuffersToCloudinary(
 //
 // Cloudinary does the work in the URL, so nothing has to be re-uploaded and
 // nothing in the database changes:
-//   f_auto  - WebP / AVIF to browsers and phones that take it
+//   f_webp  - the format, named outright (see FORMAT below for why)
 //   q_auto  - drop quality only as far as the eye won't notice
 //   c_limit - shrink to the width below; never enlarge a small picture
 //
@@ -85,7 +85,10 @@ export async function uploadManyBuffersToCloudinary(
 // The widths below are already generous enough for a 2x screen.
 const VARIANTS = {
   thumb: 200, // category chips, tiny rows
-  card: 400, // product grid, home rails
+  // A card is ~163-188dp wide in a 2-column grid, and Android phones run at
+  // 2.6-3x, so ~490 real pixels. 400 was visibly soft on a 1080p screen; in
+  // WebP the extra width costs about what the old JPEG did.
+  card: 500, // product grid, home rails
   detail: 900, // the product's own page
   banner: 1200, // full-width promo strip
 } as const;
@@ -97,15 +100,29 @@ export type ImageVariant = keyof typeof VARIANTS;
 // and transformations go in directly after "/upload/".
 const UPLOAD_MARKER = "/image/upload/";
 
+// WebP is named outright rather than left to f_auto.
+//
+// f_auto picks the format from the browser's Accept header - and the app is
+// not a browser. Measured on a real product picture: the app's own HTTP
+// clients (OkHttp/Glide on Android, SDWebImage on iOS) send no WebP in their
+// Accept header, so Cloudinary fell back to JPEG and served 33.7 KB where
+// WebP is 22.8 KB - a third of the bytes, wasted, on every card.
+//
+// Naming WebP is safe everywhere this app reaches: Android has decoded it
+// since 4.0, expo-image bundles a decoder for iOS, and every browser the
+// admin panel runs in takes it. AVIF would be smaller again above ~300px,
+// but not on every phone - that is a later decision, not a default.
+const FORMAT = "f_webp";
+
 export function cdnImage(url: string, variant: ImageVariant): string {
   // Anything not served by Cloudinary (a seeded link, an empty field) is
   // handed back untouched - a picture that loads slowly beats none at all.
   if (!url || !url.includes(UPLOAD_MARKER)) return url;
-  // Already carries a transformation (f_auto marks ours): leave it alone.
-  if (url.includes(`${UPLOAD_MARKER}f_auto`)) return url;
+  // Already carries one of our transformations: leave it alone.
+  if (/\/image\/upload\/f_(auto|webp)/.test(url)) return url;
 
   const [origin, rest] = url.split(UPLOAD_MARKER);
-  return `${origin}${UPLOAD_MARKER}f_auto,q_auto,c_limit,w_${VARIANTS[variant]}/${rest}`;
+  return `${origin}${UPLOAD_MARKER}${FORMAT},q_auto,c_limit,w_${VARIANTS[variant]}/${rest}`;
 }
 
 // Best-effort removal of images the admin deleted. We never let a failed

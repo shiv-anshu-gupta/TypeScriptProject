@@ -1,15 +1,14 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { Image } from "expo-image";
 import { Feather } from "@expo/vector-icons";
 import { useClerk } from "@clerk/clerk-expo";
 import { useTranslation } from "react-i18next";
 
-import { useDraftListStore } from "@/features/customer/draft-list/store";
+import { useQuantitySheetStore } from "@/features/customer/quantity-sheet/store";
 import { useCustomerWishlistStore } from "@/features/customer/wishlist/store";
 import { toast } from "@/lib/toast";
 import { formatPack } from "@/lib/utils";
-import { QuantitySheet } from "@/components/QuantitySheet";
 
 export type ProductCardData = {
   id: string;
@@ -22,17 +21,16 @@ export type ProductCardData = {
 
 type ProductCardProps = {
   product: ProductCardData;
-  onPress?: () => void;
+  // Given the product's id, so a list can pass one stable handler and the
+  // memoised card isn't re-rendered by a new closure on every scroll.
+  onPress?: (id: string) => void;
 };
 
-export function ProductCard({ product, onPress }: ProductCardProps) {
+function ProductCardView({ product, onPress }: ProductCardProps) {
   const { t } = useTranslation();
   const clerk = useClerk();
-  const addProductWithQuantity = useDraftListStore(
-    (state) => state.addProductWithQuantity,
-  );
+  const askQuantity = useQuantitySheetStore((state) => state.open);
   const packLabel = formatPack(product.unit, product.unitValue);
-  const [sheetOpen, setSheetOpen] = useState(false);
 
   // Wishlist heart. Each card watches only its OWN saved/not-saved answer, so
   // saving one product doesn't re-render every card in the grid.
@@ -66,7 +64,7 @@ export function ProductCard({ product, onPress }: ProductCardProps) {
 
   return (
     <Pressable
-      onPress={onPress}
+      onPress={() => onPress?.(product.id)}
       // w-full (not flex-1): the card's height comes from its own content
       // (image aspect-ratio + text). flex-1 collapsed to zero height inside a
       // plain ScrollView on the Home screen. w-full works in both the Home
@@ -78,7 +76,19 @@ export function ProductCard({ product, onPress }: ProductCardProps) {
           source={{ uri: product.image }}
           style={{ width: "100%", height: "100%" }}
           contentFit="cover"
-          transition={200}
+          // Deliberately no `transition`. On Android, a cross-fade that is
+          // still running when the source changes leaves the picture BLANK -
+          // expo/expo#35664, fixed in expo-image 56.0.11, and SDK 54 pins
+          // 3.0.11. That is the "images vanish when I scroll back up" bug.
+          //
+          // memory-disk because expo-image's default is `disk` ALONE: without
+          // this every picture is re-read and re-decoded from storage each
+          // time it scrolls back into view, which is what made the grid feel
+          // slow on a cheap phone.
+          cachePolicy="memory-disk"
+          // Identity of the picture in a reused cell, so a recycled card can
+          // never show the previous product's photo.
+          recyclingKey={product.id}
         />
 
         {/* Wishlist heart — same action as the one on the details screen.
@@ -108,7 +118,13 @@ export function ProductCard({ product, onPress }: ProductCardProps) {
         {/* Quick "add to list" — opens the quantity picker. Nested Pressable
             takes the touch, so tapping it doesn't open the details page. */}
         <Pressable
-          onPress={() => setSheetOpen(true)}
+          onPress={() =>
+            askQuantity({
+              title: product.title,
+              unit: product.unit,
+              unitValue: product.unitValue,
+            })
+          }
           hitSlop={8}
           className="absolute bottom-2 right-2 h-10 w-10 items-center justify-center rounded-full bg-primary shadow-lg active:opacity-80"
           style={{
@@ -122,18 +138,6 @@ export function ProductCard({ product, onPress }: ProductCardProps) {
           <Feather name="plus" size={20} color="#ffffff" />
         </Pressable>
       </View>
-
-      <QuantitySheet
-        open={sheetOpen}
-        onClose={() => setSheetOpen(false)}
-        title={product.title}
-        unit={product.unit}
-        unitValue={product.unitValue}
-        onConfirm={(quantity) => {
-          addProductWithQuantity(product.title, quantity);
-          toast.success(t("product.added"));
-        }}
-      />
 
       <View className="gap-1 p-3">
         <Text className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
@@ -151,3 +155,8 @@ export function ProductCard({ product, onPress }: ProductCardProps) {
     </Pressable>
   );
 }
+
+// A grid of these re-renders whenever anything on the Shop screen changes -
+// the search box, the sort, the draft count. Each card only depends on its
+// own product, so it is compared by identity and skipped otherwise.
+export const ProductCard = memo(ProductCardView);

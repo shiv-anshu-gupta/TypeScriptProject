@@ -124,5 +124,18 @@ const ProductSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+// Every catalogue query filters on `status` and sorts by `createdAt`, and
+// without these the database reads the WHOLE collection and sorts it in
+// memory for each one - measured on the live data: `keysExamined: 0`, a
+// COLLSCAN feeding a blocking SORT. That is survivable at 84 products and is
+// not at a few thousand.
+//
+// The first two are both needed: an index on (status, category, createdAt)
+// cannot serve a plain (status) query sorted by date, because within it dates
+// are only ordered inside each category.
+ProductSchema.index({ status: 1, createdAt: -1 });
+ProductSchema.index({ status: 1, category: 1, createdAt: -1 });
+ProductSchema.index({ status: 1, brand: 1, createdAt: -1 });
+
 export const Product =
   mongoose.models.Product || mongoose.model<Product>("Product", ProductSchema);

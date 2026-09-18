@@ -9,6 +9,9 @@ import {
 } from "@/features/customer/draft-list/quantity";
 import { formatPack } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
+import { useDraftListStore } from "@/features/customer/draft-list/store";
+import { useQuantitySheetStore } from "@/features/customer/quantity-sheet/store";
+import { toast } from "@/lib/toast";
 import { Sheet } from "@/components/ui/Sheet";
 import { QuantityControl } from "@/components/QuantityControl";
 
@@ -87,5 +90,34 @@ export function QuantitySheet({
         />
       </View>
     </Sheet>
+  );
+}
+
+// The app's single quantity picker, mounted once at the root. Every product
+// card opens THIS one through the store, so a grid of cards carries no sheets
+// of its own.
+export function QuantitySheetHost() {
+  const { t } = useTranslation();
+  const target = useQuantitySheetStore((state) => state.target);
+  const close = useQuantitySheetStore((state) => state.close);
+  const addProductWithQuantity = useDraftListStore(
+    (state) => state.addProductWithQuantity,
+  );
+
+  return (
+    <QuantitySheet
+      open={Boolean(target)}
+      onClose={close}
+      // Kept from the last product while the sheet slides away, so the title
+      // doesn't blank out mid-animation.
+      title={target?.title ?? ""}
+      unit={target?.unit}
+      unitValue={target?.unitValue}
+      onConfirm={(quantity) => {
+        if (!target) return;
+        addProductWithQuantity(target.title, quantity);
+        toast.success(t("product.added"));
+      }}
+    />
   );
 }

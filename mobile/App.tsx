@@ -19,6 +19,7 @@ import { usePushNotifications } from "@/features/customer/push/use-push-notifica
 import { RootNavigator } from "@/navigation/RootNavigator";
 import { Toaster } from "@/components/Toaster";
 import { GroceryListSheet } from "@/components/GroceryListSheet";
+import { QuantitySheetHost } from "@/components/QuantitySheet";
 import { UpdatePrompt } from "@/components/UpdatePrompt";
 import { StoreUpdatePrompt } from "@/components/StoreUpdatePrompt";
 import { SplashScreen } from "@/screens/SplashScreen";
@@ -132,6 +133,8 @@ export default function App() {
               <RootNavigator />
               {/* Slides up over everything when the centre tab button is tapped */}
               <GroceryListSheet />
+              {/* One quantity picker for every product card in the app */}
+              <QuantitySheetHost />
               <UpdatePrompt />
               {/* Play Store (native release) update prompt — on top of the OTA one */}
               <StoreUpdatePrompt />

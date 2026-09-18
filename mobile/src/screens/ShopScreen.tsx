@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -187,6 +187,35 @@ export function ShopScreen() {
     countSendableRows(state.rows),
   );
 
+  // One object per product, kept until the products change - a fresh object
+  // literal per render would make the memoised card useless.
+  const cards = useMemo(
+    () =>
+      products.map((item) => ({
+        id: item._id,
+        title: item.title,
+        brand: item.brand,
+        image: getCoverImage(item),
+        unit: item.unit,
+        unitValue: item.unitValue,
+      })),
+    [products],
+  );
+
+  const openProduct = useCallback(
+    (productId: string) => navigation.navigate("ProductDetails", { productId }),
+    [navigation],
+  );
+
+  const renderCard = useCallback(
+    ({ item }: { item: (typeof cards)[number] }) => (
+      <View style={{ width: "48.5%", marginBottom: 12 }}>
+        <ProductCard product={item} onPress={openProduct} />
+      </View>
+    ),
+    [openProduct],
+  );
+
   return (
     <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
       <View className="border-b border-border px-4 pb-3 pt-2">
@@ -311,31 +340,19 @@ export function ShopScreen() {
             // Virtualized: only visible cards are mounted, so the grid stays
             // fast no matter how many products the shop adds.
             <FlatList
-              data={products}
-              keyExtractor={(item) => item._id}
+              data={cards}
+              keyExtractor={(item) => item.id}
               numColumns={2}
               columnWrapperStyle={{ justifyContent: "space-between" }}
               contentContainerStyle={{ padding: 12, paddingBottom: 90 }}
               showsVerticalScrollIndicator={false}
-              renderItem={({ item }) => (
-                <View style={{ width: "48.5%", marginBottom: 12 }}>
-                  <ProductCard
-                    product={{
-                      id: item._id,
-                      title: item.title,
-                      brand: item.brand,
-                      image: getCoverImage(item),
-                      unit: item.unit,
-                      unitValue: item.unitValue,
-                    }}
-                    onPress={() =>
-                      navigation.navigate("ProductDetails", {
-                        productId: item._id,
-                      })
-                    }
-                  />
-                </View>
-              )}
+              renderItem={renderCard}
+              // The grid is two columns of fixed-shape cards: a screenful is
+              // about 6, so render a screenful and a bit at first and keep a
+              // few screens either side rather than the default ten.
+              initialNumToRender={8}
+              windowSize={7}
+              maxToRenderPerBatch={8}
             />
           )}
         </View>
