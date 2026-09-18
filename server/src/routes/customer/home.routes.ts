@@ -11,6 +11,7 @@ import { Category } from "../../models/Category";
 import { Product } from "../../models/Product";
 import { Promo } from "../../models/Promo";
 import { ok } from "../../utils/envelope";
+import { cdnImage } from "../../utils/cloudinary";
 
 type BannerRow = {
   _id: Types.ObjectId;
@@ -50,7 +51,7 @@ async function resolveBannerLinks(banners: BannerRow[]) {
           : { type };
     return {
       _id: String(banner._id),
-      imageUrl: banner.imageUrl,
+      imageUrl: cdnImage(banner.imageUrl, "banner"),
       title: banner.title ?? "",
       link,
       createdAt: banner.createdAt.toISOString(),
@@ -120,13 +121,15 @@ customerHomeRouter.get(
         categories: categories.map((categoryItem) => ({
           _id: String(categoryItem._id),
           name: categoryItem.name,
-          imageUrl: categoryItem.imageUrl || "",
+          imageUrl: cdnImage(categoryItem.imageUrl || "", "thumb"),
         })),
         recentProducts: recentProducts.map((recentProductItem) => {
-          const image =
+          const image = cdnImage(
             recentProductItem.images.find((item) => item.isCover)?.url ||
-            recentProductItem.images[0]?.url ||
-            "";
+              recentProductItem.images[0]?.url ||
+              "",
+            "card",
+          );
 
           return {
             _id: String(recentProductItem._id),

@@ -8,6 +8,7 @@ import { ok } from "../../utils/envelope";
 import { requireFound, requireNumber, requireText } from "../../utils/helpers";
 import { Product } from "../../models/Product";
 import { AppError } from "../../utils/AppError";
+import { sizedProduct } from "../../utils/productImages";
 import {
   deleteFromCloudinary,
   uploadManyBuffersToCloudinary,
@@ -146,7 +147,7 @@ adminProductRouter.get(
       .populate("category", "name")
       .sort({ createdAt: -1 });
 
-    res.json(ok(products));
+    res.json(ok(products.map((item) => sizedProduct(item, "card"))));
   }),
 );
 
@@ -162,7 +163,7 @@ adminProductRouter.get(
 
     requireText(product, "Product not found", 404);
 
-    res.json(ok(product));
+    res.json(ok(sizedProduct(product, "card")));
   }),
 );
 
@@ -365,7 +366,7 @@ adminProductRouter.put(
       "name",
     );
 
-    res.json(ok(updatedProduct));
+    res.json(ok(sizedProduct(updatedProduct, "card")));
   }),
 );
 

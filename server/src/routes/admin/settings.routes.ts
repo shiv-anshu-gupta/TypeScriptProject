@@ -19,6 +19,7 @@ import {
 } from "express";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { ok } from "../../utils/envelope";
+import { cdnImage } from "../../utils/cloudinary";
 import { AppError } from "../../utils/AppError";
 import { cleanField } from "../../utils/sanitizeItem";
 import {
@@ -104,7 +105,8 @@ function mapBanner(item: BannerDocument, names: Map<string, string>): AdminBanne
   const targetId = item.link?.targetId || undefined;
   return {
     _id: String(item._id),
-    imageUrl: item.imageUrl,
+    // The shop sees the same picture the app will, at the same size.
+    imageUrl: cdnImage(item.imageUrl, "banner"),
     imagePublicId: item.imagePublicId,
     title: item.title ?? "",
     isActive: item.isActive !== false,

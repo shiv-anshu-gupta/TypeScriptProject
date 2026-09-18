@@ -5,6 +5,7 @@ import { Category } from "../../models/Category";
 import { ok } from "../../utils/envelope";
 import { Product } from "../../models/Product";
 import { requireFound } from "../../utils/helpers";
+import { sizedProduct } from "../../utils/productImages";
 
 export const customerProductRouter = Router();
 
@@ -72,7 +73,7 @@ customerProductRouter.get(
         .populate("category", "name")
         .sort(sortOption);
 
-      res.json(ok(products));
+      res.json(ok(products.map((item) => sizedProduct(item, "card"))));
     },
   ),
 );
@@ -101,8 +102,8 @@ customerProductRouter.get(
 
     res.json(
       ok({
-        product: foundProduct,
-        relatedProducts,
+        product: sizedProduct(foundProduct, "detail"),
+        relatedProducts: relatedProducts.map((item) => sizedProduct(item, "card")),
       }),
     );
   }),

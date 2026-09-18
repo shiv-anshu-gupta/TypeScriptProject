@@ -3,6 +3,7 @@ import { getDbUserFromReq, requireAuth } from "../../middleware/auth";
 import { Product, ProductSize } from "../../models/Product";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { ok } from "../../utils/envelope";
+import { cdnImage } from "../../utils/cloudinary";
 import { Cart, CartItem } from "../../models/Cart";
 import { requireFound, requireText } from "../../utils/helpers";
 import { AppError } from "../../utils/AppError";
@@ -36,10 +37,13 @@ type SyncCartItemInput = {
 };
 
 function formatProduct(product: ProductPreview) {
-  const image =
+  // A cart row and a wishlist tile are small - card size covers both.
+  const image = cdnImage(
     product.images.find((item) => item.isCover)?.url ||
-    product.images[0]?.url ||
-    "";
+      product.images[0]?.url ||
+      "",
+    "card",
+  );
 
   return {
     productId: String(product._id),
