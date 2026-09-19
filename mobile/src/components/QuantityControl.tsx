@@ -1,3 +1,9 @@
+/**
+ * The unit-aware quantity stepper.
+ *
+ * @packageDocumentation
+ */
+
 import { useEffect, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
@@ -20,7 +26,27 @@ type QuantityControlProps = {
   onChange: (value: number) => void;
 };
 
-// A unit-aware quantity picker shared by the card sheet and the details screen.
+/**
+ * A minus/plus stepper with preset chips, showing the customer the exact
+ * quantity the shop will be sent.
+ *
+ * @remarks
+ * A unit-aware quantity picker shared by the card sheet and the details screen.
+ *
+ * The unit decides everything about how it behaves. Something countable steps
+ * whole units and shows a plain number; something loose steps in its own
+ * increments, offers preset chips and lets the number be typed. Bounds come
+ * from the same unit helpers, and the stepper button that would go past a
+ * limit is disabled rather than hidden.
+ *
+ * Controlled: it owns only the text being typed, and keeps that in step with
+ * `value` so the box, the preview and what Add sends can never disagree.
+ *
+ * @param unit - The product's selling unit. See the remarks — this is not
+ * decoration, it selects the whole interaction.
+ * @param unitValue - The pack size, for something sold in fixed packs.
+ * @param value - The number in the product's own unit, not a count of packs.
+ */
 export function QuantityControl({
   unit,
   unitValue,

@@ -1,3 +1,9 @@
+/**
+ * The promo strip at the top of the Home screen.
+ *
+ * @packageDocumentation
+ */
+
 import { useEffect, useRef, useState } from "react";
 import {
   AccessibilityInfo,
@@ -24,16 +30,40 @@ const PEEK = 28; // how much of the next banner shows, so the row reads as swipe
 const ASPECT = 0.46; // banner height / width - a wide promo strip
 const AUTOPLAY_MS = 4500;
 
-// Defined once: an inline component would be a new type on every render, so
-// the separators would remount on each autoplay tick.
+/**
+ * The space between two banners.
+ *
+ * @remarks
+ * Defined once: an inline component would be a new type on every render, so
+ * the separators would remount on each autoplay tick.
+ */
 function Gap() {
   return <View style={{ width: GAP }} />;
 }
 
-// Promo banners from the admin panel (Home banners): the live ones, in the
-// order the shop set. The design lives in the artwork itself; a banner can
-// also open something when tapped - the list sheet, the Shop, a category or
-// a product - as chosen in the admin panel.
+/**
+ * A swipeable row of promo pictures with page dots, which advances itself
+ * every few seconds.
+ *
+ * @remarks
+ * Promo banners from the admin panel (Home banners): the live ones, in the
+ * order the shop set. The design lives in the artwork itself; a banner can
+ * also open something when tapped - the list sheet, the Shop, a category or
+ * a product - as chosen in the admin panel.
+ *
+ * A banner only counts as tappable when this build understands its link type,
+ * so a newer server sending an unknown type leaves a picture rather than a
+ * dead button. Tapping can open the list sheet or navigate into the Shop tab
+ * or a product page.
+ *
+ * Autoplay stops while the Home tab is not focused, while a finger is on it,
+ * and when the system asks for reduced motion. Banners whose image fails to
+ * load are dropped rather than shown as a grey box, and the set of failures is
+ * cleared whenever fresh banners arrive, so a weak connection does not hide a
+ * banner permanently.
+ *
+ * Renders nothing when there is nothing left to show.
+ */
 export function BannerCarousel({ banners }: { banners: CustomerHomeBanner[] }) {
   const { width } = useWindowDimensions();
   const isFocused = useIsFocused();

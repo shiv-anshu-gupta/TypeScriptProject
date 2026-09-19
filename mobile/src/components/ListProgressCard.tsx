@@ -1,3 +1,9 @@
+/**
+ * Home's lead card: where the customer is in the list journey.
+ *
+ * @packageDocumentation
+ */
+
 import { Fragment } from "react";
 import { Pressable, Text, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
@@ -32,6 +38,18 @@ const STEP_STATES: Record<JourneyStage["kind"], StepState[]> = {
   ready: ["done", "done", "done", "current"],
 };
 
+/**
+ * One numbered step in the four-step strip.
+ *
+ * @remarks
+ * Every state occupies the same size slot, so the four labels stay on one line
+ * whichever step is lit.
+ *
+ * @param n - The step's position, shown only while it is still ahead of the
+ * customer. A finished step shows a tick and a waiting one a clock.
+ * @param state - Whose move it is: `current` is the customer's, `waiting` the
+ * shop's.
+ */
 function Step({
   n,
   label,
@@ -96,10 +114,25 @@ function Step({
   );
 }
 
-// The Home screen's lead card: the customer's list journey, live. It shows
-// which step they are on - write, send, wait for the price, collect - and
-// tapping it goes where that next step happens. It carries no button of its
-// own: the centre tab button already opens the list.
+/**
+ * The card at the top of Home telling the customer what to do next, with a
+ * four-step strip lit up to where they are.
+ *
+ * @remarks
+ * The Home screen's lead card: the customer's list journey, live. It shows
+ * which step they are on - write, send, wait for the price, collect - and
+ * tapping it goes where that next step happens. It carries no button of its
+ * own: the centre tab button already opens the list.
+ *
+ * The stage comes from `useListJourney`, which reads both the unsent draft and
+ * the sent orders, so this card needs no props and is never stale. Every
+ * stage produces a headline, an icon and a destination: writing and sending
+ * open the list sheet, everything later goes to the Lists tab, always on the
+ * Active status tab since the order it names is in progress.
+ *
+ * When more orders are in progress it says so but still opens Lists, where all
+ * of them are.
+ */
 export function ListProgressCard() {
   const { t } = useTranslation();
   const navigation = useNavigation<Nav>();

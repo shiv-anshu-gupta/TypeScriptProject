@@ -1,3 +1,9 @@
+/**
+ * Registering for order alerts, and reacting to one when it arrives.
+ *
+ * @packageDocumentation
+ */
+
 import { useEffect } from "react";
 import * as Notifications from "expo-notifications";
 import { useAuth } from "@clerk/clerk-expo";
@@ -7,6 +13,30 @@ import { savePushToken } from "./api";
 import { registeredPushToken, rememberPushToken } from "./registry";
 import { useCustomerGroceryListStore } from "../grocery-list/store";
 
+/**
+ * Registers this device for push once the customer signs in, and refreshes
+ * their lists whenever a notification arrives.
+ *
+ * @remarks
+ * Call it once, from the app root.
+ *
+ * Registration runs only when signed in and only once per session — a token
+ * already recorded in the registry skips it, so the operating system's
+ * permission dialog is not asked for again.
+ *
+ * A device that cannot register is not an error the customer can act on: an
+ * emulator, a refused permission or Expo Go are all logged and ignored, with
+ * no toast, because a message on every launch would be noise.
+ *
+ * Both notification listeners do the same thing: a notification means the
+ * shop changed something, so pull the fresh statuses. That covers the alert
+ * arriving while the app is open and the customer tapping one from the tray.
+ *
+ * Renders nothing and returns nothing.
+ *
+ * @see {@link releasePushToken} for the other half — handing the token back
+ * at sign-out.
+ */
 export function usePushNotifications() {
   const { isSignedIn } = useAuth();
   const loadLists = useCustomerGroceryListStore((state) => state.loadLists);

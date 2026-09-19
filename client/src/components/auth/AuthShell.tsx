@@ -1,6 +1,22 @@
+/**
+ * The brand frame around the Clerk sign-in and sign-up forms.
+ *
+ * @remarks
+ * Purely presentational. It holds no auth logic of its own — Clerk's own
+ * `<SignIn>` and `<SignUp>` components are passed in as children.
+ *
+ * @packageDocumentation
+ */
 import type { ReactNode } from "react";
 import { ArrowLeft, ClipboardList, IndianRupee, PackageCheck } from "lucide-react";
 
+/**
+ * The three lines listed on the desktop brand panel.
+ *
+ * @remarks
+ * They describe the shopkeeper's workflow, not a customer's, because this
+ * panel is for shop staff.
+ */
 const highlights = [
   { icon: ClipboardList, text: "See every list your customers send" },
   { icon: IndianRupee, text: "Price items and share the total" },
@@ -9,6 +25,24 @@ const highlights = [
 
 // The frame around the admin sign-in and sign-up screens: a brand panel on
 // the left (desktop only) and the Clerk form on the right.
+/**
+ * Wraps a Clerk auth form in the sKirana brand frame.
+ *
+ * @remarks
+ * The teal brand panel appears only from the `lg` breakpoint upwards. Below
+ * that it is hidden and a compact logo is shown above the form instead, so the
+ * page still identifies itself on a phone.
+ *
+ * Both "home" links here point at `/`, which is the static marketing homepage
+ * served by Vercel before any rewrite — not a route in this router. That is
+ * intentional: the footnote tells customers they are in the wrong place, and
+ * these links are their way out.
+ *
+ * Colours are literal hex values rather than theme tokens because this screen
+ * sits outside the admin theme.
+ *
+ * @param children - The Clerk `<SignIn>` or `<SignUp>` form to frame.
+ */
 export function AuthShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen bg-[#f6f1e8]">

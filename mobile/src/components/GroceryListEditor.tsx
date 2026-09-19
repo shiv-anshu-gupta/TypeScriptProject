@@ -1,3 +1,9 @@
+/**
+ * The ruled paper the customer writes their grocery list on.
+ *
+ * @packageDocumentation
+ */
+
 import { useEffect, useRef } from "react";
 import { Keyboard, Pressable, Text, TextInput, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
@@ -5,32 +11,62 @@ import { useTranslation } from "react-i18next";
 
 import { useDraftListStore } from "@/features/customer/draft-list/store";
 
-// Fixed geometry. The list sheet scrolls a focused line into view by its index,
-// and fills its page with lines, so these are the single source for both the
-// row styling and that maths - change a height here and it all stays correct.
+/**
+ * The height of one written line, in points.
+ *
+ * @remarks
+ * Fixed geometry. The list sheet scrolls a focused line into view by its index,
+ * and fills its page with lines, so these are the single source for both the
+ * row styling and that maths - change a height here and it all stays correct.
+ * Hard-coding the number in the sheet instead would silently break that maths.
+ */
 export const ROW_HEIGHT = 44;
+
+/**
+ * The height of the paper's column header, in points.
+ *
+ * @remarks
+ * Exported for the same reason as {@link ROW_HEIGHT}: the sheet offsets its
+ * scroll maths by this header.
+ */
 export const PAPER_HEADER_HEIGHT = 48;
 
 type GroceryListEditorProps = {
-  // Called with a line's index when either of its fields gains focus, so a
-  // scrolling container can keep that line above the keyboard.
   onRowFocus?: (index: number) => void;
-  // Put the cursor on the first empty line as soon as the editor appears, so
-  // the keyboard is already up and the customer can just start writing.
   autoFocusOnOpen?: boolean;
-  // Show only the written lines plus one blank line to continue on, instead of
-  // every blank line - for a summary card rather than a full page.
   compact?: boolean;
 };
 
-// The handwritten-style paper the customer writes their list on. It is a view
-// over the shared draft (the same one "Add to list" on products writes into).
-//
-// Built for typing a whole list without touching the screen: the keyboard's
-// Next key goes item -> quantity -> next item, and a fresh line appears as the
-// last one fills, so the list never runs out of lines. The paper is the root
-// on purpose - the sheet's scroll-into-view maths assumes it starts at the top
-// of the scroll content.
+/**
+ * The list the customer types into: numbered lines with an item and a
+ * quantity, shown as a page of cream paper.
+ *
+ * @remarks
+ * The handwritten-style paper the customer writes their list on. It is a view
+ * over the shared draft (the same one "Add to list" on products writes into),
+ * so a line added from a product card appears here and vice versa.
+ *
+ * Built for typing a whole list without touching the screen: the keyboard's
+ * Next key goes item -> quantity -> next item, and a fresh line appears as the
+ * last one fills, so the list never runs out of lines. The paper is the root
+ * on purpose - the sheet's scroll-into-view maths assumes it starts at the top
+ * of the scroll content.
+ *
+ * Handlers read `useDraftListStore.getState()` rather than the render's rows,
+ * because the list can grow between a keypress and its handler.
+ *
+ * It renders no Send button and owns no sheet. Its two callers supply those:
+ * {@link GroceryList} inline on the Lists tab, {@link GroceryListSheet} as a
+ * full page.
+ *
+ * @param onRowFocus - Called with a line's index when either of its fields
+ * gains focus, so a scrolling container can keep that line above the keyboard.
+ * @param autoFocusOnOpen - Put the cursor on the first empty line as soon as
+ * the editor appears, so the keyboard is already up and the customer can just
+ * start writing. It waits for a sheet's slide-in first.
+ * @param compact - Show only the written lines plus one blank line to continue
+ * on, instead of every blank line - for a summary card rather than a full page.
+ */
 export function GroceryListEditor({
   onRowFocus,
   autoFocusOnOpen,

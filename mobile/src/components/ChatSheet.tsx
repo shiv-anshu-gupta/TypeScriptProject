@@ -1,3 +1,9 @@
+/**
+ * The per-order conversation with the shop.
+ *
+ * @packageDocumentation
+ */
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -34,6 +40,13 @@ function formatTime(iso: string): string {
   });
 }
 
+/**
+ * One message, with its time under it.
+ *
+ * @remarks
+ * The sender decides the side and the colour; there is no separate prop for
+ * it.
+ */
 function Bubble({ message }: { message: ChatMessage }) {
   const mine = message.sender === "customer";
 
@@ -61,9 +74,27 @@ function Bubble({ message }: { message: ChatMessage }) {
   );
 }
 
-// A chat tied to one order, in a sheet over the Lists screen, so the customer
-// never leaves the page. Pull it down to close; the composer rides above the
-// keyboard.
+/**
+ * A conversation with the shop about one order, opened from that order's card.
+ *
+ * @remarks
+ * A chat tied to one order, in a sheet over the Lists screen, so the customer
+ * never leaves the page. Pull it down to close; the composer rides above the
+ * keyboard.
+ *
+ * It owns its messages rather than reading a store, and polls the server every
+ * few seconds — but only while it is open. Closing stops the timer, and
+ * reopening starts from an empty list and a fresh load, so nothing runs in the
+ * background for an order nobody is looking at. A poll that fails is ignored
+ * rather than shown, and an unchanged reply is discarded rather than replacing
+ * the array, so the bubbles do not re-render on every tick.
+ *
+ * Sending is optimistic: the bubble appears at once and is rolled back, with
+ * the text put back in the box, if the server refuses it.
+ *
+ * @param listId - The order being discussed. Changing it re-binds the poll.
+ * @param code - The order's short code, shown in the header only.
+ */
 export function ChatSheet({ open, listId, code, onClose }: ChatSheetProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();

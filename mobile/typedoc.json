@@ -1,0 +1,13 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["src", "App.tsx"],
+  "entryPointStrategy": "expand",
+  "out": "../docs/reference/mobile",
+  "name": "sKirana mobile app",
+  "readme": "none",
+  "includeVersion": true,
+  "excludeInternal": true,
+  "categorizeByGroup": true,
+  "sort": ["source-order"],
+  "validation": { "notExported": false, "invalidLink": true, "notDocumented": false }
+}

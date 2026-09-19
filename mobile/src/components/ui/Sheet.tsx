@@ -1,3 +1,32 @@
+/**
+ * The app's single bottom sheet, its error boundary, and the re-exported
+ * pieces a sheet's insides are built from.
+ *
+ * @remarks
+ * The ONE sheet in the app: everything that slides up from the bottom - the
+ * list paper, the phone prompt, chat, the quantity picker, editing a profile -
+ * is this component with different children. One place decides how a sheet
+ * looks, how it closes, and how it behaves with the keyboard, so they can
+ * never drift apart.
+ *
+ * The point of it is the thing a plain `<Modal>` cannot do: PULL IT DOWN to
+ * close. Before this, a customer had to find the small ✕ or tap the strip of
+ * screen above the sheet. The drag runs on the UI thread (gesture-handler +
+ * reanimated), so the sheet follows the finger instead of lagging behind it.
+ *
+ * Why this is hand-written rather than `@gorhom/bottom-sheet`: that library is
+ * written for Reanimated 3, and on Reanimated 4 - which Expo SDK 54 requires -
+ * its sheets simply never open. We tried it; they didn't. Do not "simplify"
+ * this file by reaching for the library.
+ *
+ * Sheets are drawn through a portal at the app root, so one can sit on top of
+ * another (Send inside the list sheet opens the phone prompt) - a `<Modal>`
+ * inside a `<Modal>` was unreliable on Android, which is what forced each
+ * screen to hand-roll its own sheet before.
+ *
+ * @packageDocumentation
+ */
+
 import {
   Component,
   useCallback,
@@ -27,26 +56,6 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-// The ONE sheet in the app: everything that slides up from the bottom - the
-// list paper, the phone prompt, chat, the quantity picker, editing a profile -
-// is this component with different children. One place decides how a sheet
-// looks, how it closes, and how it behaves with the keyboard, so they can
-// never drift apart.
-//
-// The point of it is the thing a plain <Modal> cannot do: PULL IT DOWN to
-// close. Before this, a customer had to find the small ✕ or tap the strip of
-// screen above the sheet. The drag runs on the UI thread (gesture-handler +
-// reanimated), so the sheet follows the finger instead of lagging behind it.
-//
-// Why this is hand-written rather than @gorhom/bottom-sheet: that library is
-// written for Reanimated 3, and on Reanimated 4 - which Expo SDK 54 requires -
-// its sheets simply never open. We tried it; they didn't.
-//
-// Sheets are drawn through a portal at the app root, so one can sit on top of
-// another (Send inside the list sheet opens the phone prompt) - a <Modal>
-// inside a <Modal> was unreliable on Android, which is what forced each screen
-// to hand-roll its own sheet before.
-
 const SHEET_BACKGROUND = "#F0F4EC"; // background
 const SHEET_BORDER = "#e6dcc9"; // border
 // Deliberately darker than the old `bg-muted` bar, which was nearly invisible
@@ -75,6 +84,35 @@ type SheetProps = {
   bottomPadding?: number;
 };
 
+/**
+ * A panel that slides up from the bottom of the screen over whatever the
+ * customer was looking at, and can be pulled back down to dismiss.
+ *
+ * @remarks
+ * Renders into `<Portal>`, whose host is mounted at the app root inside
+ * `NavigationContainer`. That placement is deliberate twice over: it lets one
+ * sheet open on top of another, and it lets sheet contents call
+ * `useNavigation()` — which they do, since a sheet's insides are ordinary
+ * screen code.
+ *
+ * It stays mounted through the closing slide, so it leaves the screen instead
+ * of vanishing. While closed it renders nothing, but it is not free: it still
+ * measures the window, reads the safe area and creates shared values. Never
+ * put a `<Sheet>` inside a list cell — open a shared one from a store instead.
+ *
+ * Also owned here: Android's hardware back closes the top sheet; the backdrop
+ * fades with the drag; the bottom edge rides on the keyboard; and content that
+ * throws is caught by {@link SheetContentGuard} rather than blacking out the
+ * app.
+ *
+ * @param height - A fixed height as a share of the screen. Changes the layout,
+ * not just the size: a tall sheet is pinned top and bottom and only its grab
+ * bar drags, while a short sheet hugs its content and drags anywhere.
+ * @param bare - Removes the side padding and the bottom inset, for content
+ * that owns its own edges.
+ * @param bottomPadding - Added on top of the phone's bottom inset. Ignored
+ * when `bare`.
+ */
 export function Sheet({
   open,
   onClose,
@@ -253,12 +291,22 @@ export function Sheet({
   );
 }
 
-// A sheet is drawn over the whole app, so an error inside one used to take
-// the app with it: the screen went black and the customer had to kill it from
-// the task switcher. Now the sheet says what went wrong and can be closed,
-// and the app behind it is untouched.
 type GuardProps = { children: ReactNode; onClose: () => void };
 
+/**
+ * An error boundary around a sheet's contents, showing the failure inside the
+ * sheet with a Close button.
+ *
+ * @remarks
+ * A sheet is drawn over the whole app, so an error inside one used to take
+ * the app with it: the screen went black and the customer had to kill it from
+ * the task switcher. Now the sheet says what went wrong and can be closed,
+ * and the app behind it is untouched.
+ *
+ * The known cause was sheet contents calling `useNavigation()` while the
+ * portal host sat outside `NavigationContainer`. The message is shown
+ * untranslated on purpose — it is a developer-facing failure string, not copy.
+ */
 class SheetContentGuard extends Component<GuardProps, { message: string }> {
   state = { message: "" };
 

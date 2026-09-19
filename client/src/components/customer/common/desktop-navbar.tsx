@@ -1,3 +1,28 @@
+/**
+ * DEAD CODE - a leftover from the e-commerce template this app was grown from.
+ *
+ * @remarks
+ * Nothing in `client/src/components/customer/` is reachable. `client/src/router.tsx` is the
+ * authority on what is alive, and it imports no file from this folder: the only
+ * routes it defines are the public legal pages, Clerk sign-in and sign-up, and
+ * the guarded `/admin/*` pages. There is no customer-facing route at all.
+ *
+ * sKirana's customers use the Expo mobile app. This web app is only the
+ * shopkeeper's admin panel, which the panel itself says in as many words - see
+ * the "Admin access only" screen in
+ * `client/src/components/auth/RoleGuardLayout.tsx` and the footnote in
+ * `client/src/components/auth/AuthShell.tsx`.
+ *
+ * This code still typechecks and is still bundled, so it costs build time and
+ * bytes, but it cannot run. **Do not extend it and do not treat it as an
+ * example.** If a change here looks necessary, the real work almost certainly
+ * belongs in the mobile app or in `client/src/pages/admin/`.
+ *
+ * The rest of this folder is in the same position; this note is not repeated on
+ * every file.
+ *
+ * @packageDocumentation
+ */
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,

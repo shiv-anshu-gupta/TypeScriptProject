@@ -1,4 +1,29 @@
-// English strings. Keep keys in sync with hi.ts.
+/**
+ * The English half of the app's strings, and the key list every other
+ * language is checked against.
+ *
+ * @remarks
+ * Keys are `namespace.key`, exactly two levels deep, with one exception:
+ * `lists.timeline.*` and `lists.tabs.*` go three deep because they are looked
+ * up dynamically by a list's status.
+ *
+ * Countable things use i18next v4 plurals — `_one` and `_other` suffixes on
+ * the same base key, always with an interpolated `{{count}}`, and always
+ * called as `t("key", { count })`. Hindi has the same two categories, so the
+ * two suffixes suffice there too.
+ *
+ * @packageDocumentation
+ */
+
+/**
+ * Every string the app can show, in English.
+ *
+ * @remarks
+ * English strings. Keep keys in sync with hi.ts.
+ *
+ * Adding a string means adding it here **and** to `hi.ts`, then running
+ * `npx tsc --noEmit` — that is the only check there is.
+ */
 export const en = {
   common: {
     clearSearch: "Clear search",
@@ -276,4 +301,13 @@ export const en = {
   },
 };
 
+/**
+ * The shape every other language must have.
+ *
+ * @remarks
+ * Derived from the English object, which is what makes a missing or stray key
+ * in `hi.ts` a compile error rather than a string that silently falls back.
+ * It types the values too, so a key whose English value is a string cannot
+ * become a nested object in another language.
+ */
 export type Translations = typeof en;

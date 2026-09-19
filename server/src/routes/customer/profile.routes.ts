@@ -1,3 +1,19 @@
+/**
+ * The customer's own name, email and mobile number.
+ *
+ * @remarks
+ * Mounted at `/customer` in `server/src/server.ts`, so the paths are
+ * `GET /customer/profile` and `PATCH /customer/profile`.
+ *
+ * Every route here requires a signed-in customer (`requireAuth` is applied
+ * router-wide). A customer can only ever read and write their own record;
+ * there is no path to another user's profile.
+ *
+ * Email is read-only through this API — it comes from Clerk and is
+ * synchronised by `syncDbUser`.
+ *
+ * @packageDocumentation
+ */
 import { Router, type Request, type Response } from "express";
 import { getDbUserFromReq, requireAuth } from "../../middleware/auth";
 import { asyncHandler } from "../../utils/asyncHandler";
@@ -17,6 +33,18 @@ type ProfileFields = {
   phone?: string;
 };
 
+/**
+ * Shapes a user document as the three fields the Account screen shows.
+ *
+ * @remarks
+ * Each missing value becomes `""`, never `null` or an absent key, so the app
+ * can bind the values straight into text inputs. Everything else on the
+ * record — `_id`, `clerkUserId`, `role`, `points`, `addresses`, push tokens —
+ * is deliberately omitted.
+ *
+ * @param dbUser - The resolved `users` document.
+ * @returns `{ name, email, phone }`, all strings.
+ */
 function mapProfile(dbUser: ProfileFields) {
   return {
     name: dbUser.name || "",
@@ -29,6 +57,17 @@ export const customerProfileRouter = Router();
 
 customerProfileRouter.use(requireAuth);
 
+/**
+ * `GET /customer/profile` — the caller's own name, email and mobile.
+ *
+ * @remarks
+ * Auth: signed-in customer. No parameters.
+ *
+ * Resolved through `getDbUserFromReq`, so a first-time caller has their
+ * record created here rather than getting a 404.
+ *
+ * Side effects: none, beyond that create-on-demand write.
+ */
 customerProfileRouter.get(
   "/profile",
   asyncHandler(async (req: Request, res: Response) => {
@@ -37,6 +76,34 @@ customerProfileRouter.get(
   }),
 );
 
+/**
+ * `PATCH /customer/profile` — updates the caller's name and/or mobile number.
+ *
+ * @remarks
+ * Auth: signed-in customer.
+ *
+ * Body: `name` and `phone`, both optional. Only keys actually present in the
+ * body are touched, so sending `{ phone }` leaves the name alone. Sending
+ * `null` counts as present and will fail validation.
+ *
+ * `name` is cleaned by `cleanField(value, 50, true)`: control, zero-width and
+ * bidi characters are stripped, anything outside the grocery allowlist is
+ * removed, whitespace is collapsed, and the result is cut to 50 characters.
+ * A name that cleans down to nothing is rejected.
+ *
+ * `phone` is normalised by `normalizeMobile`: digits only, a leading `+91` or
+ * `0` removed, and the result must match an Indian 10-digit mobile. Unlike
+ * the grocery-list route, an invalid number here is an error rather than
+ * being ignored.
+ *
+ * Side effects: two database writes — the `users` document, then a
+ * `GroceryList.updateMany` described in the comment below.
+ *
+ * @throws AppError 400 `"Please enter your name"` when `name` is present but
+ * empty after cleaning.
+ * @throws AppError 400 `"Enter a valid 10-digit mobile number"` when `phone`
+ * is present but does not normalise.
+ */
 // Update the name and/or mobile. Each field is optional, so the app can send
 // just the one that changed. Values go through the same sanitizer as grocery
 // items (length cap + no special characters) and the shared mobile validator.

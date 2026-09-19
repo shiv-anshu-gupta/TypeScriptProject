@@ -1,3 +1,9 @@
+/**
+ * The bottom tab navigator: Home, Shop, Lists and Account.
+ *
+ * @packageDocumentation
+ */
+
 import { useEffect, useRef } from "react";
 import { Animated } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
@@ -29,8 +35,20 @@ const iconByRoute: Record<
   Account: "account",
 };
 
-// Heartbeat-pulsing icon: grabs attention while the draft is waiting to be
-// sent, so even first-time / less-literate users notice where to go next.
+/**
+ * A tab icon that beats gently while there is something waiting for the
+ * customer.
+ *
+ * @remarks
+ * Heartbeat-pulsing icon: grabs attention while the draft is waiting to be
+ * sent, so even first-time / less-literate users notice where to go next.
+ *
+ * The loop is stopped on unmount and whenever `pulse` goes false, so a settled
+ * tab bar runs no animation at all. It uses the native driver, so the beat
+ * does not stutter while the customer scrolls.
+ *
+ * @param pulse - Turns the beat on. False also resets the scale to 1 straight away.
+ */
 function PulsingIcon({
   name,
   color,
@@ -77,6 +95,26 @@ function PulsingIcon({
   );
 }
 
+/**
+ * The four bottom tabs, drawn by the app's own tab bar rather than the
+ * default one.
+ *
+ * @remarks
+ * Subscribes to two stores so the Lists tab can advertise itself: the unseen
+ * count of sent orders, and the number of sendable rows in the unsent draft.
+ * The badge shows unseen orders first and falls back to the draft count, since
+ * news from the shop matters more than a reminder to send. A non-empty draft
+ * also turns the icon red and starts it beating.
+ *
+ * `freezeOnBlur` means a tab that is off screen stops re-rendering but stays
+ * mounted, so its effects still run. That is why several screens guard their
+ * work with `useIsFocused()` — a background tab must not mark orders seen or
+ * take over the device's single Clerk sign-in attempt.
+ *
+ * The bar itself is {@link CustomTabBar}, which handles its own safe-area
+ * padding and owns the raised centre button that opens the list sheet. That
+ * button is not a tab and has no route.
+ */
 export function TabNavigator() {
   const { t } = useTranslation();
   const unseenLists = useCustomerGroceryListStore((state) => state.unseenCount);

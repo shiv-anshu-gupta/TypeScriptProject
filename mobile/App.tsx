@@ -1,3 +1,15 @@
+/**
+ * The root of the app: the provider tree, the startup effects, and the two
+ * screens that sit outside the navigator.
+ *
+ * @remarks
+ * The order of the providers is load-bearing and two placements have bitten
+ * before — the portal host sits inside the navigation container, and the
+ * toaster sits outside the portal host. Both are explained where they are
+ * written.
+ *
+ * @packageDocumentation
+ */
 import "./global.css";
 import { useEffect, useState } from "react";
 import { StatusBar } from "expo-status-bar";
@@ -26,6 +38,24 @@ import { SplashScreen } from "@/screens/SplashScreen";
 import { LanguagePicker } from "@/screens/LanguagePicker";
 import i18n, { getStoredLanguage } from "@/lib/i18n";
 
+/**
+ * Runs the startup work and renders nothing.
+ *
+ * @remarks
+ * A component rather than a hook in `App` so its state changes — Clerk
+ * loading, a list arriving — re-render only this null node, and not the whole
+ * provider tree with the navigator inside it.
+ *
+ * Four things happen here, and their gating differs. Auth and push are
+ * wired by their own hooks. The draft list hydrates **unconditionally**,
+ * because a list written before signing in is still the customer's list.
+ * Everything else — lists, wishlist, profile — is loaded when Clerk says
+ * somebody is signed in and **cleared** when it says nobody is, which is what
+ * stops a shared phone leaking the previous customer's data.
+ *
+ * Nothing here blocks the first paint. The screens behind the splash are
+ * already mounted and fetching while these run.
+ */
 function Bootstrap() {
   useBootstrapAuth();
   usePushNotifications();
@@ -70,6 +100,28 @@ function Bootstrap() {
   return null;
 }
 
+/**
+ * Mounts the provider tree, and gates the first launch on a language.
+ *
+ * @remarks
+ * Three things it owns that are easy to miss.
+ *
+ * **The language gate.** Nothing renders until the saved language has been
+ * read back. With none stored, this is a first launch and the picker is shown
+ * instead of the app — deliberately bilingual, so either audience can read
+ * it.
+ *
+ * **The splash is a decoration.** Its progress counter is a timer, not real
+ * loading: 4 % every 40 ms, then a 700 ms hold. The app underneath is mounted
+ * from the start and the splash is drawn **over** it, so Clerk, the first
+ * Home request and the customer's lists all load while the logo is still
+ * showing — instead of starting only once it disappears. Changing the timings
+ * changes how long the logo shows and nothing else.
+ *
+ * **Two screens are not in any navigator.** The splash and the language
+ * picker are rendered here directly, which is why neither can navigate and
+ * both take a callback instead.
+ */
 export default function App() {
   const [isSplashVisible, setIsSplashVisible] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(0);

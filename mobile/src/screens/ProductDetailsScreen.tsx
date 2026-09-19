@@ -1,3 +1,9 @@
+/**
+ * The product page.
+ *
+ * @packageDocumentation
+ */
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -41,6 +47,32 @@ import { Badge } from "@/components/ui/Badge";
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type DetailsRoute = RouteProp<RootStackParamList, "ProductDetails">;
 
+/**
+ * One product in full: its gallery, stock, description, related products, and
+ * a bar pinned at the bottom to save it or add it to the list.
+ *
+ * @remarks
+ * Reads `useCustomerProductDetailsStore` for the product,
+ * `useCustomerWishlistStore` for the heart, `useDraftListStore` to add the
+ * item, and both Clerk and `useAuthStore` so the heart can tell "not signed
+ * in" from "not loaded yet".
+ *
+ * Product pages stack — a related product is pushed rather than replacing this
+ * one — yet they all share a single store. So the load on focus happens only
+ * when the store currently holds a different product, which is what lets a
+ * page reclaim its own data after the customer comes back from a related one.
+ *
+ * The quantity lives on this screen rather than in the store, and is re-seeded
+ * from the product's own unit once it is known. Adding uses
+ * `addProductWithQuantity`, which sets the quantity outright rather than
+ * adding to whatever is already on the line.
+ *
+ * It opens no sheet: the quantity picker is inline here, not the shared one a
+ * product card opens. Colours and sizes are apparel leftovers and render only
+ * when the product has them.
+ *
+ * Fully usable signed out; the heart toasts instead of saving.
+ */
 export function ProductDetailsScreen() {
   const { t } = useTranslation();
   const navigation = useNavigation<Nav>();

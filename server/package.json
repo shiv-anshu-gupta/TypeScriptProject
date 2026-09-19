@@ -7,7 +7,8 @@
     "dev": "nodemon --watch src --ext ts,js,json --exec tsx src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "seed": "tsx src/scripts/seed.ts"
+    "seed": "tsx src/scripts/seed.ts",
+    "docs": "typedoc"
   },
   "keywords": [],
   "author": "",
@@ -36,6 +37,8 @@
     "@types/streamifier": "^0.1.2",
     "nodemon": "^3.1.14",
     "tsx": "^4.21.0",
+    "typedoc": "^0.28.20",
+    "typedoc-plugin-markdown": "^4.13.1",
     "typescript": "^5.9.3"
   }
 }

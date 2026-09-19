@@ -1,3 +1,9 @@
+/**
+ * The app's top-level native stack.
+ *
+ * @packageDocumentation
+ */
+
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useTranslation } from "react-i18next";
 import type { RootStackParamList } from "./types";
@@ -9,6 +15,23 @@ import { LegalScreen } from "@/screens/LegalScreen";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
+/**
+ * The navigator the customer is always inside: the tab bar, with product
+ * details, saved products, sign-in and the legal text pushed over it.
+ *
+ * @remarks
+ * There is no route guard here. Every route is reachable signed out; the Lists
+ * and Account screens decide for themselves to draw the login in place of
+ * their content.
+ *
+ * Header titles are read through `useTranslation`, so this component
+ * re-renders — and the titles change — when the language does.
+ *
+ * The bottom sheets are not screens and are not listed here. They are
+ * portalled in from the app root and draw over whatever this navigator shows.
+ *
+ * @see {@link RootStackParamList} for the route parameters.
+ */
 export function RootNavigator() {
   const { t } = useTranslation();
   return (

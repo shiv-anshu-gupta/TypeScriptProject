@@ -1,3 +1,17 @@
+/**
+ * The `/admin/products` screen — the shop's catalogue for the mobile app's
+ * Shop tab.
+ *
+ * @remarks
+ * Routed at `/admin/products` behind `ProtectedLayout` and
+ * `RoleGuardLayout allow={["admin"]}` (`client/src/router.tsx`).
+ *
+ * This file is layout only. All state and every request live in
+ * `useAdminProducts`; the two dialogs own their own save and delete calls.
+ *
+ * @packageDocumentation
+ */
+
 import { CategoryDialog } from "@/components/admin/products/category-dialog";
 import { ProductDialog } from "@/components/admin/products/product-dialog";
 import { ProductsTable } from "@/components/admin/products/products-table";
@@ -15,6 +29,25 @@ const cardTitleClass = "text-xl";
 
 const cardContentClass = "space-y-4";
 
+/**
+ * Renders the products card — toolbar plus table — and mounts both dialogs.
+ *
+ * @remarks
+ * Composition only: it reads everything from `useAdminProducts` and passes it
+ * down. Typing in the toolbar sets `search`, which the hook debounces by
+ * 250 ms before re-issuing `GET /admin/products?search=`. Both dialogs are
+ * always mounted and toggled by their `open` prop.
+ *
+ * Both dialogs get `refreshAll` as `onSaved`, so any save or delete refetches
+ * the products and the categories together. Nothing here updates
+ * optimistically and there is no polling.
+ *
+ * The product dialog's `onOpenChange` routes a close through
+ * `closeProductDialog` so `editingProduct` is cleared — without that, the next
+ * "Add Product" would open on the last edited row.
+ *
+ * The default export is what `router.tsx` imports.
+ */
 function AdminProducts() {
   const {
     search,

@@ -1,3 +1,33 @@
+/**
+ * One customer order, and everything the shop does to it.
+ *
+ * @remarks
+ * The busiest component in the app. A card carries the whole life of an order:
+ * pricing it, marking items out of stock, correcting or adding items, ticking
+ * items off while packing, moving it along the status flow, recording payment,
+ * chatting to the customer, and sharing the priced list over WhatsApp.
+ *
+ * Four things are worth reading before changing anything here.
+ *
+ * **Prices are drafts.** The price and rate boxes are fed from the parent hook
+ * and nothing reaches the server until "Send prices to customer" is pressed.
+ * Availability, item edits and status steps are the opposite - they apply
+ * immediately.
+ *
+ * **The status flow is one-way.** Only the immediate next step is clickable;
+ * earlier steps show as ticks and later ones are disabled. This replaced
+ * buttons that looked like toggles and were misread. See {@link STATUS_FLOW}.
+ *
+ * **The packing checklist never leaves this browser.** It lives in
+ * `localStorage`, so it is invisible on any other device and to the customer.
+ * See {@link GroceryListCard} for the consequences.
+ *
+ * **The Hindi and English toggle is best-effort.** It calls a third-party
+ * translation endpoint per item name and falls back silently to the original
+ * text, so it can simply show nothing extra.
+ *
+ * @packageDocumentation
+ */
 import { useEffect, useMemo, useState } from "react";
 import { Check, Languages, Pencil, Plus, Share2, X } from "lucide-react";
 
@@ -22,11 +52,40 @@ import PriceCalculator from "./price-calculator";
 // server allowlist so what the shopkeeper types matches what's stored.
 // \p{M} keeps Hindi vowel signs (matras) — they're marks, not letters, so
 // omitting them would corrupt Devanagari words.
+/**
+ * Shortest item name accepted, matching the server.
+ *
+ * @remarks
+ * Checked before both adding an item and saving an inline edit. A shorter name
+ * is ignored silently rather than reported, so the button appears to do
+ * nothing.
+ */
 const MIN_NAME_LEN = 2;
 
+/**
+ * Removes characters outside the allowlist from an item name or quantity.
+ *
+ * @remarks
+ * Mirrors the server's allowlist so what the shopkeeper types is what gets
+ * stored. It keeps letters in any script, digits, spaces and the punctuation
+ * that real product names use.
+ *
+ * `\p{M}` is in the pattern deliberately: Devanagari matras are combining
+ * marks rather than letters, so dropping that class would silently corrupt
+ * every Hindi item name. Do not "tidy" it out.
+ *
+ * @param value - Raw input text.
+ * @returns The text with disallowed characters removed.
+ */
 const stripSpecials = (value: string) =>
   value.replace(/[^\p{L}\p{M}\p{N}\s.,&'\-/()%]/gu, "");
 
+/**
+ * Tailwind class strings, hoisted out of the markup.
+ *
+ * @remarks
+ * Presentation only.
+ */
 const cardClass = "border-border bg-card shadow-sm";
 const headerRowClass = "flex flex-wrap items-start justify-between gap-3";
 const codeClass = "text-sm font-semibold text-foreground";
@@ -40,6 +99,15 @@ const totalValueClass = "text-base font-semibold text-foreground";
 
 const actionsRowClass = "flex flex-wrap gap-2 pt-1";
 
+/**
+ * What each status is called on the badge.
+ *
+ * @remarks
+ * Written for the shopkeeper rather than as bare state names, and two of them
+ * say what has already happened: "Priced - sent to customer" and "Ready - come
+ * to receive". Both are promises the server has already made by push, so keep
+ * them accurate if the notifications change.
+ */
 const statusLabel: Record<GroceryListStatus, string> = {
   received: "Received",
   priced: "Priced — sent to customer",
@@ -53,6 +121,18 @@ const statusLabel: Record<GroceryListStatus, string> = {
 // The order a list moves through. Progress is one-way: a step can only be
 // clicked when it is the immediate next one, so the shopkeeper can never jump
 // backwards (which previously made the buttons look like they toggled).
+/**
+ * The stages an order moves through, in order.
+ *
+ * @remarks
+ * Position in this array is what decides whether a step renders as a tick, as
+ * the one live button, or as disabled. `received` is absent because it is
+ * where a list starts, and `cancelled` because it is a way out rather than a
+ * stage.
+ *
+ * The flow is one-way on purpose - see the comment below - so do not make
+ * earlier steps clickable again.
+ */
 const STATUS_FLOW = [
   "priced",
   "packing",
@@ -61,15 +141,31 @@ const STATUS_FLOW = [
   "completed",
 ] as const;
 
+/** One of the stages in {@link STATUS_FLOW}. */
 type FlowStatus = (typeof STATUS_FLOW)[number];
 
 // The steps the shopkeeper actually clicks (everything after "priced",
 // which is reached by sending prices rather than by a status button).
+/**
+ * The stages that actually get a button.
+ *
+ * @remarks
+ * Everything after `priced`, which is excluded because it is reached by saving
+ * prices rather than by pressing a status button.
+ */
 const FLOW_ACTIONS = STATUS_FLOW.filter(
   (status): status is Exclude<FlowStatus, "priced"> => status !== "priced",
 );
 
 // Buttons for these steps read as an action, not a state.
+/**
+ * Button text for each clickable step.
+ *
+ * @remarks
+ * Deliberately verbs - "Start packing", "Mark packed" - so a button reads as
+ * something to do rather than as the state the order is in. That distinction is
+ * what stopped the old buttons being mistaken for toggles.
+ */
 const actionLabel: Record<Exclude<FlowStatus, "priced">, string> = {
   packing: "Start packing",
   packed: "Mark packed",
@@ -77,6 +173,15 @@ const actionLabel: Record<Exclude<FlowStatus, "priced">, string> = {
   completed: "Mark completed",
 };
 
+/**
+ * Props for {@link GroceryListCard}.
+ *
+ * @remarks
+ * The card owns no order state of its own. Everything comes from
+ * `useAdminGroceryLists` on the page above, and every change goes back up
+ * through these callbacks. The only exceptions are the packing checklist, the
+ * translation toggle and the in-progress add/edit fields.
+ */
 type GroceryListCardProps = {
   list: AdminGroceryList;
   draft: string[];
@@ -93,6 +198,64 @@ type GroceryListCardProps = {
   onEditItem: (index: number, name: string, quantity: string) => void;
 };
 
+/**
+ * Renders one order with every action the shop can take on it.
+ *
+ * @remarks
+ * **Header.** Order code and customer name, the phone as a `tel:` link so it
+ * can be dialled with one tap, the item count, and the `updatedAt ?? createdAt`
+ * timestamp - with a separate "first sent" line when the order was edited on a
+ * later day. On the right: the status badge, a payment badge once the list is
+ * priced, and Share.
+ *
+ * **Pricing.** Each row has a rate box and a total box. Typing a rate fills the
+ * total in as `round(rate x leading number of the quantity)`, treating a
+ * quantity with no leading number as 1; the total can also be typed directly.
+ * Each row also has a calculator popover, seeded from the quantity. Everything
+ * typed is a draft held by the parent hook, which is why the 15-second poll
+ * does not disturb half-entered prices - and why a reload loses them. The total
+ * shown at the foot of the card is the sum of the drafts, not the server's
+ * figure, so the two differ until prices are saved.
+ *
+ * **Availability.** "Out of stock" and "Restore" apply immediately, with no
+ * save step. An unavailable row hides its price boxes; the server forces that
+ * line to zero and pushes the customer - but only when marking unavailable, not
+ * when restoring.
+ *
+ * **Adding and editing items.** The shop can append an item the customer asked
+ * for later, and correct an existing name or quantity inline. Both are stripped
+ * by {@link stripSpecials} and need at least {@link MIN_NAME_LEN} characters.
+ * Adding an item discards this list's price drafts, because the row count
+ * changes; editing one does not.
+ *
+ * **Packing checklist.** Each row has a tick box, ticked items are struck
+ * through, and a counter shows progress. This is stored under
+ * `grocery-packed:<listId>` in `localStorage` and is **never sent to the
+ * server**. So it shows as nothing packed on a second device or browser, two
+ * staff packing the same order see different checklists, a storage failure is
+ * swallowed and the tick just stops persisting, and the keys are never cleaned
+ * up. Moving it to the server would need a new field on the item type.
+ *
+ * **Hindi and English toggle.** Fetches both forms of every item name and shows
+ * them after the original, which always stays visible. Translation is
+ * best-effort through a third-party endpoint, cached in memory only, and falls
+ * back to the original text on any failure - so the toggle can appear to do
+ * nothing. When it is on, Share sends the translated names too.
+ *
+ * **Status flow.** The primary button reads "Send prices to customer" before
+ * pricing and "Update prices" after, judged by `totalAmount > 0`. Beware that
+ * pressing "Update prices" on a list already at `packed` or `ready` drags it
+ * back to `priced` and re-notifies the customer, because the server hard-sets
+ * the status. "Mark as paid" appears only while priced and unpaid. "Cancel
+ * order" is available at any open stage, including an unpriced one. Once
+ * completed or cancelled the card is closed: pricing, item changes and the flow
+ * are all disabled.
+ *
+ * **Chat.** A collapsed `GroceryListChat` sits at the foot of every card. It
+ * polls only while open.
+ *
+ * @returns The card for one order.
+ */
 function GroceryListCard({
   list,
   draft,
@@ -151,6 +314,20 @@ function GroceryListCard({
     }
   });
 
+  /**
+   * Ticks or unticks one item on the packing checklist.
+   *
+   * @remarks
+   * Writes straight to `localStorage` under `grocery-packed:<listId>`. A
+   * storage failure — private browsing, storage full — is swallowed, so the tick
+   * appears to work and simply stops surviving a reload, with no message.
+   *
+   * The set holds row indexes, so it is only meaningful while the order has the
+   * same rows in the same order. Adding an item shifts nothing today, because
+   * items are appended, but reordering would mis-tick the list.
+   *
+   * @param index - Which row to toggle.
+   */
   function togglePacked(index: number) {
     setPacked((prev) => {
       const next = new Set(prev);
@@ -205,6 +382,19 @@ function GroceryListCard({
 
   // When the worker has the Hindi+English view on, share the translated names
   // too (so a shared/WhatsApp'd order isn't stuck in the original language).
+  /**
+   * Item names for the Share message, with translations folded in.
+   *
+   * @remarks
+   * `undefined` while the toggle is off, which tells `shareList` to use the
+   * customer's original wording.
+   *
+   * With the toggle on, each name becomes `original (other forms)`. A
+   * translation that merely repeats the original, in any case, is dropped, and
+   * duplicates between the Hindi and English results are removed — so a name
+   * that is already the same in both languages is shared unchanged rather than
+   * with a redundant bracket.
+   */
   const shareNames = useMemo(() => {
     if (!showBoth) return undefined;
     return list.items.map((item, index) => {

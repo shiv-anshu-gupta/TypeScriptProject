@@ -1,3 +1,19 @@
+/**
+ * The ordered list of banners, with reorder, visibility, edit and delete
+ * controls.
+ *
+ * @remarks
+ * Presentational: it renders the list the page passes in and raises callbacks.
+ * The only state it owns is which images failed to load and which banner is
+ * awaiting delete confirmation.
+ *
+ * Row order is the app's carousel order, so the up and down arrows change what
+ * customers see first — and can push another live banner past the carousel
+ * limit.
+ *
+ * @packageDocumentation
+ */
+
 import { useState } from "react";
 import { ArrowDown, ArrowUp, ImageOff, Pencil, Trash2 } from "lucide-react";
 
@@ -18,6 +34,14 @@ import {
 } from "@/features/admin/settings/banner-status";
 import type { AdminBanner, BannerStatus } from "@/features/admin/settings/types";
 
+/**
+ * Badge label and colour for each computed status.
+ *
+ * @remarks
+ * Typed as a full `Record`, so a new `BannerStatus` member will not compile
+ * until it is given a badge here. The `overLimit` label is overridden at the
+ * call site to name the actual limit.
+ */
 const STATUS: Record<BannerStatus, { label: string; className: string }> = {
   live: { label: "Live in app", className: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300" },
   hidden: { label: "Hidden", className: "bg-muted text-muted-foreground" },
@@ -26,6 +50,20 @@ const STATUS: Record<BannerStatus, { label: string; className: string }> = {
   overLimit: { label: "Not shown - over the limit", className: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300" },
 };
 
+/**
+ * The shown/hidden toggle on a banner row.
+ *
+ * @remarks
+ * A `<button role="switch">` with `aria-checked`, styled as a switch, rather
+ * than a checkbox. It is uncontrolled visually — the appearance follows the
+ * `on` prop, which follows the banner's stored `isActive`, so it only changes
+ * once the server confirms.
+ *
+ * @param on - Whether the banner is currently shown in the app.
+ * @param label - Accessible name, since the visible text is only "Shown" or
+ * "Hidden" and would not say which banner.
+ * @returns The switch.
+ */
 function VisibilitySwitch({
   on,
   disabled,
@@ -63,6 +101,36 @@ function VisibilitySwitch({
   );
 }
 
+/**
+ * Renders one row per banner, plus the delete confirmation dialog.
+ *
+ * @remarks
+ * Each row shows its position, up and down arrows, a thumbnail at the banner
+ * aspect ratio, the name (falling back to "Banner N"), a status badge, and one
+ * line summarising the tap target and schedule from `linkSummary` and
+ * `scheduleSummary`.
+ *
+ * While any mutation is in flight, `busyId` disables the controls on **every**
+ * row, not just the one being saved, so two overlapping changes cannot race;
+ * only the affected row is dimmed.
+ *
+ * Images that fail to load — typically removed from Cloudinary behind the
+ * app's back — are tracked in a local `Set` and shown as "Image missing" in
+ * place of the status badge. The app skips them too, so the fix is to delete
+ * the record.
+ *
+ * Deleting is confirmed in a dialog, not `window.confirm`, and the dialog says
+ * the image goes with it and suggests hiding as the reversible option. The
+ * dialog closes only when `onDelete` resolves `true`.
+ *
+ * @param statuses - Statuses from `bannerStatuses`, aligned by index with
+ * `items`.
+ * @param busyId - Id of the banner whose request is in flight, or `null`.
+ * @param limit - Carousel limit, used only to word the `overLimit` badge.
+ * @param onMove - Called with `-1` to move a banner up, `1` to move it down.
+ * @param onDelete - Resolves `true` when the delete succeeded.
+ * @returns The list and its confirmation dialog.
+ */
 export function BannerList({
   items,
   statuses,

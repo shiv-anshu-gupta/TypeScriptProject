@@ -1,7 +1,42 @@
+/**
+ * The app's own record of a person, alongside their Clerk account.
+ *
+ * @remarks
+ * Clerk owns authentication and the identity fields; this record owns
+ * everything the shop needs and Clerk does not hold - the phone number, the
+ * role, points, addresses and push tokens. The two are joined by
+ * `clerkUserId`, and services/user-sync.ts is what keeps them together.
+ *
+ * Unusually for this folder the schema is untyped, so `User` documents come
+ * back loosely typed; {@link UserRole} is exported for callers that need to
+ * name a role.
+ *
+ * @packageDocumentation
+ */
 import mongoose from "mongoose";
 
+/**
+ * What a person may do.
+ *
+ * @remarks
+ * `admin` unlocks the whole admin panel; there is no finer permission. The
+ * role is granted from the `ADMIN_EMAILS` environment variable by
+ * services/user-sync.ts, never through the app, and that code only ever
+ * grants - removing an email does not demote an existing admin.
+ */
 export type UserRole = "user" | "admin";
 
+/**
+ * One delivery address on a customer's record.
+ *
+ * @remarks
+ * Embedded, and with `timestamps: false` because an address is replaced
+ * rather than tracked. `isDefault` marks the one offered first; nothing here
+ * enforces that only one carries it.
+ *
+ * Used by catalogue orders, which are delivered. A grocery list is collected
+ * from the shop, so it does not touch these.
+ */
 const addressSchema = new mongoose.Schema(
   {
     fullName: {
@@ -94,4 +129,21 @@ const UserSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+/**
+ * The User model.
+ *
+ * @remarks
+ * Resolved from `mongoose.models` first so a hot reload does not compile the
+ * same model twice.
+ *
+ * Two unique indexes, and both matter. `clerkUserId` is how every
+ * authenticated request finds its record. `email` is what lets a returning
+ * customer be re-linked to a new Clerk id - and also what makes creating a
+ * second record for the same person fail, which is the situation
+ * services/user-sync.ts exists to handle. Read the note on the `email` field
+ * before making either sparse.
+ *
+ * Records are never deleted here; a customer who stops using the app simply
+ * stops appearing.
+ */
 export const User = mongoose.models.User || mongoose.model("User", UserSchema);

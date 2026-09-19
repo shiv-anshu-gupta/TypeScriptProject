@@ -1,3 +1,17 @@
+/**
+ * The banner edit dialog: name, tap target and optional schedule.
+ *
+ * @remarks
+ * The image itself cannot be changed here — replacing a picture means uploading
+ * a new banner and deleting the old one.
+ *
+ * Category and product targets are resolved against the products feature's own
+ * endpoints, so this dialog is the reason the Products pages are not dead
+ * weight for banners.
+ *
+ * @packageDocumentation
+ */
+
 import { useEffect, useState } from "react";
 import { Check, Search } from "lucide-react";
 
@@ -30,8 +44,40 @@ import {
 } from "@/features/admin/settings/banner-status";
 import type { AdminBanner, BannerLinkType, UpdateBannerBody } from "@/features/admin/settings/types";
 
+/**
+ * Link types in the order the dropdown lists them.
+ *
+ * @remarks
+ * The labels come from `LINK_LABELS`. `category` and `product` are the two that
+ * reveal a picker and require a target.
+ */
 const LINK_TYPES: BannerLinkType[] = ["none", "writeList", "shop", "category", "product"];
 
+/**
+ * Search box and result list for choosing the product a banner opens.
+ *
+ * @remarks
+ * Calls `GET /admin/products?search=` through `getAdminProducts`, **debounced
+ * 300 ms**, and shows the first 8 results. The effect runs on mount as well, so
+ * an empty query lists the first products rather than nothing. In-flight
+ * results are discarded by a `cancelled` flag when the query changes or the
+ * picker unmounts, which keeps a slow earlier response from overwriting a newer
+ * one.
+ *
+ * A failed search clears the results and shows "No products found" — there is
+ * no separate error state.
+ *
+ * Products with `status === "inactive"` are still listed, marked "(hidden in
+ * app)", so it is possible to point a banner at a product customers cannot see.
+ *
+ * The search text and results are local to this component and are lost when the
+ * link type changes away from `product`.
+ *
+ * @param selectedId - Currently chosen product id, used to tick its row.
+ * @param selectedName - Its title, shown above the search box; it survives even
+ * when the product is not in the current results.
+ * @returns The picker.
+ */
 function ProductPicker({
   selectedId,
   selectedName,
@@ -116,6 +162,37 @@ function ProductPicker({
   );
 }
 
+/**
+ * Modal form for one banner's name, tap target and schedule.
+ *
+ * @remarks
+ * Open state is implicit: the dialog is open whenever `banner` is not `null`.
+ * Every field is local state, seeded from the banner by an effect each time a
+ * different banner is passed, so unsaved edits are dropped on close.
+ *
+ * Categories are fetched once per dialog session via `getAdminCategories`
+ * (`GET /admin/categories`) and cached in state; the effect skips the call once
+ * `categories` is non-empty. A failure leaves the list empty and the dropdown
+ * shows nothing to choose. Products use the debounced {@link ProductPicker}
+ * instead, because the list is too long to load whole.
+ *
+ * Changing the link type clears `targetId` and `targetName`, so a stale product
+ * id cannot be saved against a category link.
+ *
+ * Two checks run before saving, both shown inline: a `category` or `product`
+ * link must have a target, and an end date must be after a start date.
+ * `datetime-local` values are converted to ISO by `fromLocalInput`, and an
+ * empty field becomes `null`, which clears that end of the schedule.
+ *
+ * Only `targetId` is sent — the server resolves `targetName`. The dialog closes
+ * only when `onSave` resolves `true`, so a rejected save keeps the edits on
+ * screen with the hook's toast explaining why.
+ *
+ * @param banner - The banner being edited, or `null` to keep the dialog closed.
+ * @param saving - Whether the patch is in flight; disables both footer buttons.
+ * @param onSave - Resolves `true` when the patch succeeded.
+ * @returns The dialog.
+ */
 export function BannerEditDialog({
   banner,
   saving,
@@ -155,8 +232,18 @@ export function BannerEditDialog({
       .catch(() => setCategories([]));
   }, [banner, categories.length]);
 
+  /** Whether the chosen link type requires a target to be picked. */
   const needsTarget = linkType === "category" || linkType === "product";
 
+  /**
+   * Validates the form, then patches the banner.
+   *
+   * @remarks
+   * Refuses a `category` or `product` link with no target, and an end date at or
+   * before the start; both refusals show inline text rather than a toast. The
+   * title is trimmed, the dates converted to ISO, and the dialog closes only on
+   * a successful save.
+   */
   const save = async () => {
     if (!banner) return;
     if (needsTarget && !targetId) {

@@ -1,3 +1,9 @@
+/**
+ * The login itself: Google, or an email and a six-digit code.
+ *
+ * @packageDocumentation
+ */
+
 import { useEffect, useState } from "react";
 import {
   BackHandler,
@@ -32,8 +38,18 @@ type Step = "email" | "code";
 // signs in, a new one signs up. Both then confirm with the same 6-digit code.
 type Mode = "signIn" | "signUp";
 
-// Six boxes over one invisible input: typing, pasting and the keyboard's
-// code suggestion all go into the real field, the boxes just show it.
+/**
+ * The six-digit code entry.
+ *
+ * @remarks
+ * Six boxes over one invisible input: typing, pasting and the keyboard's
+ * code suggestion all go into the real field, the boxes just show it.
+ *
+ * `onChange` only ever receives digits, already trimmed to six, so a pasted
+ * code with spaces or dashes needs no handling by the caller.
+ *
+ * @param invalid - Colours the boxes as rejected. It does not block typing.
+ */
 function CodeBoxes({
   value,
   onChange,
@@ -91,19 +107,44 @@ function CodeBoxes({
 }
 
 type AuthPanelProps = {
-  // Called once the customer is signed in.
   onDone: () => void;
-  // Replaces the default line under the welcome title.
   subtitle?: string;
-  // Push the consent line to the bottom of a full-height screen.
   grow?: boolean;
 };
 
-// The one door into an account, used wherever someone needs to log in: the
-// Account and Lists tabs show it straight away, and sending a list opens it
-// as its own screen. Google is the quickest; email works for everyone else
-// with a code instead of a password, so there's nothing to remember and no
-// separate "sign up" to find.
+/**
+ * Two steps in one panel: a Google button and an email box, then six boxes for
+ * the code that arrives by email.
+ *
+ * @remarks
+ * The one door into an account, used wherever someone needs to log in: the
+ * Account and Lists tabs show it straight away, and sending a list opens it
+ * as its own screen. Google is the quickest; email works for everyone else
+ * with a code instead of a password, so there's nothing to remember and no
+ * separate "sign up" to find.
+ *
+ * Whether an email signs in or signs up is decided by the server, never by the
+ * customer: the panel tries to sign in, and only creates an account when Clerk
+ * says that identifier does not exist. A new account is also asked for a name,
+ * which the shop will see on every order.
+ *
+ * It is mounted in three places at once — the Account tab, the Lists tab and
+ * the SignIn screen — while Clerk keeps only one sign-in attempt per device.
+ * Every effect here is therefore gated on `useIsFocused()`, and a hidden copy
+ * left on the code step resets itself. Without that, a background copy would
+ * take over the attempt another screen started and Resend would mail a
+ * different address.
+ *
+ * Finishing goes through `useSessionGuard`, the same path
+ * {@link GoogleAuthButton} uses, so a session Clerk holds back as pending is
+ * handled identically either way. Clerk's English-only error messages are
+ * re-worded and translated for the common codes.
+ *
+ * @param onDone - Called once the customer is signed in. Nothing is navigated
+ * from here; the caller decides.
+ * @param subtitle - Replaces the default line under the welcome title.
+ * @param grow - Push the consent line to the bottom of a full-height screen.
+ */
 export function AuthPanel({ onDone, subtitle, grow }: AuthPanelProps) {
   const { t } = useTranslation();
   const navigation =

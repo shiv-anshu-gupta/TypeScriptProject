@@ -1,3 +1,37 @@
+/**
+ * The server entry point: connects to MongoDB, builds the Express app, mounts
+ * every router and starts listening.
+ *
+ * @remarks
+ * Three mount points, and nothing else. There is no `/api` prefix and no
+ * version prefix:
+ *
+ * - `/auth` — the account routes; signed-in callers.
+ * - `/customer` — eleven routers, all sharing this one prefix. The home and
+ *   catalogue routers are public; the rest apply `requireAuth` to themselves.
+ * - `/admin` — seven routers, every one guarded by `requireAdmin`.
+ *
+ * Because the customer and admin routers share a prefix, a path is matched
+ * against them in mount order, and the first router with a matching path
+ * wins. Adding a path that already exists in an earlier router on the same
+ * prefix would make the later one unreachable.
+ *
+ * Two routes are defined here rather than in a router, `/health` and
+ * `/app-version`, and both are public.
+ *
+ * Middleware order matters and is fixed: CORS, then the JSON body parser,
+ * then request logging, then Clerk. `clerkMiddleware` only reads the
+ * `Authorization` header and attaches the auth state — it never rejects a
+ * request, so an unauthenticated call reaches the route and is refused there.
+ * `notFound` and `errorHandler` close the chain after every router.
+ *
+ * The process exits with code 1 if `connectDB` rejects, so the server never
+ * accepts traffic without a database. `utils/razorpay` also throws at import
+ * time when its keys are missing, which stops the whole server rather than
+ * just the payment routes.
+ *
+ * @packageDocumentation
+ */
 import "dotenv/config";
 import express from "express";
 import { connectDB } from "./db";
@@ -27,6 +61,22 @@ import { customerPushTokenRouter } from "./routes/customer/push-token.routes";
 import { adminGroceryListRouter } from "./routes/admin/grocery-list.routes";
 import { adminPushTokenRouter } from "./routes/admin/push-token.routes";
 
+/**
+ * Connects to MongoDB, assembles the Express app and binds the listener.
+ *
+ * @remarks
+ * Awaits `connectDB()` before anything else, so the port is only opened once
+ * the database is reachable.
+ *
+ * `CORS_ORIGINS` is a comma-separated allowlist, defaulting to
+ * `http://localhost:3000`, and credentials are allowed. An origin that is not
+ * on the list is refused by the browser as a CORS failure, so the caller
+ * never sees a JSON error for it.
+ *
+ * `PORT` defaults to 5000.
+ *
+ * @returns A promise that settles once the server is listening.
+ */
 async function mainEntryFunction() {
   await connectDB();
 
@@ -50,10 +100,41 @@ async function mainEntryFunction() {
   app.use(morgan("dev"));
   app.use(clerkMiddleware());
 
+  /**
+   * `GET /health` — liveness probe.
+   *
+   * @remarks
+   * Auth: public. No parameters. Always answers 200 with a fixed message.
+   *
+   * It says the process is up, not that the database is. The listener only
+   * starts after `connectDB()` resolves, so a 200 proves Mongo was reachable
+   * at boot — it does not re-check the connection on each call.
+   *
+   * Side effects: none.
+   */
   app.get("/health", (_req, res) => {
     res.status(200).json(ok({ message: "Server is healthy/in running state" }));
   });
 
+  /**
+   * `GET /app-version` — the Play Store version the mobile app compares
+   * itself against.
+   *
+   * @remarks
+   * Auth: public. No parameters.
+   *
+   * Reads three environment variables and nothing else, so it touches neither
+   * the database nor the Play Store. Each field falls back to a default when
+   * unset: `latestVersion` and `minVersion` to `""`, and `androidPackage` to
+   * `"com.skirana.app"`.
+   *
+   * An empty `latestVersion` is the "say nothing" case — the app has no
+   * version to compare against and shows no prompt — so forgetting the
+   * variable is quiet rather than broken. The app decides what to do with the
+   * answer; this route enforces nothing.
+   *
+   * Side effects: none.
+   */
   // Public: the app asks "is there a newer Play Store build than the one I'm
   // running?". Driven by env vars so publishing a new Play release only needs
   // an env change here — no code deploy:

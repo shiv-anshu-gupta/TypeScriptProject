@@ -1,3 +1,9 @@
+/**
+ * The Lists tab: sent orders and the unsent draft.
+ *
+ * @packageDocumentation
+ */
+
 import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -80,6 +86,15 @@ const STEP_INDEX: Record<GroceryListStatus, number> = {
   cancelled: -1,
 };
 
+/**
+ * The order's progress as a ticked checklist, or a single badge when it was
+ * cancelled.
+ *
+ * @remarks
+ * Labels are looked up dynamically by status, which is why these translation
+ * keys go three levels deep. The "Priced" row carries the quoted total, so the
+ * customer sees the quote arrive on the timeline itself.
+ */
 function StatusTimeline({ list }: { list: CustomerGroceryList }) {
   const { t } = useTranslation();
   const status = list.status;
@@ -137,6 +152,33 @@ function StatusTimeline({ list }: { list: CustomerGroceryList }) {
   );
 }
 
+/**
+ * One sent order: its items, the total once priced, its progress, a way to
+ * message the shop, and payment buttons when there is something to pay.
+ *
+ * @remarks
+ * It marks the order seen on mount, but only while the tab is focused. This
+ * tab stays mounted in the background, so without that guard a shop update
+ * would be cleared from the badge while the customer was on another tab and
+ * never saw it.
+ *
+ * It subscribes to only its own busy flag rather than the whole store, because
+ * subscribing broadly re-renders every card and every card's chat sheet on any
+ * change. The action functions are read once from the store rather than
+ * subscribed to.
+ *
+ * It mounts a {@link ChatSheet} per order, which polls only while open.
+ *
+ * Two rules are deliberate. Items may be removed only before the shop starts
+ * packing, never after payment and never the last one; removal is by position,
+ * so one removal at a time and the position is re-read when the customer
+ * confirms, not when the alert opened. Payment appears only when the order is
+ * priced and still live — a cancelled or completed order must never ask for
+ * money again.
+ *
+ * "The shop is busy" after a wait is computed purely from the order's age.
+ * There is no backend field and no shopkeeper action behind it.
+ */
 function ListCard({ list }: { list: CustomerGroceryList }) {
   const { t } = useTranslation();
   // This tab stays mounted in the background, so without this a shop update
@@ -359,9 +401,17 @@ function ListCard({ list }: { list: CustomerGroceryList }) {
   );
 }
 
-// The customer's not-yet-sent draft (built on the Home paper and/or via
-// "Add to list" on products). Shown here as the SAME editable paper as Home,
-// so items can be edited / added / removed and sent without going back Home.
+/**
+ * The unsent draft, in a dashed card above the sent orders.
+ *
+ * @remarks
+ * The customer's not-yet-sent draft (built on the Home paper and/or via
+ * "Add to list" on products). Shown here as the SAME editable paper as Home,
+ * so items can be edited / added / removed and sent without going back Home.
+ *
+ * Renders nothing when the draft is empty, so the screen does not show an
+ * empty page of paper.
+ */
 function DraftCard() {
   const { t } = useTranslation();
   const filledCount = useDraftListStore((state) =>
@@ -390,6 +440,25 @@ function DraftCard() {
   );
 }
 
+/**
+ * The customer's orders, split into Active, Completed and Cancelled, with
+ * their unsent draft at the top of the Active tab.
+ *
+ * @remarks
+ * Signed out it renders the login in place of its content — there is no route
+ * guard anywhere in the app, each screen decides for itself.
+ *
+ * Signed in, it reloads the orders on every focus and on pull-to-refresh, and
+ * reads the draft store to know whether to show the draft card. Filtering
+ * between the three status tabs is local; nothing is re-fetched.
+ *
+ * It opens no sheet itself, but each order card mounts a chat sheet, and the
+ * draft card carries the Send flow, which can open the phone prompt.
+ *
+ * The `tab` parameter is a one-shot hand-off from Home's journey card or a
+ * just-sent list, so the order being pointed at is actually on screen. It is
+ * cleared once applied, leaving the customer free to switch tabs afterwards.
+ */
 export function MyListsScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();

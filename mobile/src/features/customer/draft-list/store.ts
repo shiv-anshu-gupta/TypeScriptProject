@@ -1,3 +1,14 @@
+/**
+ * The unsent grocery list — the piece of paper the whole app writes on.
+ *
+ * @remarks
+ * This is the only state in the app that survives being killed, and the only
+ * store that writes to AsyncStorage. Everything else is fetched again at
+ * launch.
+ *
+ * @packageDocumentation
+ */
+
 import { create } from "zustand";
 import { stripSpecials } from "@/lib/clean-text";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -8,12 +19,33 @@ import { AppState } from "react-native";
 // write into this same draft, so there is a single list to review and send.
 // Persisted to AsyncStorage so a half-written list survives an app restart.
 
+/**
+ * AsyncStorage key the rows are saved under.
+ *
+ * @remarks
+ * Holds the `DraftRow[]` as JSON and nothing else — no ids, no timestamps —
+ * so anything unrecognised there is simply ignored on hydration. Changing
+ * this key silently discards every customer's unsent list on upgrade.
+ */
 const STORAGE_KEY = "draft_grocery_list_rows";
 
 // Start compact; the list auto-grows a fresh blank line as each one is filled
 // (see withTrailingBlank), so there is no upper limit on items.
 const INITIAL_ROWS = 8;
 
+/**
+ * One line on the paper.
+ *
+ * @remarks
+ * `id` is stable for the life of a line and is what the editor keys on, so a
+ * line keeps its keyboard focus while the list grows around it. It is not a
+ * position: removing a line leaves a gap in the ids, and the number the
+ * customer sees is the index, not this.
+ *
+ * `name` and `quantity` are free text and may both be empty — that is a blank
+ * line, not an invalid one. `quantity` is never parsed as a number except by
+ * `addProduct`'s "+1" bump.
+ */
 export type DraftRow = {
   id: number;
   name: string;
@@ -33,13 +65,31 @@ function isRowFilled(row: DraftRow) {
   return (row.name ?? "").trim() !== "" || (row.quantity ?? "").trim() !== "";
 }
 
-// A line that will actually be SENT: the shop needs a name. This is the one
-// definition behind every "how many items" count in the app - the tab badge,
-// the Home card, the sheet header and Send - so they can never disagree.
+/**
+ * A line that will actually be SENT: the shop needs a name. This is the one
+ * definition behind every "how many items" count in the app - the tab badge,
+ * the Home card, the sheet header and Send - so they can never disagree.
+ *
+ * @remarks
+ * A quantity with no name is not sendable, which is why it is possible to see
+ * a line with writing on it that the badge does not count.
+ *
+ * It says nothing about whether the line is *acceptable*: the send flow also
+ * requires at least two characters, mirroring the server. Do not use this as
+ * the last check before a POST.
+ */
 export function isSendableRow(row: DraftRow) {
   return (row.name ?? "").trim().length > 0;
 }
 
+/**
+ * How many items the customer has written, by the one definition above.
+ *
+ * @remarks
+ * Every count the customer sees comes from here — the tab badge, the centre
+ * button, the Shop sticky bar, the sheet header. Compute a count any other
+ * way and two places will eventually disagree.
+ */
 export function countSendableRows(rows: DraftRow[]) {
   return rows.filter(isSendableRow).length;
 }
@@ -53,10 +103,21 @@ function withTrailingBlank(rows: DraftRow[], nextId: () => number): DraftRow[] {
   return rows;
 }
 
-// Saving the draft is a native disk write. Typing a list would do one per
-// keystroke, which is exactly the moment the phone should be free, so writes
-// are collected and made shortly after typing stops - and immediately when
-// the app goes to the background, so nothing is lost.
+/**
+ * How long writing has to stop before the draft is saved, in milliseconds.
+ *
+ * @remarks
+ * Saving the draft is a native disk write. Typing a list would do one per
+ * keystroke, which is exactly the moment the phone should be free, so writes
+ * are collected and made shortly after typing stops - and immediately when
+ * the app goes to the background, so nothing is lost.
+ *
+ * The consequence to know: for up to half a second after a keystroke, what is
+ * on disk is older than what is in the store. Only two things close that gap
+ * — the timer, and the `AppState` listener below. A test or a caller that
+ * wants the disk to be current must go through one of them; there is no
+ * exported flush.
+ */
 const PERSIST_DELAY_MS = 500;
 let persistTimer: ReturnType<typeof setTimeout> | null = null;
 let pendingRows: DraftRow[] | null = null;
@@ -82,35 +143,147 @@ AppState.addEventListener("change", (state) => {
   if (state !== "active") writeNow();
 });
 
-// One line read off a photo of the customer's handwritten list.
+/**
+ * One line read off a photo of the customer's handwritten list.
+ *
+ * @remarks
+ * A suggestion, not a fact. It becomes an ordinary editable line, because the
+ * reader can misread a word and a wrong line means a wrong bill.
+ *
+ * `quantity` is often empty — a handwritten list frequently names an item and
+ * nothing else.
+ */
 export type ScannedLine = {
   name: string;
   quantity: string;
 };
 
-// How many photos may be read in one go (kept in step with the server).
+/**
+ * How many photos may be read in one go (kept in step with the server).
+ *
+ * @remarks
+ * The server enforces the same ceiling, so raising it here alone makes the
+ * upload fail rather than read more pages.
+ */
 export const MAX_PHOTOS_PER_SCAN = 3;
 
 type DraftListStore = {
   rows: DraftRow[];
   hydrated: boolean;
   nextId: number;
+  /**
+   * Reads the saved list back from disk. Call once, at startup.
+   *
+   * @remarks
+   * Does nothing on a second call, so it is safe in an effect. Resolves
+   * whatever happens, including a storage or parse failure, which falls back
+   * to a fresh page of blank lines.
+   */
   hydrate: () => Promise<void>;
+  /**
+   * Writes one field of one line, as the customer types.
+   *
+   * @remarks
+   * Every keystroke goes through here, and through `stripSpecials` on the way
+   * — a blocked character never reaches the row. Filling the last line
+   * appends a new blank one, so the row list can change between a keypress
+   * and its handler; handlers should read the current rows rather than the
+   * ones their render closed over.
+   */
   updateRow: (id: number, key: "name" | "quantity", value: string) => void;
-  // Take a line out entirely, so the numbering below it closes up instead of
-  // leaving a blank gap where the item was.
+  /**
+   * Take a line out entirely, so the numbering below it closes up instead of
+   * leaving a blank gap where the item was.
+   */
   removeRow: (id: number) => void;
-  // Top the paper up with blank lines until it has at least `count`, so a tall
-  // screen shows a full page of writable lines instead of empty space.
+  /**
+   * Top the paper up with blank lines until it has at least `count`, so a tall
+   * screen shows a full page of writable lines instead of empty space.
+   *
+   * @remarks
+   * Never removes lines, so it is safe to call on every layout change. The
+   * list sheet measures its own viewport and calls it with the number of rows
+   * that fit.
+   */
   ensureRows: (count: number) => void;
+  /**
+   * Adds a catalogue product to the list, or bumps it if it is already there.
+   *
+   * @remarks
+   * What the "+" on a product card does. Matching is by name, case-insensitive
+   * and trimmed. An existing line whose quantity starts with an integer is
+   * incremented; free text like "half kg" is left exactly as written, because
+   * the customer meant it. A new line takes the first blank one, so the list
+   * fills like a page rather than growing at the bottom.
+   *
+   * `unitValue` decides the starting quantity: a real pack size gives
+   * "10 kg", a loose unit gives "1 kg", anything else gives "1".
+   */
   addProduct: (name: string, unit?: string, unitValue?: number) => void;
+  /**
+   * Adds a product with an exact quantity, replacing any quantity already
+   * there.
+   *
+   * @remarks
+   * What the quantity picker and the details screen use. Unlike
+   * {@link DraftListStore.addProduct} this **sets** rather than bumps: the
+   * customer has just said how much they want, so asking again must not add
+   * to the old answer.
+   */
   addProductWithQuantity: (name: string, quantity: string) => void;
-  // Write what a photo of the handwritten list was read as onto the paper,
-  // in ordinary editable lines. Returns how many lines it wrote.
+  /**
+   * Write what a photo of the handwritten list was read as onto the paper,
+   * in ordinary editable lines. Returns how many lines it wrote.
+   *
+   * @remarks
+   * An item already on the list is not duplicated: its quantity is filled in
+   * if it had none, and otherwise it is left alone. The return count is of
+   * **new** lines, so it can be lower than the number of lines read — which
+   * is what the "N items added" toast should say.
+   */
   addScannedLines: (lines: ScannedLine[]) => number;
+  /**
+   * Empties the paper back to a fresh page of blank lines.
+   *
+   * @remarks
+   * Called by the send flow once the list has actually reached the shop, and
+   * by nothing else. It is not undoable and there is no copy kept — the sent
+   * list now lives on the server.
+   */
   clearDraft: () => void;
 };
 
+/**
+ * Holds the unsent list: the rows, whether they have been read back from
+ * disk, and the counter that hands out row ids.
+ *
+ * @remarks
+ * Written from everywhere a customer can add to their list — the paper editor,
+ * "add to list" on a product card, the quantity picker, the photo scan — and
+ * cleared by the send flow once the list is on its way.
+ *
+ * **Persisted.** The rows go to AsyncStorage under `draft_grocery_list_rows`,
+ * debounced by half a second, and immediately whenever the app leaves the
+ * foreground. `hydrated` and `nextId` are **not** persisted: `hydrated` is
+ * about this process, and `nextId` is recomputed from the saved rows.
+ *
+ * **Hydration** happens once, from the app root, and is deliberately not
+ * gated on being signed in — a list written before signing in is still the
+ * customer's list. It is also picky: saved rows are restored only if at least
+ * one of them has writing on it, so an already-sent list or an old grown one
+ * cannot carry a wall of blank lines into the new session. Until `hydrate()`
+ * resolves the store holds eight blank rows, which is what the editor shows.
+ *
+ * **The invariant behind every count** is `isSendableRow`: a row with a
+ * non-empty name. The tab badge, the centre button, the Shop sticky bar, the
+ * sheet header and Send all count with it, so they cannot disagree.
+ *
+ * **The paper always ends in one blank line.** Every mutation runs the rows
+ * through `withTrailingBlank`, so there is somewhere to write and no item
+ * limit.
+ *
+ * Nothing here talks to the network. Sending belongs to `useSendDraft`.
+ */
 export const useDraftListStore = create<DraftListStore>((set, get) => ({
   rows: makeInitialRows(),
   hydrated: false,

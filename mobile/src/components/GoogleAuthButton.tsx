@@ -1,3 +1,9 @@
+/**
+ * The "Continue with Google" button.
+ *
+ * @packageDocumentation
+ */
+
 import { useState } from "react";
 import { ActivityIndicator, Image, Pressable, Text } from "react-native";
 import * as WebBrowser from "expo-web-browser";
@@ -18,6 +24,26 @@ type GoogleAuthButtonProps = {
   onDone: () => void;
 };
 
+/**
+ * Signs the customer in with their Google account, opening Google's own page
+ * in a browser window over the app.
+ *
+ * @remarks
+ * Runs Clerk's SSO flow and warms the browser up first on Android, so the
+ * window opens without a pause.
+ *
+ * It finishes through the same `useSessionGuard` the email flow uses, so the
+ * two paths can never answer the same situation differently — including a
+ * session Clerk created but is holding back as pending, and a
+ * `session_exists` failure from an earlier attempt.
+ *
+ * Two outcomes are deliberately quiet rather than errors: Clerk not being
+ * ready means nothing was attempted, and the customer closing the Google
+ * window is not a failure.
+ *
+ * @param onDone - Called only once there is a usable active session. The
+ * caller decides where to go next.
+ */
 export function GoogleAuthButton({ onDone }: GoogleAuthButtonProps) {
   const { t } = useTranslation();
   useWarmUpBrowser();

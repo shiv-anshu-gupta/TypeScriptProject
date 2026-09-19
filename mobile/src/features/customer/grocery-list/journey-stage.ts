@@ -1,9 +1,22 @@
+/**
+ * Where the customer is in their journey, as a single decision.
+ *
+ * @packageDocumentation
+ */
+
 import { ACTIVE_STATUSES, type CustomerGroceryList } from "./types";
 
-// Where the customer is in the write -> send -> get price -> collect journey,
-// so the Home card can show their real progress and point at the next step.
-// `others` counts the customer's other orders still in progress, so the card
-// can mention them without following them.
+/**
+ * Where the customer is in the write -> send -> get price -> collect journey,
+ * so the Home card can show their real progress and point at the next step.
+ * `others` counts the customer's other orders still in progress, so the card
+ * can mention them without following them.
+ *
+ * @remarks
+ * A discriminated union on `kind`, so the card can switch on it and every
+ * stage carries exactly what it needs — `write` and `send` have no list to
+ * show, the rest do.
+ */
 export type JourneyStage =
   | { kind: "write" } // nothing on the go - start a list
   | { kind: "send"; count: number } // written but not sent
@@ -17,8 +30,25 @@ export type JourneyStage =
 // they are not tracked - with none left the journey starts over at "write".
 const ACTIVE: ReadonlySet<string> = new Set(ACTIVE_STATUSES);
 
-// Pure decision, kept free of React so it can be reasoned about and tested on
-// its own.
+/**
+ * Decides which single stage the Home card should show.
+ *
+ * @remarks
+ * Pure decision, kept free of React so it can be reasoned about and tested on
+ * its own.
+ *
+ * Three rules, in order. An unsent draft always wins, because a list the
+ * customer forgot to send never reaches the shop. Otherwise a `ready` order
+ * leads, since that one needs the customer to walk to the shop. Otherwise the
+ * newest order leads — not the one furthest along, so an old order left
+ * unfinished cannot hide the list just sent.
+ *
+ * @param draftCount - Sendable rows on the paper, counted with
+ * `countSendableRows`.
+ * @param lists - Every list the customer has; completed and cancelled ones
+ * are filtered out here, so callers pass the lot.
+ * @returns One stage. With no draft and no active order, `write`.
+ */
 export function journeyStage(
   draftCount: number,
   lists: CustomerGroceryList[],

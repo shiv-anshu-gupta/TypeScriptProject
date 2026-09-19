@@ -1,3 +1,26 @@
+/**
+ * Reads a photo of a handwritten grocery list and returns the items as text.
+ *
+ * @remarks
+ * The photo is NEVER stored: its bytes arrive in the request, go straight to
+ * the model, and are gone when the response is written. What the customer
+ * keeps is the TEXT — written onto their list, where they can fix anything
+ * the model misread before the shop ever sees it. That is the whole point:
+ * the paper is only a way of typing quickly, so there is nothing to save.
+ *
+ * Provider: Google Gemini via the plain REST endpoint (free tier friendly,
+ * no extra SDK). The whole provider surface is this one file, so swapping to
+ * another model later touches nothing else.
+ *
+ * Configured by environment:
+ *
+ * ```
+ * GEMINI_API_KEY  — required; without it every read answers 503
+ * GEMINI_MODEL    — optional; overrides the default model
+ * ```
+ *
+ * @packageDocumentation
+ */
 import { z } from "zod";
 import { AppError } from "../utils/AppError";
 import {
@@ -7,18 +30,6 @@ import {
   MAX_QTY_LEN,
   MIN_NAME_LEN,
 } from "../utils/sanitizeItem";
-
-// Reads a photo of a handwritten grocery list and returns the items as text.
-//
-// The photo is NEVER stored: its bytes arrive in the request, go straight to
-// the model, and are gone when the response is written. What the customer
-// keeps is the TEXT — written onto their list, where they can fix anything
-// the model misread before the shop ever sees it. That is the whole point:
-// the paper is only a way of typing quickly, so there is nothing to save.
-//
-// Provider: Google Gemini via the plain REST endpoint (free tier friendly,
-// no extra SDK). The whole provider surface is this one file, so swapping to
-// another model later touches nothing else.
 
 const GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models";
 const DEFAULT_MODEL = "gemini-3.6-flash";
@@ -42,7 +53,14 @@ const finishedAtByUser = new Map<string, number>();
 let windowStartedAt = 0;
 let callsInWindow = 0;
 
-// Drop callers we haven't seen for a while, so the map can't grow for ever.
+/**
+ * Drop callers we haven't seen for a while, so the map can't grow for ever.
+ *
+ * @remarks
+ * Only does anything once the map passes 500 entries, so the common case
+ * costs a size check. Entries older than a minute are past the per-customer
+ * gap anyway, so forgetting them changes no decision.
+ */
 function forgetOldCallers(now: number) {
   if (finishedAtByUser.size < 500) return;
   for (const [key, at] of finishedAtByUser) {
@@ -50,12 +68,33 @@ function forgetOldCallers(now: number) {
   }
 }
 
+/**
+ * One item read off the paper.
+ *
+ * @remarks
+ * `confidence` is the model's own estimate of how clearly the writing could
+ * be read - `high` legible, `medium` fairly sure, `low` a guess at messy
+ * handwriting. The app uses it to flag the rows the customer should check
+ * before sending; nothing on the server treats a low-confidence row
+ * differently.
+ *
+ * `name` and `quantity` have already been through the same sanitizer as
+ * hand-typed items, so they are safe to store as they are.
+ */
 export type ParsedPhotoItem = {
   name: string;
   quantity: string;
   confidence: "high" | "medium" | "low";
 };
 
+/**
+ * The result of reading one customer's photographs.
+ *
+ * @remarks
+ * `readable` false means no list could be made out at all - a blurred photo,
+ * or a picture of something else - and `items` is then empty. It is not an
+ * error: the customer is asked to retake the photo or type instead.
+ */
 export type ParsedPhotoList = {
   readable: boolean;
   items: ParsedPhotoItem[];
@@ -114,16 +153,51 @@ const SYSTEM_INSTRUCTION = [
   "empty items array.",
 ].join("\n");
 
-// The photo as it came off the phone. Held only for this one call.
+/**
+ * The photo as it came off the phone. Held only for this one call.
+ *
+ * @remarks
+ * `buffer` is the raw image bytes from the upload, base64-encoded inline into
+ * the model request and never written anywhere. `mimeType` is passed to the
+ * model as given.
+ */
 export type PhotoToRead = {
   mimeType: string;
   buffer: Buffer;
 };
 
-// One request carries every photo of the same list: the model sees them
-// together (a list can run onto a second page) and it costs one quota unit.
-// `callerKey` is the customer, so one impatient person cannot lock out the
-// rest of the shop's customers.
+/**
+ * Reads one customer's photographed list and returns the items as text.
+ *
+ * @remarks
+ * One request carries every photo of the same list: the model sees them
+ * together (a list can run onto a second page) and it costs one quota unit.
+ *
+ * This function is the admission control; the model call itself is
+ * `readWithModel`. Three brakes are applied in order, all in this process's
+ * memory and therefore best-effort only - several serverless instances each
+ * keep their own counts, so treat them as a brake, never as a security
+ * boundary:
+ *
+ * 1. one read at a time per customer;
+ * 2. a five-second gap after a customer's previous read FINISHED;
+ * 3. a whole-server ceiling of twelve reads a minute.
+ *
+ * Nothing is written to the database and no photo is kept. The model's text
+ * is validated with zod and then put through the same allowlist sanitizer as
+ * hand-typed items, so what comes back is safe to store.
+ *
+ * @param callerKey - identifies the customer for the per-customer brakes, so
+ * one impatient person cannot lock out the rest of the shop's customers. Use
+ * a stable id, not something the client chooses.
+ * @returns At most {@link MAX_ITEMS_PER_SUBMIT} items. `readable` is only
+ * true when the model said so AND at least one item survived cleaning.
+ * @throws {@link AppError} 503 when the API key is unset, the model cannot be
+ * reached or timed out (45s), the model is rate-limiting, or its output was
+ * unusable. {@link AppError} 429 when this customer's own read is still
+ * running or their gap has not elapsed. Every message is written for the
+ * customer and suggests typing the items instead.
+ */
 export async function parseGroceryListPhotos(
   photosToRead: PhotoToRead[],
   callerKey: string,
@@ -170,7 +244,23 @@ export async function parseGroceryListPhotos(
   }
 }
 
-// The call itself. Everything above is only about who may make it.
+/**
+ * The call itself. Everything above is only about who may make it.
+ *
+ * @remarks
+ * Posts the photos inline to Gemini's `generateContent` with a fixed system
+ * instruction, `temperature: 0` and a structured-output schema, so the reply
+ * is JSON of a known shape rather than prose. The whole call is abandoned
+ * after 45 seconds.
+ *
+ * Failures are deliberately asymmetric: the customer gets one plain sentence,
+ * while the real reason - HTTP status, Gemini's body, or unusable output - is
+ * logged with a `[photo-parser]` prefix, truncated to 300 characters. A
+ * successful read logs the model, photo count, item count and elapsed time.
+ *
+ * @throws {@link AppError} 503 for every failure mode; see
+ * {@link parseGroceryListPhotos}.
+ */
 async function readWithModel(
   photosToRead: PhotoToRead[],
   apiKey: string,

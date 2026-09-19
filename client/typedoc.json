@@ -1,0 +1,14 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["src"],
+  "entryPointStrategy": "expand",
+  "exclude": ["**/components/ui/**", "**/pages/customer/**", "**/components/customer/**", "**/features/customer/**"],
+  "out": "../docs/reference/admin",
+  "name": "sKirana admin panel",
+  "readme": "none",
+  "includeVersion": true,
+  "excludeInternal": true,
+  "categorizeByGroup": true,
+  "sort": ["source-order"],
+  "validation": { "notExported": false, "invalidLink": true, "notDocumented": false }
+}

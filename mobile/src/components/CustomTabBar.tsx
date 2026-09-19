@@ -1,3 +1,9 @@
+/**
+ * The bottom bar: four tabs and the raised button that opens the list.
+ *
+ * @packageDocumentation
+ */
+
 import { Pressable, Text, useWindowDimensions, View } from "react-native";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -45,14 +51,33 @@ const CAPTION_SIZE_DEVANAGARI = 15; // Devanagari reads larger at the same size
 const CAPTION_AKSHARA_GAP = 3; // space between syllables along the arc
 const CAPTION_CENTERLINE = 43; // button centre -> middle of each syllable
 
-// A bottom tab bar whose top edge sweeps up and around a large circular button
-// in the middle.
-//
-// The curve is an SVG elliptical-arc command. This cannot be done with
-// border-radius: a cradle needs the arc to ease back into the straight edge,
-// and a CSS arc always meets that edge at a visible kink. Drawing the whole bar
-// as one path also means the outline is continuous, with no seam where the
-// curve joins the line.
+/**
+ * The bar along the bottom of every tab screen, cradling a large round button
+ * that opens the grocery list.
+ *
+ * @remarks
+ * A bottom tab bar whose top edge sweeps up and around a large circular button
+ * in the middle.
+ *
+ * The curve is an SVG elliptical-arc command. This cannot be done with
+ * border-radius: a cradle needs the arc to ease back into the straight edge,
+ * and a CSS arc always meets that edge at a visible kink. Drawing the whole bar
+ * as one path also means the outline is continuous, with no seam where the
+ * curve joins the line.
+ *
+ * The centre button is not a tab and has no route. It opens the list sheet
+ * through `useGrocerySheetStore`, and carries a badge of unsent items read
+ * from the draft store — the same count the Lists tab badges itself with, so
+ * the two can never disagree.
+ *
+ * Its caption is drawn one of two ways. Latin goes through SVG `TextPath`;
+ * Devanagari cannot, so {@link CurvedCaption} places whole syllables along the
+ * arc instead.
+ *
+ * Tab presses go through `navigation.emit` first, so a screen can intercept
+ * its own tab press. It handles its own safe-area padding, which is why the
+ * navigator passes no inset.
+ */
 export function CustomTabBar({
   state,
   descriptors,

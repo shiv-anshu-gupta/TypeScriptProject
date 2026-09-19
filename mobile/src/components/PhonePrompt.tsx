@@ -1,3 +1,9 @@
+/**
+ * The one-time sheet asking for the customer's mobile number.
+ *
+ * @packageDocumentation
+ */
+
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
@@ -13,8 +19,26 @@ type PhonePromptProps = {
   onSubmit: (phone: string) => void;
 };
 
-// Asked once, the first time a customer sends a list, so the shop can call them
-// about their order. Includes a short trust line explaining why.
+/**
+ * A short sheet asking for a mobile number before the customer's first list
+ * goes to the shop.
+ *
+ * @remarks
+ * Asked once, the first time a customer sends a list, so the shop can call them
+ * about their order. Includes a short trust line explaining why.
+ *
+ * It opens over the list sheet rather than replacing it, which the portal at
+ * the app root makes possible. Controlled: it holds only the number being
+ * typed, clears that each time it opens, and shows the validation message only
+ * after the field has been left once, so it does not scold someone mid-type.
+ *
+ * `onSubmit` receives a normalised number, never the raw text, so the caller
+ * does not have to clean it up. Saving belongs to the send flow, not here.
+ *
+ * @param submitting - Drives both the spinner and the disabled state, so the
+ * number cannot be sent twice.
+ * @param onSubmit - Given the normalised 10-digit number, without the +91.
+ */
 export function PhonePrompt({
   open,
   submitting,

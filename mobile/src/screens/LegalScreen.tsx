@@ -1,15 +1,25 @@
+/**
+ * The privacy policy and terms, written into this file.
+ *
+ * @remarks
+ * Plain-language Privacy Policy + Terms tailored to this app's model:
+ * a digital order-list / quote tool for a single shop, with pay-and-collect
+ * in person. Not legal advice — have a professional skim it before launch.
+ *
+ * @packageDocumentation
+ */
+
 import { ScrollView, Text } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-// Plain-language Privacy Policy + Terms tailored to this app's model:
-// a digital order-list / quote tool for a single shop, with pay-and-collect
-// in person. Not legal advice — have a professional skim it before launch.
-//
 // EDIT THESE for the real shop before publishing:
 const SHOP_NAME = "sKirana";
 const CONTACT_EMAIL = "shivanshu2019gupta@gmail.com";
 const LAST_UPDATED = "September 2026";
 
+/**
+ * A section heading in the legal text.
+ */
 function H({ children }: { children: string }) {
   return (
     <Text className="mb-2 mt-6 text-lg font-semibold text-foreground">
@@ -18,6 +28,9 @@ function H({ children }: { children: string }) {
   );
 }
 
+/**
+ * A paragraph in the legal text.
+ */
 function P({ children }: { children: React.ReactNode }) {
   return (
     <Text className="mb-2 text-sm leading-6 text-muted-foreground">
@@ -26,6 +39,21 @@ function P({ children }: { children: React.ReactNode }) {
   );
 }
 
+/**
+ * The privacy policy and terms as one scrolling page, reached from Account and
+ * from the consent line under the login.
+ *
+ * @remarks
+ * The text is hard-coded here rather than translated or fetched, so it is the
+ * same wording for every customer and ships with the build. It reads no store
+ * and loads nothing.
+ *
+ * `SHOP_NAME`, `CONTACT_EMAIL` and `LAST_UPDATED` at the top of this file must
+ * be edited for a real shop before publishing.
+ *
+ * It describes the photo flow — the photo is read and discarded, and never
+ * stored. Keep that in step with what the camera button actually does.
+ */
 export function LegalScreen() {
   const insets = useSafeAreaInsets();
 

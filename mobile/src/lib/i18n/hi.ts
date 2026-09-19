@@ -1,7 +1,28 @@
+/**
+ * The Hindi half of the app's strings.
+ *
+ * @remarks
+ * This is the app's default language, not a fallback: Hindi is what a phone
+ * shows until the customer chooses otherwise.
+ *
+ * Some words stay in English on purpose, because that is what customers say:
+ * Play Store, UPI, the app's own name.
+ *
+ * @packageDocumentation
+ */
 import type { Translations } from "./en";
 
-// Hindi strings — simple, everyday Hindi for non-English-speaking customers.
-// Keys must match en.ts exactly.
+/**
+ * Every string the app can show, in Hindi.
+ *
+ * @remarks
+ * Hindi strings — simple, everyday Hindi for non-English-speaking customers.
+ * Keys must match en.ts exactly.
+ *
+ * The `Translations` annotation is what enforces the mirror — leave it in
+ * place. Without it a missing key would quietly fall back to English at
+ * runtime with nothing to warn anybody.
+ */
 export const hi: Translations = {
   common: {
     clearSearch: "खोज साफ़ करें",

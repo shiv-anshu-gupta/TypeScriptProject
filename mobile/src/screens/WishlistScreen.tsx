@@ -1,3 +1,9 @@
+/**
+ * The saved products screen.
+ *
+ * @packageDocumentation
+ */
+
 import { useEffect } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { Image } from "expo-image";
@@ -12,6 +18,23 @@ import { useCustomerWishlistStore } from "@/features/customer/wishlist/store";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
+/**
+ * The products the customer has hearted, as a list they can open or remove
+ * from.
+ *
+ * @remarks
+ * Pushed from the Account tab's "Saved products" row. Reads
+ * `useCustomerWishlistStore` and loads it on mount when signed in, not on
+ * focus — this is a pushed screen, not a tab, so it is mounted fresh each
+ * time.
+ *
+ * Three states: a message when signed out, a message when empty, or the list.
+ * Signed out it shows a message rather than the login, unlike the Lists and
+ * Account tabs, because nothing here is worth signing in for on its own.
+ *
+ * Removing is immediate, with no confirmation, since it is reversible from the
+ * product page. It opens no sheets and reads nothing else.
+ */
 export function WishlistScreen() {
   const { t } = useTranslation();
   const navigation = useNavigation<Nav>();

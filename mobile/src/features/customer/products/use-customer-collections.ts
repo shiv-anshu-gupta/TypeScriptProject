@@ -1,3 +1,9 @@
+/**
+ * The Shop screen's data, as a hook rather than a store.
+ *
+ * @packageDocumentation
+ */
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type {
   CustomerProduct,
@@ -19,8 +25,33 @@ const emptyFilters: CustomerProductFilters = {
   size: "",
 };
 
-// React Native has no URL/search-params, so filter state lives in local state
-// instead of the query string (the only behavioural difference from web).
+/**
+ * Loads the categories once, and the products whenever the filters, sort or
+ * search change.
+ *
+ * @remarks
+ * React Native has no URL/search-params, so filter state lives in local state
+ * instead of the query string (the only behavioural difference from web).
+ *
+ * A hook, not a store, because one screen uses it — so the filters live and
+ * die with that screen instead of leaking into the next visit. The
+ * consequence to know: `initialCategory` is read **once**. The Shop tab stays
+ * mounted, so a later hand-off from Home has to go through `startFresh`, not
+ * through a new argument.
+ *
+ * Search is debounced by 300 ms, and a request that is superseded before it
+ * lands is dropped — a broad search ("m") returns more and can arrive after a
+ * narrower one ("milk").
+ *
+ * Neither fetch throws: a failed category load leaves an empty rail, and a
+ * failed product load an empty grid.
+ *
+ * @param initialCategory - Category id to start filtered by; read on first
+ * render only.
+ * @returns The data (`categories`, `products`, `loading`), the current
+ * `filters`, `sort` and `search`, the setters that change them, and
+ * `activeFilterBadges` for showing what is applied.
+ */
 export function useCustomerProductList(initialCategory?: string) {
   const [categories, setCategories] = useState<ProductCategory[]>([]);
   const [products, setProducts] = useState<CustomerProduct[]>([]);

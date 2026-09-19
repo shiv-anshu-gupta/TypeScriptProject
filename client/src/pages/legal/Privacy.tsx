@@ -1,12 +1,63 @@
+/**
+ * The public privacy policy and terms of use page.
+ *
+ * @remarks
+ * Mounted twice in `router.tsx`: at `/privacy` and, with the same component,
+ * at `/terms`. Both URLs therefore render identical content — the terms are
+ * the second half of this one page, not a separate document. Editing this file
+ * changes both.
+ *
+ * These legal routes are declared outside `PublicOnlyLayout`,
+ * `ProtectedLayout` and `RoleGuardLayout`, so they are the only routes in the
+ * admin web app with no authentication guard of any kind. `/privacy` is the
+ * public URL the Google Play Console requires for the mobile app's listing.
+ *
+ * The page is still part of the SPA. `client/vercel.json` rewrites every
+ * unmatched path to `/app.html`, so visiting `/privacy` boots React and the
+ * router before this prose appears, even though the page has no interactive
+ * behaviour and makes no API calls.
+ *
+ * The copy is policy text, not decoration. It must stay in step with what the
+ * mobile app actually declares and does — the camera and gallery permissions,
+ * the notification token, the third-party processors listed under "Who can see
+ * your data", and the deletion timings, which must match
+ * `pages/legal/DeleteAccount.tsx`.
+ *
+ * @packageDocumentation
+ */
+
 // Public, no-login Privacy Policy + Terms page. This gives you the public URL
 // (e.g. https://your-domain/privacy) that Google Play Console requires, and
 // mirrors the in-app policy text.
 //
 // EDIT THESE for the real shop before publishing:
+/**
+ * Shop identity, contact address and policy date interpolated into the copy.
+ *
+ * @remarks
+ * Edit these for the real shop before publishing, as the note above says.
+ * `SHOP_NAME` and `CONTACT_EMAIL` are repeated throughout the prose and must
+ * match the same constants in `pages/legal/DeleteAccount.tsx`, which are
+ * declared separately and will not follow a change made here. `LAST_UPDATED`
+ * is displayed to the reader and should be bumped whenever the policy wording
+ * changes, because app-store reviews check it.
+ */
 const SHOP_NAME = "sKirana";
 const CONTACT_EMAIL = "shivanshu2019gupta@gmail.com";
 const LAST_UPDATED = "September 2026";
 
+/**
+ * A titled block of policy prose.
+ *
+ * @remarks
+ * Local to this file; `DeleteAccount.tsx` declares its own copy rather than
+ * importing this one. It renders an `h2`, so it sits one level below the two
+ * `h2` dividers used for "Privacy Policy" and "Terms of Use" in the page body
+ * — the heading levels are not strictly nested.
+ *
+ * @param title - Heading text for the section.
+ * @param children - Paragraphs of policy text.
+ */
 function Section({
   title,
   children,
@@ -24,6 +75,24 @@ function Section({
   );
 }
 
+/**
+ * Renders the full privacy policy followed by the terms of use.
+ *
+ * @remarks
+ * Takes no props, holds no state and calls no API. Everything is static prose
+ * apart from the three constants above.
+ *
+ * The same component is the element for both `/privacy` and `/terms`, so the
+ * two routes are indistinguishable to a visitor; there is no separate terms
+ * page to update. It also links to `/delete-account` with a plain anchor, not
+ * a router `Link`, so that link causes a full page load.
+ *
+ * Treat the wording as compliance material: the "Photos of your list" and
+ * "What we collect" sections describe the mobile app's camera, gallery and
+ * notification permissions, and the "How long we keep it" section states the
+ * 7-day and 30-day deletion windows repeated on the delete-account page. If
+ * the app's behaviour changes, this text has to change with it.
+ */
 export default function PrivacyPage() {
   return (
     <main className="mx-auto max-w-2xl px-5 py-10 text-neutral-800">

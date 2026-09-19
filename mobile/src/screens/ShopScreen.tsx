@@ -1,3 +1,9 @@
+/**
+ * The Shop tab: the catalogue.
+ *
+ * @packageDocumentation
+ */
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -35,8 +41,16 @@ const sortOptions: { key: ProductSort; labelKey: string }[] = [
   { key: "recent", labelKey: "shop.newest" },
 ];
 
-// One entry in the vertical category rail on the left of the product grid:
-// a rounded category image (fallback icon) with the name under it.
+/**
+ * A category in the rail down the left of the grid.
+ *
+ * @remarks
+ * One entry in the vertical category rail on the left of the product grid:
+ * a rounded category image (fallback icon) with the name under it.
+ *
+ * @param image - Omitted or empty falls back to a generic icon, so a category
+ * with no artwork still reads as a category.
+ */
 function RailItem({
   label,
   active,
@@ -83,6 +97,11 @@ function RailItem({
   );
 }
 
+/**
+ * A rounded filter or sort pill above the grid.
+ *
+ * @param swatch - A colour dot drawn before the label, for a colour facet.
+ */
 function Chip({
   label,
   active,
@@ -122,6 +141,31 @@ function Chip({
   );
 }
 
+/**
+ * The catalogue: a category rail down the left and a two-column product grid,
+ * with a search box and a bar offering to send the list once it has items.
+ *
+ * @remarks
+ * Everything is loaded by `useCustomerProductList`, a hook rather than a
+ * store: it fetches the categories once and re-fetches products whenever the
+ * category, sort or search changes, with the search debounced. The only store
+ * this screen reads is the draft list, for the count on the sticky bar.
+ *
+ * Fully usable signed out, and it opens no sheets or modals. A product goes to
+ * its details page; the sticky bar goes to the Lists tab, where Send is.
+ *
+ * The tab stays mounted once visited, so the hook's initial category is read
+ * only once. Three effects apply the later hand-offs from Home — a category, a
+ * "browse everything", an "open the search" — each starting a fresh browse so
+ * no filter or search survives from an earlier visit, then clearing its own
+ * parameter so the same shortcut works twice.
+ *
+ * The card data is memoised and the press handler is a `useCallback`, because
+ * a new object or closure per render would defeat the memoised product card.
+ *
+ * Sort currently offers one option. The hook can filter by brand, colour and
+ * size, but nothing here shows those yet.
+ */
 export function ShopScreen() {
   const { t } = useTranslation();
   const navigation = useNavigation<Nav>();

@@ -1,8 +1,32 @@
+/**
+ * The shop's main order: a free-text grocery list, priced by hand.
+ *
+ * @remarks
+ * A customer writes a free-text grocery list (item + quantity, no price).
+ * The shopkeeper receives it, fills in a price per item, and sends it back.
+ * The customer then pays online or at the shop on pickup.
+ *
+ * This is the path most customers take, rather than the catalogue and cart.
+ * Handled by routes/customer/grocery-list.routes.ts and
+ * routes/admin/grocery-list.routes.ts; the conversation about a list lives in
+ * Message.ts.
+ *
+ * @packageDocumentation
+ */
 import mongoose, { HydratedDocument, model, Schema, Types } from "mongoose";
 
-// A customer writes a free-text grocery list (item + quantity, no price).
-// The shopkeeper receives it, fills in a price per item, and sends it back.
-// The customer then pays online or at the shop on pickup.
+/**
+ * Where a list has got to. The meaning of each value is beside it.
+ *
+ * @remarks
+ * Normal progression is received - priced - packing - packed - ready -
+ * completed, with `cancelled` reachable from anywhere. Nothing in the schema
+ * enforces the order; the admin routes decide which move is offered, and each
+ * step stamps its own `...At` date.
+ *
+ * `priced` is the one the customer is waiting for: it is when a total exists
+ * and payment becomes possible.
+ */
 export type GroceryListStatus =
   | "received" // shop has the list, not priced yet
   | "priced" // shopkeeper filled prices + total, sent back
@@ -12,9 +36,44 @@ export type GroceryListStatus =
   | "completed"
   | "cancelled";
 
+/**
+ * How the customer chose to pay.
+ *
+ * @remarks
+ * `online` is a Razorpay order; `upi` is a direct transfer to the shop;
+ * `at_shop` is cash or card on collection and is the default, since that is
+ * what most customers do.
+ */
 export type GroceryListPaymentMethod = "online" | "upi" | "at_shop";
+
+/**
+ * Whether the money has arrived.
+ *
+ * @remarks
+ * Only ever set to `paid` by the server, after Razorpay's signature has been
+ * verified or the shopkeeper has confirmed payment at the counter - never on
+ * the client's word.
+ */
 export type GroceryListPaymentStatus = "pending" | "paid";
 
+/**
+ * One line of the list.
+ *
+ * @remarks
+ * `name` and `quantity` are the customer's own words - `quantity` is free
+ * text ("2 kg", "1 packet") rather than a number, because that is how people
+ * write a list and forcing units would slow them down.
+ *
+ * `rate` and `price` are in rupees and both start at 0; the shopkeeper fills
+ * them in when pricing. `price` is the line total and is what sums to the
+ * list's `totalAmount`.
+ *
+ * `available` false is the shop saying it is out of stock. The line stays on
+ * the list so the customer can see what they will not be getting.
+ *
+ * Every name and quantity here has been through utils/sanitizeItem.ts,
+ * whether it was typed or read off a photograph.
+ */
 export type GroceryListItem = {
   name: string;
   quantity: string; // free text, e.g. "2 kg", "1 packet"
@@ -27,6 +86,23 @@ export type GroceryListItem = {
 // but that photo is read into items the moment it is taken and then thrown
 // away - so what is stored is the text they checked, never the image.
 
+/**
+ * One list. Notes on individual fields are beside the fields.
+ *
+ * @remarks
+ * `customerName`, `customerEmail` and `customerPhone` are copied onto the
+ * list rather than read through `user`, so the shop still has the details it
+ * was given at the time even if the customer later changes them.
+ *
+ * `totalAmount` stays 0 until the shopkeeper prices the list, so it cannot be
+ * read as "free" - `status` says whether it means anything yet.
+ *
+ * Items are capped at `MAX_ITEMS_PER_LIST` (utils/sanitizeItem.ts), enforced
+ * by the routes when adding to an existing list, not by this schema.
+ *
+ * The `...At` dates are stamps, written once when the list reaches that step
+ * and left alone afterwards.
+ */
 export type GroceryList = {
   user: Types.ObjectId;
   customerName: string;
@@ -40,7 +116,10 @@ export type GroceryList = {
   paymentStatus: GroceryListPaymentStatus;
   razorpayOrderId: string;
   paymentId: string;
-  seenByCustomer: boolean; // drives the in-app notification badge
+  // Drives the in-app notification badge. Set false by every admin change
+  // that the customer should look at (routes/admin/grocery-list.routes.ts),
+  // and back to true when they open the list.
+  seenByCustomer: boolean;
   note: string;
   pricedAt?: Date | null;
   packedAt?: Date | null;
@@ -51,6 +130,7 @@ export type GroceryList = {
   updatedAt: Date;
 };
 
+/** A saved list, as Mongoose hands it back. */
 export type GroceryListDocument = HydratedDocument<GroceryList>;
 
 const GroceryListItemSchema = new Schema<GroceryListItem>(
@@ -185,9 +265,24 @@ const GroceryListSchema = new Schema<GroceryList>(
   { timestamps: true },
 );
 
+// The two ways a list is ever looked for, each newest-first:
+//   (user, createdAt)   - a customer opening their own orders
+//   (status, createdAt) - the shop's queue, filtered to one status
+// Both put the sort field last so the index satisfies the sort as well as the
+// match, and the database never has to order the results itself.
 GroceryListSchema.index({ user: 1, createdAt: -1 });
 GroceryListSchema.index({ status: 1, createdAt: -1 });
 
+/**
+ * The GroceryList model.
+ *
+ * @remarks
+ * Resolved from `mongoose.models` first so a hot reload does not compile the
+ * same model twice.
+ *
+ * Lists are never deleted - a cancelled one keeps its `cancelled` status, so
+ * the shop's history stays whole.
+ */
 export const GroceryList =
   mongoose.models.GroceryList ||
   model<GroceryList>("GroceryList", GroceryListSchema);

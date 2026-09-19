@@ -1,3 +1,9 @@
+/**
+ * The launch screen.
+ *
+ * @packageDocumentation
+ */
+
 import { useEffect, useRef } from "react";
 import { Animated, Easing, Text, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -6,6 +12,24 @@ type SplashScreenProps = {
   progress: number;
 };
 
+/**
+ * The first thing the customer sees: the logo over a faint pattern of kirana
+ * goods, with a progress bar underneath.
+ *
+ * @remarks
+ * Not a navigator screen. `App.tsx` renders it directly, on top of an app that
+ * is already mounted and fetching, so Clerk, the home request and the
+ * customer's orders all load behind it.
+ *
+ * The progress is decorative. It is driven by a fake counter in `App.tsx` and
+ * is not tied to any real loading, so this component must never be treated as
+ * a signal that the app is ready.
+ *
+ * Its text is deliberately not translated: it can appear before the stored
+ * language has been read back.
+ *
+ * @param progress - A percentage from 0 to 100. Values above 100 are clamped.
+ */
 export function SplashScreen({ progress }: SplashScreenProps) {
   const logoAnim = useRef(new Animated.Value(0)).current;
   const barAnim = useRef(new Animated.Value(0)).current;

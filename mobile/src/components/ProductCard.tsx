@@ -1,3 +1,9 @@
+/**
+ * The product tile used in every grid in the app.
+ *
+ * @packageDocumentation
+ */
+
 import { memo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { Image } from "expo-image";
@@ -10,6 +16,13 @@ import { useCustomerWishlistStore } from "@/features/customer/wishlist/store";
 import { toast } from "@/lib/toast";
 import { formatPack } from "@/lib/utils";
 
+/**
+ * The fields a card needs.
+ *
+ * @remarks
+ * Deliberately narrower than the full product type, so Home, Shop and the
+ * wishlist can all feed the same card from differently shaped payloads.
+ */
 export type ProductCardData = {
   id: string;
   title: string;
@@ -21,11 +34,31 @@ export type ProductCardData = {
 
 type ProductCardProps = {
   product: ProductCardData;
-  // Given the product's id, so a list can pass one stable handler and the
-  // memoised card isn't re-rendered by a new closure on every scroll.
   onPress?: (id: string) => void;
 };
 
+/**
+ * One product in a grid: its photo, brand, name and pack size, with a heart to
+ * save it and a "+" to put it on the list.
+ *
+ * @remarks
+ * See {@link ProductCard} for the memoised export every caller should use.
+ *
+ * It subscribes to the wishlist store, but only to its own saved/not-saved
+ * answer, and reads Clerk's session at press time rather than subscribing to
+ * it. Both are about keeping a scrolling grid still.
+ *
+ * The "+" does not add anything directly. It opens the app's single quantity
+ * picker through `useQuantitySheetStore`; this card mounts no sheet, and a
+ * card must never mount one.
+ *
+ * The `expo-image` props here are load-bearing — read the comments on them
+ * before changing any of them.
+ *
+ * @param onPress - Given the product's id, so a list can pass one stable
+ * handler and the memoised card isn't re-rendered by a new closure on every
+ * scroll.
+ */
 function ProductCardView({ product, onPress }: ProductCardProps) {
   const { t } = useTranslation();
   const clerk = useClerk();
@@ -156,7 +189,16 @@ function ProductCardView({ product, onPress }: ProductCardProps) {
   );
 }
 
-// A grid of these re-renders whenever anything on the Shop screen changes -
-// the search box, the sort, the draft count. Each card only depends on its
-// own product, so it is compared by identity and skipped otherwise.
+/**
+ * {@link ProductCardView}, memoised. This is the export to use.
+ *
+ * @remarks
+ * A grid of these re-renders whenever anything on the Shop screen changes -
+ * the search box, the sort, the draft count. Each card only depends on its
+ * own product, so it is compared by identity and skipped otherwise.
+ *
+ * The memo only pays off if the caller's `product` and `onPress` are stable
+ * too, which is why the callers memoise their row data and wrap `onPress` in
+ * `useCallback`.
+ */
 export const ProductCard = memo(ProductCardView);

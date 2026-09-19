@@ -1,3 +1,14 @@
+/**
+ * The image area of the product dialog: two pickers, the existing pictures and
+ * previews of newly added files.
+ *
+ * @remarks
+ * Presentation only. It neither compresses nor size-checks anything — both
+ * happen in `useProductForm` after `onFilesAdd` hands the files up.
+ *
+ * @packageDocumentation
+ */
+
 import { Button } from "@/components/ui/button";
 import type { ProductImage } from "@/features/admin/products/types";
 import { Camera, ImagePlus, Star, X } from "lucide-react";
@@ -37,6 +48,16 @@ const removeIconClass = "h-4 w-4";
 
 const fileNameClass = "p-2 text-xs text-muted-foreground";
 
+/**
+ * Props for {@link ImagePicker}.
+ *
+ * @param existingImages - Pictures already stored on the product. Only these
+ * can be removed or made the cover; new files cannot, until they are saved.
+ * @param newFiles - Files picked in this session and not yet uploaded.
+ * @param onFilesAdd - Receives the raw `FileList` from either input, including
+ * `null` when the admin cancels the picker.
+ * @param coverImagePublicId - Which existing image is marked as the cover.
+ */
 type ImagePickerProps = {
   existingImages: ProductImage[];
   newFiles: File[];
@@ -46,6 +67,26 @@ type ImagePickerProps = {
   onCoverImageChange: (publicId: string) => void;
 };
 
+/**
+ * Picks product images and manages the ones already saved.
+ *
+ * @remarks
+ * Two inputs feed the same `onFilesAdd`. "Choose from gallery" is `multiple`;
+ * "Take photo" carries `capture="environment"`, which opens the rear camera
+ * directly on a phone — the main affordance for a shopkeeper adding stock from
+ * the shop floor — and behaves like an ordinary file picker on desktop. Both
+ * are `accept="image/*"`, which is the only type check anywhere in the product
+ * upload path, and a hint the browser is free to ignore.
+ *
+ * Previews for new files are `URL.createObjectURL` blobs held in a `useMemo`
+ * keyed on `newFiles`, and the cleanup effect revokes them when `newFiles`
+ * changes or the component unmounts. Leaving that effect out would leak a blob
+ * per picked photo for the life of the tab.
+ *
+ * Cover selection and removal act on existing images only, by `publicId`, and
+ * are staged in form state — nothing reaches the server until the dialog is
+ * saved.
+ */
 export function ImagePicker({
   existingImages,
   newFiles,

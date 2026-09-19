@@ -1,3 +1,13 @@
+/**
+ * The "Manage Categories" dialog: add, rename, re-image and delete categories.
+ *
+ * @remarks
+ * Unlike the product dialog, this one has no hook — all its state and all its
+ * requests sit in the component.
+ *
+ * @packageDocumentation
+ */
+
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -43,6 +53,15 @@ const rowActions = "flex items-center gap-1";
 
 const errorTextClass = "text-sm text-destructive";
 
+/**
+ * Props for {@link CategoryDialog}.
+ *
+ * @param categories - The full list, owned by the page. The dialog never
+ * fetches it; it re-reads the prop after `onSaved` refreshes upstream.
+ * @param onSaved - Awaited after every successful create, update or delete.
+ * The page passes `refreshAll`, so the product list picks up renamed
+ * categories too.
+ */
 type CategoryDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -50,6 +69,38 @@ type CategoryDialogProps = {
   onSaved: () => Promise<void>;
 };
 
+/**
+ * Dialog for managing product categories.
+ *
+ * @remarks
+ * One text field doubles as create and rename: pressing the pencil on a row
+ * loads it into `editingCategory`, after which the button reads "Update" and
+ * calls `PUT /admin/categories/:id` instead of `POST /admin/categories`. Both
+ * go as multipart form-data so an optional image can ride along; the mobile
+ * app shows that image as a circle on the Shop tab.
+ *
+ * Images are compressed by `compressImage` (`client/src/lib/image.ts`) and
+ * then held to a hard 1 MB. Unlike the product form, a single file is in play,
+ * so an over-limit image is refused with an inline error and the selection is
+ * cleared. The server applies no size or MIME check on this route, so this is
+ * the only limit. The "Take photo" button carries `capture="environment"` and
+ * opens the rear camera directly on a phone.
+ *
+ * The search box filters the array **in the browser** — no request is made,
+ * which is the opposite of the products search on the page behind it. The
+ * count beside "All categories" always reflects the unfiltered list.
+ *
+ * Deleting asks through `window.confirm`, then calls
+ * `DELETE /admin/categories/:id`. The server refuses to delete a category that
+ * still has products, and its message is shown verbatim in the error line, so
+ * do not swap it for a generic string. Deleting the row currently being edited
+ * also resets the form.
+ *
+ * All state is local and dropped when the dialog closes: `name`, `imageFile`,
+ * `editingCategory`, `saving`, `deletingCategoryId`, `error` and `filter`.
+ * Nothing is applied optimistically — the list only changes once `onSaved`
+ * has refetched.
+ */
 export function CategoryDialog({
   open,
   onOpenChange,

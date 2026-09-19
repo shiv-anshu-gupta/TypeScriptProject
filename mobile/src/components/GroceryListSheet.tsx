@@ -1,3 +1,9 @@
+/**
+ * The list paper as a near-full-screen bottom sheet.
+ *
+ * @packageDocumentation
+ */
+
 import { useCallback, useEffect, useRef } from "react";
 import { Keyboard, Platform, Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -37,14 +43,32 @@ const SCROLL_FOCUSED_LINE_FROM_JS = Platform.OS === "ios";
 // Nearly full screen: the point of this sheet is to be a sheet of paper.
 const SHEET_HEIGHT = "93%";
 
-// The list sheet, opened by "Write list" and the centre tab button.
-//
-// It is the shared <Sheet> now, so it is dragged down to close like every
-// other sheet, and the keyboard is handled there - it used to be ~120 lines
-// here, because Android edge-to-edge (the RN 0.81 default) no longer resizes
-// the window for the keypad. What stays here is only what is specific to
-// writing a list: Send pinned in the header, the paper filling the page with
-// blank lines, and keeping the line being typed in on screen.
+/**
+ * The full page of paper the customer writes their list on, slid up over
+ * whatever screen they were on.
+ *
+ * @remarks
+ * The list sheet, opened by "Write list" and the centre tab button.
+ *
+ * It is the shared `<Sheet>` now, so it is dragged down to close like every
+ * other sheet, and the keyboard is handled there - it used to be ~120 lines
+ * here, because Android edge-to-edge (the RN 0.81 default) no longer resizes
+ * the window for the keypad. What stays here is only what is specific to
+ * writing a list: Send pinned in the header, the paper filling the page with
+ * blank lines, and keeping the line being typed in on screen.
+ *
+ * Mounted once at the app root, not by any screen, and takes no props: it
+ * opens and closes through `useGrocerySheetStore`, so the centre tab button,
+ * a banner and the home journey card can all open it. It also reads the draft
+ * store for the item count in its subtitle and to top the paper up with blank
+ * lines once it knows how tall its viewport is.
+ *
+ * Closing by any route — the ✕, the backdrop, a drag down, Android back —
+ * dismisses the keyboard first.
+ *
+ * Sending is not handled here. {@link SendListButton} owns it, along with the
+ * phone prompt that opens as a second sheet on top of this one.
+ */
 export function GroceryListSheet() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();

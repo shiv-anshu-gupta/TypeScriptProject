@@ -1,3 +1,9 @@
+/**
+ * The sheet for editing the name and number the shop sees.
+ *
+ * @packageDocumentation
+ */
+
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
@@ -13,13 +19,30 @@ type ProfileEditSheetProps = {
   initialName: string;
   initialPhone: string;
   onClose: () => void;
-  // `phone` is left out when the customer hasn't given one - the server
-  // rejects an empty number, and the name alone is a valid save.
   onSubmit: (values: { name: string; phone?: string }) => void;
 };
 
-// Lets the customer correct the name and mobile the SHOP sees on their orders.
-// Opened from the "Edit" button on the Account screen.
+/**
+ * A short sheet with a name field and a mobile field, saving what the shop
+ * will see on this customer's orders.
+ *
+ * @remarks
+ * Lets the customer correct the name and mobile the SHOP sees on their orders.
+ * Opened from the "Edit" button on the Account screen.
+ *
+ * Controlled by its caller and re-seeded from the current values every time it
+ * opens, so an abandoned edit is never carried into the next one. It saves
+ * nothing itself — the Account screen owns the request and the store.
+ *
+ * The name is required; the mobile is optional and only has to be valid if
+ * something was typed, so a customer who has not given a number can still fix
+ * their name. Names pass through `stripSpecials`, the same cleaning the list
+ * lines get.
+ *
+ * @param onSubmit - Given a trimmed name and a normalised phone. `phone` is
+ * left out when the customer hasn't given one - the server rejects an empty
+ * number, and the name alone is a valid save.
+ */
 export function ProfileEditSheet({
   open,
   submitting,

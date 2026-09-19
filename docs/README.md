@@ -15,12 +15,41 @@ back; the customer collects and pays. Three apps, one server, one database.
 | Working on the shop's panel | [ADMIN-WEB.md](ADMIN-WEB.md) — pages, routing, auth, what is live and what is dead |
 | Setting up the domain, Clerk or keys | [PRODUCTION-SETUP.md](PRODUCTION-SETUP.md) — the one-time runbook |
 
+## The generated reference
+
+The source itself carries TSDoc comments — roughly a thousand of them, on every
+exported function, component, store, model and route handler. They document what
+a caller cannot see from the signature: what a function throws, what it writes,
+what it calls, what it caps, and why the odd-looking parts are odd.
+
+To read them as a browsable site:
+
+```bash
+cd server   && npm run docs   # → docs/reference/server/index.html
+cd mobile   && npm run docs   # → docs/reference/mobile/index.html
+cd client   && npm run docs   # → docs/reference/admin/index.html
+```
+
+The output is **not committed** — it is a build product, and committing it would
+put a thousand-line diff behind every comment change. Generate it when you want
+it. (TypeDoc, not Doxygen: Doxygen is a C and C++ tool and understands
+TypeScript's types poorly.)
+
+The documents in this folder and the comments in the code do different jobs.
+These explain the system; the comments explain the call in front of you. When
+they disagree, the comments are closer to the code and usually right.
+
 ## How these were written
 
 Every document was written by reading the code, not from memory, and each claim
-carries the `file:line` it came from. Where the live database or a live endpoint
-was checked, the measured value is stated. Anything that could not be verified
-is marked **unverified** rather than guessed — trust those marks.
+names the file and the function it came from. Where the live database or a live
+endpoint was checked, the measured value is stated. Anything that could not be
+verified is marked **unverified** rather than guessed — trust those marks.
+
+**References name a file and a symbol, never a line number.** They used to
+carry line numbers, and a single pass of adding comments moved every one of
+them: 1,383 citations became wrong in an afternoon without a word of prose
+changing. A file path and a function name survive that; a line number cannot.
 
 They record two kinds of thing that code alone does not:
 

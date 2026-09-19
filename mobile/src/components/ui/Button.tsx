@@ -1,3 +1,9 @@
+/**
+ * The app's one button: five variants, three sizes, a built-in busy state.
+ *
+ * @packageDocumentation
+ */
+
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
@@ -39,6 +45,20 @@ const containerBySize: Record<Size, string> = {
   lg: "h-14 px-6",
 };
 
+/**
+ * A tappable button with a label, an optional leading icon and a spinner while
+ * the action it starts is still running.
+ *
+ * @remarks
+ * `loading` also disables the button, so a caller does not have to set both to
+ * stop a double tap. While loading the label and icon are replaced by a
+ * spinner, not overlaid, so the button keeps its size but loses its text. The
+ * spinner colour is chosen from the variant because `ActivityIndicator` takes a
+ * colour value rather than a class.
+ *
+ * @param label - Already translated. This component does no `t()` lookup of its own.
+ * @param icon - Drawn to the left of the label, and hidden while `loading`.
+ */
 export function Button({
   label,
   onPress,

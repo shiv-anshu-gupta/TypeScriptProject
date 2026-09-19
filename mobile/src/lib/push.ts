@@ -1,3 +1,18 @@
+/**
+ * Getting this device an Expo push token, and deciding how a notification
+ * behaves when it arrives.
+ *
+ * @remarks
+ * Importing this module has a side effect: it installs the notification
+ * handler below. That is why it is imported for its token function and the
+ * handler is never registered anywhere else.
+ *
+ * Nothing here talks to the sKirana server. Handing the token over, and
+ * handing it back at sign-out, belong to the push feature.
+ *
+ * @packageDocumentation
+ */
+
 import { Platform } from "react-native";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
@@ -25,6 +40,14 @@ function getProjectId(): string | undefined {
   return fromConfig ?? fromEas;
 }
 
+/**
+ * The outcome of asking this device for a push token.
+ *
+ * @remarks
+ * A `null` token is an ordinary outcome, not an error — an emulator, a
+ * refused permission or Expo Go all land here. `reason` then says which, for
+ * the log; it is developer English and is never shown to a customer.
+ */
 export type PushRegistration = {
   token: string | null;
   // Why registration failed — surfaced to the UI so it isn't a silent no-op.
@@ -36,6 +59,23 @@ export type PushRegistration = {
  *
  * Never throws: when push isn't possible (emulator, permission denied, no
  * EAS project id, Expo Go) it reports why instead, so the app keeps working.
+ *
+ * @remarks
+ * It may show the operating system's permission dialog, so call it only once
+ * the customer is signed in and there is something to notify them about.
+ *
+ * On Android it also creates the "default" notification channel, which has to
+ * exist before the first notification arrives or that one is delivered
+ * silently. The channel is created even on a device that then turns out to be
+ * an emulator, because creating it is cheap and getting the order wrong is
+ * not recoverable later.
+ *
+ * The token identifies the *device*, not the account. The caller is
+ * responsible for handing it to the server and for handing it back at
+ * sign-out.
+ *
+ * @returns A token with an empty `reason`, or a `null` token and the reason
+ * it could not be had.
  */
 export async function registerForPushNotificationsAsync(): Promise<PushRegistration> {
   // Android needs a channel or the notification arrives silently.

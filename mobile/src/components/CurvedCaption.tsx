@@ -1,17 +1,22 @@
+/**
+ * Curved text that stays correctly shaped in complex scripts like Devanagari.
+ *
+ * @remarks
+ * SVG TextPath lays text out one codepoint at a time, which breaks shaping:
+ * in लिस्ट the zero-width ि matra and the स्ट conjunct fall apart and ल/स
+ * collide. Letter-spacing cannot fix that - it moves glyphs but never
+ * reattaches a matra to its consonant.
+ *
+ * So the text is split into aksharas (syllable clusters) instead. Each cluster
+ * is a normal `<Text>`, shaped by the platform's own engine exactly as it would
+ * be anywhere else in the app, then placed along the arc and rotated to it.
+ * Spacing is added BETWEEN clusters, never inside one.
+ *
+ * @packageDocumentation
+ */
+
 import { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
-
-// Curved text that stays correctly shaped in complex scripts like Devanagari.
-//
-// SVG TextPath lays text out one codepoint at a time, which breaks shaping:
-// in लिस्ट the zero-width ि matra and the स्ट conjunct fall apart and ल/स
-// collide. Letter-spacing cannot fix that - it moves glyphs but never
-// reattaches a matra to its consonant.
-//
-// So the text is split into aksharas (syllable clusters) instead. Each cluster
-// is a normal <Text>, shaped by the platform's own engine exactly as it would
-// be anywhere else in the app, then placed along the arc and rotated to it.
-// Spacing is added BETWEEN clusters, never inside one.
 
 // Marks that attach to the preceding base: chandrabindu, anusvara, visarga,
 // nukta, every vowel sign (matra), the virama, stress signs, and ZWJ/ZWNJ.
@@ -19,7 +24,22 @@ const COMBINING =
   /[\u0900-\u0903\u093A-\u093C\u093E-\u094F\u0951-\u0957\u0962\u0963\u200C\u200D]/;
 const VIRAMA = "\u094D";
 
-// "लिस्ट लिखें" -> ["लि", "स्ट", " ", "लि", "खें"]
+/**
+ * Splits text into aksharas — syllable clusters that must stay whole.
+ *
+ * @remarks
+ * A mark joins the base before it, and a consonant after a virama joins the
+ * conjunct. Spaces come back as their own cluster, which is what lets the
+ * caller widen the word breaks without touching the spacing inside a word.
+ *
+ * Latin text passes through as one cluster per character, so the same code
+ * path works in both languages.
+ *
+ * @example
+ * ```ts
+ * splitClusters("लिस्ट लिखें"); // ["लि", "स्ट", " ", "लि", "खें"]
+ * ```
+ */
 export function splitClusters(text: string): string[] {
   const out: string[] = [];
   const codepoints = [...text];
@@ -38,20 +58,39 @@ export function splitClusters(text: string): string[] {
 
 type CurvedCaptionProps = {
   text: string;
-  cx: number; // centre of the circle the text follows
+  cx: number;
   cy: number;
-  radius: number; // distance from that centre to each cluster's middle
+  radius: number;
   fontSize: number;
   color: string;
-  gap: number; // space between clusters, measured along the arc
-  wordGap: number; // extra space added at each word break
+  gap: number;
+  wordGap: number;
 };
 
 type Box = { w: number; h: number };
 
-// Draws `text` along the lower half of a circle, reading left to right with the
-// tops of the letters toward the centre. Render it keyed by `text`, so a
-// language switch remounts it and the clusters are measured afresh.
+/**
+ * A short caption bent around a circle, used for the label under the tab bar's
+ * centre button.
+ *
+ * @remarks
+ * Draws `text` along the lower half of a circle, reading left to right with the
+ * tops of the letters toward the centre. Render it keyed by `text`, so a
+ * language switch remounts it and the clusters are measured afresh.
+ *
+ * It renders twice. The first pass lays the clusters out invisibly to learn
+ * their real widths, because the spacing along the arc depends on them; the
+ * second places each one. So it is briefly blank on first mount, and a caller
+ * should not expect it to draw synchronously.
+ *
+ * Absolutely positioned over its parent and `pointerEvents="none"`, so it
+ * never takes a tap from the button it labels.
+ *
+ * @param cx - Centre of the circle the text follows.
+ * @param radius - Distance from that centre to each cluster's middle.
+ * @param gap - Space between clusters, measured along the arc.
+ * @param wordGap - Extra space added at each word break.
+ */
 export function CurvedCaption({
   text,
   cx,

@@ -1,3 +1,9 @@
+/**
+ * The prompt for an over-the-air JavaScript update.
+ *
+ * @packageDocumentation
+ */
+
 import { useEffect, useState } from "react";
 import { AppState, Modal, Pressable, Text, View } from "react-native";
 import * as Updates from "expo-updates";
@@ -5,15 +11,28 @@ import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/Button";
 
-// Shows a friendly "a new version is ready" prompt whenever an OTA update has
-// been downloaded, and lets the customer apply it immediately (reload) instead
-// of waiting for the next natural app restart.
-//
-// expo-updates already downloads a new update on launch (checkAutomatically:
-// ON_LOAD). `isUpdatePending` becomes true once it's downloaded; we also
-// re-check whenever the app returns to the foreground so a freshly-published
-// update is picked up without a full cold start. No-op in Expo Go / dev
-// (Updates.isEnabled is false there).
+/**
+ * A dialog offering to restart the app into a newly downloaded update, with a
+ * "Later" the customer can always take.
+ *
+ * @remarks
+ * Shows a friendly "a new version is ready" prompt whenever an OTA update has
+ * been downloaded, and lets the customer apply it immediately (reload) instead
+ * of waiting for the next natural app restart.
+ *
+ * expo-updates already downloads a new update on launch (checkAutomatically:
+ * ON_LOAD). `isUpdatePending` becomes true once it's downloaded; we also
+ * re-check whenever the app returns to the foreground so a freshly-published
+ * update is picked up without a full cold start. No-op in Expo Go / dev
+ * (Updates.isEnabled is false there).
+ *
+ * "Later" is remembered only for that one update. A different update arriving
+ * afterwards asks again, which is why the dismissal is keyed on the pending
+ * update's id rather than a plain boolean.
+ *
+ * Mounted once at the app root and takes no props. This is the JavaScript
+ * half of updating; {@link StoreUpdatePrompt} handles a new native release.
+ */
 export function UpdatePrompt() {
   const { t } = useTranslation();
   const { isUpdatePending } = Updates.useUpdates();

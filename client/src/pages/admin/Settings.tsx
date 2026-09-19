@@ -1,3 +1,23 @@
+/**
+ * The home-banners admin screen.
+ *
+ * @remarks
+ * The route is `/admin/settings` and the sidebar label is "Home banners"
+ * (`client/src/components/admin/common/sidebar.tsx`). It configures the picture
+ * strip at the top of the **mobile app's** Home screen — nothing on this web
+ * page is affected by it, so the only way to see the real result is the app, or
+ * the {@link BannerPhonePreview} mock here.
+ *
+ * Four panes: the uploader, the ordered banner list, the phone preview, and the
+ * edit dialog. All server state comes from {@link useAdminBanners}; the only
+ * state this module owns is which banner's dialog is open.
+ *
+ * Status per banner is computed locally by `bannerStatuses`, never sent by the
+ * server, and the header counts are derived from it.
+ *
+ * @packageDocumentation
+ */
+
 import { useMemo, useState } from "react";
 import { RefreshCw } from "lucide-react";
 
@@ -15,6 +35,29 @@ import { useAdminBanners } from "@/features/admin/settings/use-admin-banners";
 // Home banners: the picture strip at the top of the customer app's Home
 // screen. Upload, order, hide, schedule and link banners here; the app shows
 // the live ones in this order.
+/**
+ * Route component for `/admin/settings`.
+ *
+ * @remarks
+ * Reads everything from {@link useAdminBanners} and keeps one piece of local
+ * state, `editing`, which is both the banner being edited and the edit dialog's
+ * open flag.
+ *
+ * `statuses` is memoised on `items` and `limit`. Because `bannerStatuses`
+ * defaults its `now` argument to the current time, the statuses are only
+ * recomputed when the list or the limit changes — a banner whose schedule
+ * starts or ends while the page sits open keeps its old badge until the next
+ * change or refresh.
+ *
+ * `live` is the banners whose status is exactly `"live"`, so anything past the
+ * carousel limit (`overLimit`) is excluded from the phone preview, matching
+ * what the app will show. The header counts hidden and scheduled banners and
+ * hides each count when it is zero.
+ *
+ * There is no polling; "Refresh" re-runs `GET /admin/settings/banners` by hand.
+ *
+ * @returns The home-banners page.
+ */
 function AdminSettings() {
   const { items, limit, loading, uploading, busyId, refresh, upload, update, toggleActive, move, remove } =
     useAdminBanners();

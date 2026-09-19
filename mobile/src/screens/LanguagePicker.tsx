@@ -1,10 +1,30 @@
+/**
+ * The first-launch language choice.
+ *
+ * @packageDocumentation
+ */
+
 import { Pressable, Text, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 import { setAppLanguage, type AppLanguage } from "@/lib/i18n";
 
-// Shown once, on the very first launch, before anything else. Bilingual on
-// purpose so a Hindi- or English-only user can both understand it.
+/**
+ * A full-screen choice between हिंदी and English, asked once before the app
+ * is used.
+ *
+ * @remarks
+ * Shown once, on the very first launch, before anything else. Bilingual on
+ * purpose so a Hindi- or English-only user can both understand it.
+ *
+ * Not a navigator screen. `App.tsx` renders it directly when no language has
+ * been stored yet. Every string here is hard-coded in both languages rather
+ * than translated, because this is the screen that decides which language the
+ * rest of the app will use.
+ *
+ * Choosing writes through `setAppLanguage`, which applies it and persists it,
+ * before `onSelect` is called.
+ */
 export function LanguagePicker({ onSelect }: { onSelect: () => void }) {
   const choose = async (lang: AppLanguage) => {
     await setAppLanguage(lang);

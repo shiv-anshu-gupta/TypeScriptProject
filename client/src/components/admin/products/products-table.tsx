@@ -1,3 +1,13 @@
+/**
+ * The products table on `/admin/products`.
+ *
+ * @remarks
+ * Display only — it fetches nothing and mutates nothing. Editing is delegated
+ * upwards through `onEdit`.
+ *
+ * @packageDocumentation
+ */
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,12 +41,37 @@ const editCellWrapClass = "flex justify-end";
 
 const editIconClass = "h-4 w-4";
 
+/**
+ * Props for {@link ProductsTable}.
+ *
+ * @param onEdit - Given the whole product, not an id: the page keeps it in
+ * `editingProduct` and seeds the dialog from it rather than refetching.
+ */
 type ProductsTableProps = {
   products: Product[];
   onEdit: (product: Product) => void;
   loading: boolean;
 };
 
+/**
+ * Lists products with cover image, title, brand, category, unit, status and
+ * stock.
+ *
+ * @remarks
+ * Renders the whole `products` array — no pagination, no client-side
+ * filtering, no sorting. What arrives is what is shown, and the search that
+ * produced it ran on the server.
+ *
+ * Three states share the same body: a "Loading Products..." row while
+ * `loading`, a "No products found!!!" row when the array is empty, and the
+ * rows themselves. Because the hook swallows a failed fetch, a request error
+ * looks like whichever of those two the previous state left behind.
+ *
+ * The cover comes from `getCoverImage` (the `isCover` image, else the first);
+ * a product with no images shows an empty grey box rather than a broken
+ * image. The unit cell hides `unitValue` when it is 1, so "per kg" rather
+ * than "per 1 kg", and falls back to `piece` for older products with no unit.
+ */
 export function ProductsTable({
   products,
   onEdit,

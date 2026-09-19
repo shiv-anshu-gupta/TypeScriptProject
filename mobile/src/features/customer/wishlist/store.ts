@@ -1,3 +1,9 @@
+/**
+ * The customer's saved products.
+ *
+ * @packageDocumentation
+ */
+
 import { create } from "zustand";
 import type { CustomerWishlistItem } from "./types";
 import {
@@ -27,6 +33,33 @@ type CustomerWishlistStore = {
   clear: () => void;
 };
 
+/**
+ * Holds the saved products, and whether the wishlist sheet is showing.
+ *
+ * @remarks
+ * Written by `loadWishlist` at startup, by `toggleItem` and `removeItem`, and
+ * by the product-details store through `setItems` — which is why `setItems`
+ * is public: the details screen's own save button already has the server's
+ * answer and should not cause a second fetch.
+ *
+ * Nothing is persisted. It is loaded at startup when signed in and cleared on
+ * sign-out, so the hearts on a shared phone are never the previous
+ * customer's.
+ *
+ * A failed load keeps the items already on screen — same ticket rule as the
+ * grocery-list store, so a late answer never overwrites newer state and a
+ * failure never empties the hearts.
+ *
+ * The two mutations differ on purpose. `removeItem` owns its toasts and never
+ * throws, for the Wishlist screen. `toggleItem` **throws** and toasts nothing,
+ * because the heart on a product card flips optimistically and has to be able
+ * to flip back — it returns what it did so the caller can pick the right
+ * message.
+ *
+ * `isSaved` reads the current items, so calling it inside a component does
+ * not subscribe that component to anything. A card that wants to re-render
+ * when its own state changes should select just its own answer.
+ */
 export const useCustomerWishlistStore = create<CustomerWishlistStore>(
   (set, get) => ({
     items: [],

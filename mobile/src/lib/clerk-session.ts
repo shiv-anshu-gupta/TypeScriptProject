@@ -1,9 +1,31 @@
+/**
+ * The end of every login, in one place: what to do about a Clerk session that
+ * exists but is not usable.
+ *
+ * @remarks
+ * Used identically by the email-code path and the Google path, so the two can
+ * never answer the same situation differently.
+ *
+ * @packageDocumentation
+ */
 import { useCallback } from "react";
 import { useClerk } from "@clerk/clerk-expo";
 
 type Activate = (params: { session: string }) => Promise<void>;
 
-// Clerk reports failures as { errors: [{ code, message }] }.
+/**
+ * Digs Clerk's machine-readable failure code out of a thrown value.
+ *
+ * @remarks
+ * Clerk reports failures as `{ errors: [{ code, message }] }`. Only the first
+ * error is read, which is the one Clerk puts the actionable code on. The
+ * codes the login branches on are `form_identifier_not_found` (no such
+ * account, so sign up instead) and `session_exists` (hand to
+ * `recoverExisting`).
+ *
+ * @returns The code, or `undefined` for anything that is not a Clerk error —
+ * a network failure, for instance. Never throws.
+ */
 export function clerkErrorCode(error: unknown): string | undefined {
   if (error && typeof error === "object" && "errors" in error) {
     const errors = (error as { errors?: { code?: string }[] }).errors;
@@ -12,15 +34,27 @@ export function clerkErrorCode(error: unknown): string | undefined {
   return undefined;
 }
 
-// Guards the end of every login against a "pending" session.
-//
-// Clerk can create a session but hold it back until the user finishes a task
-// in Clerk's own screens (choose an organization, reset a password, set up
-// MFA) - e.g. when "organization membership required" is switched on in the
-// dashboard. The app has no such screens, and Clerk reports a pending session
-// as signed out, so the customer would stay on the login while the device
-// still holds the session - and every retry fails with "session_exists".
-// A pending session is therefore cleared and reported, never left behind.
+/**
+ * Guards the end of every login against a "pending" session.
+ *
+ * @remarks
+ * Clerk can create a session but hold it back until the user finishes a task
+ * in Clerk's own screens (choose an organization, reset a password, set up
+ * MFA) - e.g. when "organization membership required" is switched on in the
+ * dashboard. The app has no such screens, and Clerk reports a pending session
+ * as signed out, so the customer would stay on the login while the device
+ * still holds the session - and every retry fails with "session_exists".
+ * A pending session is therefore cleared and reported, never left behind.
+ *
+ * The login panel also calls `clearPending` as soon as it appears, so a
+ * session left pending by an earlier attempt cannot block the new one.
+ *
+ * Every returned function can throw whatever Clerk throws — `signOut` and
+ * `setActive` are network calls — so callers wrap them.
+ *
+ * @returns `clearPending`, `complete`, `recoverExisting` and
+ * `messageForOutcome`; see the comment on each below.
+ */
 export function useSessionGuard() {
   const clerk = useClerk();
 

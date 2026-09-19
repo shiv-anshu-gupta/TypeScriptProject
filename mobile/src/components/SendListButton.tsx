@@ -1,3 +1,9 @@
+/**
+ * The Send control for the draft list, in its two shapes.
+ *
+ * @packageDocumentation
+ */
+
 import {
   ActivityIndicator,
   Keyboard,
@@ -13,15 +19,31 @@ import { Button } from "@/components/ui/Button";
 import { PhonePrompt } from "@/components/PhonePrompt";
 
 type SendListButtonProps = {
-  // "pill": the compact round button pinned in the list sheet's header, so
-  // Send is always on screen whatever the keyboard or scroll position.
-  // "block": the full-width button under the list on the Lists tab.
   variant: "pill" | "block";
 };
 
-// The one Send control for the draft list. Both shapes run the same send flow
-// (validation, sign-in, first-time mobile number, submit) and own the phone
-// prompt that flow may open.
+/**
+ * The button that sends the customer's list to the shop, showing how many
+ * items are going and a spinner while it sends.
+ *
+ * @remarks
+ * The one Send control for the draft list. Both shapes run the same send flow
+ * (validation, sign-in, first-time mobile number, submit) and own the phone
+ * prompt that flow may open.
+ *
+ * All of that lives in `useSendDraft`, not here: this component is the two
+ * shapes plus a `Keyboard.dismiss()` so the customer can see it sending. It
+ * always mounts {@link PhonePrompt}, which opens as a second sheet over the
+ * list sheet the first time a list is sent.
+ *
+ * The flow can navigate away — signed out, it closes the sheet and opens the
+ * sign-in screen — so a caller should not assume the button leaves the
+ * customer where they were.
+ *
+ * @param variant - "pill": the compact round button pinned in the list sheet's
+ * header, so Send is always on screen whatever the keyboard or scroll
+ * position. "block": the full-width button under the list on the Lists tab.
+ */
 export function SendListButton({ variant }: SendListButtonProps) {
   const { t } = useTranslation();
   const {

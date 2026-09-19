@@ -1,11 +1,54 @@
+/**
+ * The public account-deletion instructions page.
+ *
+ * @remarks
+ * Mounted at `/delete-account` in `router.tsx`. Like the privacy page it is
+ * declared outside every layout guard, so it needs no sign-in; these legal
+ * routes are the only unguarded ones in the admin web app. The URL is required
+ * by app-store policy under data safety, and the privacy page links to it.
+ *
+ * The page only explains the process. Deletion is handled by hand, by email or
+ * in person — there is no form, no button and no endpoint behind it, so
+ * nothing here calls the API.
+ *
+ * It is still served through the SPA: `client/vercel.json` rewrites unmatched
+ * paths to `/app.html`, so React boots before this static prose renders.
+ *
+ * The copy is policy text. The stated windows — deletion within 7 days,
+ * backups purged within 30 — and the list of what is removed must match
+ * `pages/legal/Privacy.tsx` and what the shop actually does.
+ *
+ * @packageDocumentation
+ */
+
 // Public, no-login "Delete account & data" page. This is the URL Google Play
 // requires under Data safety → account deletion. Mirrors the privacy page.
 //
 // EDIT THESE for the real shop before publishing (keep in sync with Privacy):
+/**
+ * Shop identity, contact address and policy date interpolated into the copy.
+ *
+ * @remarks
+ * Duplicated from `pages/legal/Privacy.tsx` rather than shared, so a change
+ * there does not reach here. Keep the two sets in sync by hand, as the note
+ * above says. `LAST_UPDATED` is shown to the reader and currently differs
+ * from the privacy page's date, which is expected: each page carries the date
+ * its own wording last changed.
+ */
 const SHOP_NAME = "sKirana";
 const CONTACT_EMAIL = "shivanshu2019gupta@gmail.com";
 const LAST_UPDATED = "August 2026";
 
+/**
+ * A titled block of policy prose.
+ *
+ * @remarks
+ * A local copy of the identical helper in `pages/legal/Privacy.tsx`; neither
+ * file imports the other, so a styling change must be made in both.
+ *
+ * @param title - Heading text for the section.
+ * @param children - Paragraphs of policy text.
+ */
 function Section({
   title,
   children,
@@ -23,6 +66,23 @@ function Section({
   );
 }
 
+/**
+ * Renders the deletion instructions, what is removed, and the timings.
+ *
+ * @remarks
+ * Takes no props, holds no state and makes no requests. The only interactive
+ * elements are `mailto:` links built from `CONTACT_EMAIL`, so the whole flow
+ * depends on that address being monitored.
+ *
+ * The prose describes a manual process: the customer emails from the address
+ * they signed in with, the shop verifies and deletes. It also describes
+ * partial deletion the customer can do themselves in the mobile app — removing
+ * a saved address, or removing items from a list before packing starts — so
+ * the wording must match what the mobile app still allows.
+ *
+ * Treat the 7-day and 30-day figures as commitments published to an app store,
+ * and keep them identical to the privacy page.
+ */
 export default function DeleteAccountPage() {
   return (
     <main className="mx-auto max-w-2xl px-5 py-10 text-neutral-800">

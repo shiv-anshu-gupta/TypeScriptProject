@@ -1,3 +1,13 @@
+/**
+ * The chat thread between the shop and one customer about one order.
+ *
+ * @remarks
+ * Mounted twice over: collapsed at the bottom of every grocery-list card, and
+ * expanded inside each row of the Messages page. Both use this same component,
+ * so a change here affects both screens.
+ *
+ * @packageDocumentation
+ */
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { MessageCircle, Send } from "lucide-react";
@@ -12,8 +22,25 @@ import {
 } from "@/features/admin/grocery-lists/api";
 
 // Poll for new messages only while the panel is open — no background work.
+/**
+ * Message poll interval, in milliseconds.
+ *
+ * @remarks
+ * Five seconds, three times faster than the orders poll, because a chat is a
+ * live conversation. It runs only while the panel is open, so a page of
+ * collapsed cards issues no chat requests at all.
+ */
 const POLL_MS = 5000;
 
+/**
+ * Formats a message timestamp as time plus day and month.
+ *
+ * @remarks
+ * No year, since an order's conversation lasts hours rather than months.
+ *
+ * @param iso - ISO timestamp from the server.
+ * @returns A short local-time string.
+ */
 function formatTime(iso: string) {
   return new Date(iso).toLocaleString([], {
     hour: "2-digit",
@@ -23,12 +50,54 @@ function formatTime(iso: string) {
   });
 }
 
+/** Props for {@link GroceryListChat}. */
 type GroceryListChatProps = {
+  /** The order's `_id`; the thread is keyed to the order, not the customer. */
   listId: string;
+  /** Shown in the empty state only. Falls back to "this customer" when blank. */
   customerName: string;
+  /**
+   * Start expanded, and therefore start polling straight away.
+   *
+   * @remarks
+   * The Messages page passes this, because a row is only rendered after the
+   * shopkeeper has opened it. The grocery-list card leaves it off, so a page of
+   * cards makes no chat requests until one is opened.
+   *
+   * It sets the initial state only. Changing it later does not reopen a panel
+   * the shopkeeper has closed.
+   */
   startOpen?: boolean;
 };
 
+/**
+ * Shows and sends messages for one order.
+ *
+ * @remarks
+ * Collapsed by default. Opening it loads the thread and starts a
+ * {@link POLL_MS} poll; closing it clears the interval. Nothing polls while the
+ * panel is shut, which is what keeps a page of a dozen cards cheap.
+ *
+ * The poll refetches the entire thread each time — there is no incremental
+ * fetch — so a long conversation is re-read every five seconds.
+ *
+ * **Sending is the one optimistic action on this screen.** The input is cleared
+ * before the request resolves, so the box feels immediate; if the send fails the
+ * text is put back and a toast explains why. Nothing is queued and nothing is
+ * retried, so a failed message is simply not sent. Enter sends, Shift+Enter
+ * does not.
+ *
+ * Scrolling is deliberately confined to the message box: the effect sets
+ * `scrollTop` on the container rather than calling `scrollIntoView`. The
+ * earlier version scrolled the whole admin page on every five-second poll,
+ * which yanked the shopkeeper's position around while they were pricing. Do not
+ * reintroduce `scrollIntoView` here.
+ *
+ * A failed poll is caught and ignored, so an open conversation is never blanked
+ * by a momentary network problem — and equally, an outage shows no error.
+ *
+ * @returns The chat toggle, and the thread when open.
+ */
 function GroceryListChat({
   listId,
   customerName,
@@ -41,6 +110,16 @@ function GroceryListChat({
   const [sending, setSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  /**
+   * Fetches the whole thread.
+   *
+   * @remarks
+   * Errors are swallowed, so a failed poll leaves the visible conversation
+   * alone.
+   *
+   * @param silent - `true` for a background poll, which leaves the loading flag
+   * alone so the thread does not flicker every five seconds.
+   */
   async function load(silent = false) {
     try {
       if (!silent) setLoading(true);
@@ -70,6 +149,20 @@ function GroceryListChat({
     if (open && el) el.scrollTop = el.scrollHeight;
   }, [messages, open]);
 
+  /**
+   * Sends the typed message.
+   *
+   * @remarks
+   * Clears the input before awaiting the request, and restores the text with a
+   * toast if it fails — the only optimistic behaviour on this screen. There is
+   * no queue and no retry.
+   *
+   * Blank input is ignored, and the `sending` flag prevents a double send from
+   * a fast second press of Enter.
+   *
+   * After a successful send it refetches silently rather than appending the
+   * returned message, so the thread stays exactly as the server has it.
+   */
   async function onSend() {
     const body = text.trim();
     if (!body || sending) return;

@@ -1,3 +1,9 @@
+/**
+ * The scrolling page that wraps the login panel.
+ *
+ * @packageDocumentation
+ */
+
 import {
   useCallback,
   useEffect,
@@ -13,16 +19,32 @@ import { AuthPanel } from "./AuthPanel";
 
 type AuthViewProps = {
   onDone: () => void;
-  // Above the panel: a close bar, or a tab's title.
   header?: ReactNode;
-  // Below the panel (e.g. settings). Hidden while typing so the field in use
-  // stays in view.
   footer?: ReactNode;
   subtitle?: string;
 };
 
-// A scrolling page around the login panel that keeps whatever is being typed
-// above the keyboard - used as a full screen and inside the tabs.
+/**
+ * The login as a full page, scrolled so the field being typed in is never
+ * under the keyboard.
+ *
+ * @remarks
+ * A scrolling page around the login panel that keeps whatever is being typed
+ * above the keyboard - used as a full screen and inside the tabs.
+ *
+ * It measures how far its own bottom sits above the bottom of the screen and
+ * pads by the overlap, not by the keyboard's full height. Inside a tab,
+ * padding the tab bar's height as well would scroll the active field off the
+ * top. It also follows the content as it changes, because moving to the code
+ * step keeps the keyboard up and so fires no new show event.
+ *
+ * All the signing in belongs to {@link AuthPanel}; this component is layout.
+ *
+ * @param header - Above the panel: a close bar, or a tab's title.
+ * @param footer - Below the panel (e.g. settings). Hidden while typing so the
+ * field in use stays in view. Its presence also stops the panel from growing
+ * to fill the page.
+ */
 export function AuthView({ onDone, header, footer, subtitle }: AuthViewProps) {
   const insets = useSafeAreaInsets();
   const keyboardHeight = useKeyboardHeight();

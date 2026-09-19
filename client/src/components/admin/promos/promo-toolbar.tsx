@@ -1,3 +1,13 @@
+/**
+ * The controls above the promos table: a search box and an "Add promo" button.
+ *
+ * @remarks
+ * Fully controlled — it owns no state and calls no API. The search value lives
+ * in {@link useAdminPromos}.
+ *
+ * @packageDocumentation
+ */
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Search } from "lucide-react";
@@ -16,12 +26,24 @@ const addButtonClass = "rounded-none";
 
 const addButtonIconClass = "mr-2 h-4 w-4";
 
+/** Props for {@link PromoToolbar}. */
 type PromoToolbarProps = {
   search: string;
   onSearchChange: (value: string) => void;
   onAddPromo: () => void;
 };
 
+/**
+ * Search field plus "Add promo" button.
+ *
+ * @remarks
+ * Every keystroke calls `onSearchChange` — there is no debounce, because the
+ * filter is client-side and matches the `code` field only
+ * (`filteredPromos` in {@link useAdminPromos}). Nothing is sent to the server
+ * while the admin types.
+ *
+ * @returns The toolbar row.
+ */
 function PromoToolbar({
   search,
   onSearchChange,

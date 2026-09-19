@@ -1,3 +1,18 @@
+/**
+ * A mock phone showing the live banners as the app's Home carousel draws them.
+ *
+ * @remarks
+ * A static drawing, not the real app: the surrounding blocks are placeholders
+ * for the app's header, search bar and category circles. Only the banners are
+ * real images.
+ *
+ * It receives the banners the page has already filtered to status `"live"`, so
+ * hidden, scheduled, ended and over-the-limit banners never appear — which is
+ * the point of the preview.
+ *
+ * @packageDocumentation
+ */
+
 import { useState } from "react";
 
 import { BANNER_RATIO } from "@/features/admin/settings/banner-status";
@@ -5,11 +20,43 @@ import type { AdminBanner } from "@/features/admin/settings/types";
 
 // Same measurements as the app's Home carousel (mobile BannerCarousel), scaled
 // to a 300px-wide phone: 16px sides, 12px gap, and a peek of the next banner.
+/**
+ * Mock screen width in pixels, the basis for every other measurement.
+ *
+ * @remarks
+ * The outer frame is 316px wide: this plus the 8px border on each side.
+ */
 const SCREEN = 300;
+/** Horizontal padding either side of the carousel. */
 const SIDE = 12;
+/** Gap between two banner slides. */
 const GAP = 9;
+/**
+ * Width kept back so the next banner peeks in from the right.
+ *
+ * @remarks
+ * Applied only when there is more than one live banner; a single banner uses
+ * the full width.
+ */
 const PEEK = 21;
 
+/**
+ * Renders the phone mock and its carousel.
+ *
+ * @remarks
+ * Slide width is derived from the constants above, and slide height from
+ * `BANNER_RATIO`, so the preview keeps the real 1600 × 736 shape. Paging is by
+ * CSS `translateX`; there is no auto-advance and no swipe — the dots are the
+ * only control.
+ *
+ * The selected index is clamped against the current list length, so deleting or
+ * hiding the last banner cannot leave the carousel scrolled past the end. With
+ * no live banners it shows a note that the app skips the space entirely.
+ *
+ * @param live - Banners whose computed status is exactly `"live"`, in carousel
+ * order.
+ * @returns The preview.
+ */
 export function BannerPhonePreview({ live }: { live: AdminBanner[] }) {
   const [index, setIndex] = useState(0);
   const many = live.length > 1;

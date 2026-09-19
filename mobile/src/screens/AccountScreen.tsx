@@ -1,3 +1,9 @@
+/**
+ * The Account tab: identity, saved details, counters, settings, sign out.
+ *
+ * @packageDocumentation
+ */
+
 import { useCallback, useState, type ReactNode } from "react";
 import { Linking, Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -27,14 +33,23 @@ const INK = "#1f2a2e";
 const PRIMARY = "#3c5a64";
 const ANDROID_PACKAGE = "com.skirana.app";
 
-// The language switch - one row for both the signed-in settings card and the
-// signed-out one, so the two can never drift apart. It owns its own open
-// state and its own हिंदी/English labels.
 const LANGUAGES: { code: AppLanguage; label: string }[] = [
   { code: "hi", label: "हिंदी" },
   { code: "en", label: "English" },
 ];
 
+/**
+ * A settings row that expands into the two language choices.
+ *
+ * @remarks
+ * The language switch - one row for both the signed-in settings card and the
+ * signed-out one, so the two can never drift apart. It owns its own open
+ * state and its own हिंदी/English labels.
+ *
+ * Each language is written in itself and not translated, so the row is
+ * readable whichever one is currently active. Choosing one writes through
+ * `setAppLanguage`, which also persists it.
+ */
 function LanguageRow() {
   const { t, i18n } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -85,7 +100,9 @@ function LanguageRow() {
   );
 }
 
-// One "label above value" line inside the details card.
+/**
+ * One "label above value" line inside the details card.
+ */
 function InfoRow({
   icon,
   label,
@@ -108,7 +125,9 @@ function InfoRow({
   );
 }
 
-// One of the three summary tiles.
+/**
+ * One of the three summary tiles.
+ */
 function StatCard({
   icon,
   value,
@@ -129,7 +148,11 @@ function StatCard({
   );
 }
 
-// A tappable settings row: icon bubble, title + subtitle, chevron.
+/**
+ * A tappable settings row: icon bubble, title + subtitle, chevron.
+ *
+ * @param last - Drops the bottom divider, for the final row in a card.
+ */
 function MenuRow({
   icon,
   title,
@@ -165,6 +188,30 @@ function MenuRow({
   );
 }
 
+/**
+ * Who the customer is, what the shop has on file for them, how many orders
+ * they have placed, and the app's settings.
+ *
+ * @remarks
+ * Signed out it renders the login in place of its content, with the settings
+ * that work without an account — language and terms — in the footer below it.
+ *
+ * Signed in, it reloads the orders and the saved profile on every focus.
+ * Reads `useCustomerGroceryListStore` for the counters and the phone on file,
+ * `useCustomerAccountStore` for the saved profile, and Clerk's `useUser` as
+ * the fallback. Display values prefer the saved profile, because that is what
+ * the shop actually sees on an order.
+ *
+ * It opens one sheet, {@link ProfileEditSheet}, and owns the save: the
+ * request, the store update and the toast all happen here, and the orders are
+ * reloaded afterwards because they carry the customer's phone.
+ *
+ * Signing out hands this device's push token back to the server first, while
+ * the session still exists. Without that the next person on a shared phone
+ * would keep receiving the previous customer's order alerts.
+ *
+ * The Help row only appears when a shop WhatsApp number is configured.
+ */
 export function AccountScreen() {
   const { t } = useTranslation();
   const navigation = useNavigation<Nav>();

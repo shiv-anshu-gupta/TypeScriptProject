@@ -1,3 +1,16 @@
+/**
+ * Web push to the admin's browser, through Firebase Cloud Messaging.
+ *
+ * @remarks
+ * This is how the shop learns of a new order while the admin panel is open in
+ * a browser tab. The customer's phone is notified separately, through Expo -
+ * see utils/push.ts.
+ *
+ * Nothing here throws: a notification is a side-effect of the customer's
+ * request and must never fail it.
+ *
+ * @packageDocumentation
+ */
 import {
   cert,
   getApp as getAdminApp,
@@ -14,6 +27,14 @@ import { User } from "../models/User";
 // (the private key is stored with literal "\n" which we convert to newlines.)
 let cachedApp: App | null | undefined;
 
+/**
+ * The Firebase Admin app, initialised on first use and then cached.
+ *
+ * @returns The app, or `null` when the three env vars are not all set - in
+ * which case every notification in this file quietly does nothing. The result
+ * is cached either way, so an unconfigured server does not re-check on every
+ * order.
+ */
 function getApp(): App | null {
   if (cachedApp !== undefined) return cachedApp;
 
@@ -34,8 +55,24 @@ function getApp(): App | null {
   return cachedApp;
 }
 
-// Send an FCM web push to a set of tokens. Returns the tokens that are dead
-// (unregistered/invalid) so the caller can prune them. Never throws.
+/**
+ * Send an FCM web push to a set of tokens. Returns the tokens that are dead
+ * (unregistered/invalid) so the caller can prune them. Never throws.
+ *
+ * @remarks
+ * Sent as one multicast, with a fixed icon and a click target of
+ * `/admin/grocery-lists`, so the shopkeeper lands on the orders screen.
+ * Empty and duplicate tokens are dropped first.
+ *
+ * "Dead" means FCM reported the token as unregistered or invalid, which is
+ * permanent - a token that merely failed this once is not reported, so a
+ * transient outage never costs the admin their notifications.
+ *
+ * @param data - arbitrary string pairs delivered to the service worker.
+ * @returns The subset of tokens that should be removed from the database.
+ * Empty when nothing failed permanently, when Firebase is not configured, or
+ * when the send itself threw.
+ */
 async function sendWebPush(
   tokens: string[],
   title: string,
@@ -75,8 +112,20 @@ async function sendWebPush(
   }
 }
 
-// Notify every admin's browser of something (e.g. a new order). Fire-and-forget,
-// never throws — a push failure must not break the customer's request.
+/**
+ * Notify every admin's browser of something (e.g. a new order). Fire-and-forget,
+ * never throws — a push failure must not break the customer's request.
+ *
+ * @remarks
+ * Collects `webPushTokens` from every user with role `admin`, sends to all of
+ * them, and then writes back: any token FCM called permanently dead is
+ * `$pull`ed from every admin record, so the list cannot grow stale as the
+ * shop's browsers come and go.
+ *
+ * Silent when there are no admins, no tokens, or no Firebase configuration.
+ *
+ * @param data - string pairs passed through to the browser's service worker.
+ */
 export async function notifyAdmins(
   title: string,
   body: string,

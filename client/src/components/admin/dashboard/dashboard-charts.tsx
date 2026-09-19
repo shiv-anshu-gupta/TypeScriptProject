@@ -1,3 +1,20 @@
+/**
+ * The two seven-day dashboard charts: orders per day and sales per day.
+ *
+ * @remarks
+ * Rendered by `pages/admin/Dashboard.tsx` below the stat cards. It fetches its
+ * own data from `GET /admin/dashboard/daily` and keeps it in local component
+ * state, so the series is refetched every time the component mounts — unlike
+ * the stat cards, which are cached in a store for the whole session.
+ *
+ * Charts are drawn with recharts. Because recharts emits SVG presentation
+ * attributes, colours here are concrete hex values rather than the CSS
+ * variables used everywhere else in the admin; see the note above `ACCENT`.
+ * One consequence is that these charts do not follow a theme change.
+ *
+ * @packageDocumentation
+ */
+
 import { useEffect, useState } from "react";
 import {
   Area,
@@ -16,6 +33,16 @@ import { getAdminDashboardDaily } from "@/features/admin/dashboard/api";
 import type { DashboardDailyPoint } from "@/features/admin/dashboard/types";
 import { formatPrice } from "@/lib/utils";
 
+/**
+ * Chart palette: the accent hue for marks, plus grid and axis greys.
+ *
+ * @remarks
+ * These must stay literal hex. The original note below records why, and it is
+ * the reason a maintainer should not "tidy" them into `var(--primary)`:
+ * recharts writes them into SVG `fill` and `stroke` attributes, where `var()`
+ * does not resolve and the marks would disappear. `ACCENT` is kept in step
+ * with the admin brand primary by hand. These values are light-theme only.
+ */
 // One accent hue (matches the admin's brand primary). Concrete hex values, not
 // CSS vars — recharts renders these as SVG attributes, where var() does not
 // resolve, so vars would leave marks uncolored/invisible.
@@ -23,6 +50,14 @@ const ACCENT = "#c026d3";
 const GRID = "#e5e7eb";
 const AXIS = "#6b7280";
 
+/**
+ * Inline style for the recharts tooltip box, shared by both charts.
+ *
+ * @remarks
+ * Inline rather than a class because recharts renders the tooltip into its own
+ * element and takes a style object. The colours are hard-coded light-theme
+ * values for the same reason as the palette above.
+ */
 const tooltipStyle: React.CSSProperties = {
   background: "#ffffff",
   border: `1px solid ${GRID}`,
@@ -33,8 +68,27 @@ const tooltipStyle: React.CSSProperties = {
   boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
 };
 
+/**
+ * Tick label style passed to both axes of both charts.
+ *
+ * @remarks
+ * `fill`, not `color`, because the tick is an SVG `text` node.
+ */
 const axisTick = { fontSize: 11, fill: AXIS } as const;
 
+/**
+ * Card shell with a small heading and a fixed-height chart area.
+ *
+ * @remarks
+ * The 220px height is set on a wrapper div because `ResponsiveContainer`
+ * measures its parent; a percentage height with no measurable parent collapses
+ * to zero and the chart vanishes. The matching 268px used by the loading
+ * skeleton is this height plus the card header and padding, so the layout does
+ * not jump when the data arrives.
+ *
+ * @param title - Heading text shown above the chart.
+ * @param children - The recharts tree to render inside the sized box.
+ */
 function ChartCard({
   title,
   children,
@@ -56,6 +110,29 @@ function ChartCard({
   );
 }
 
+/**
+ * Fetches the seven-day series and renders the orders bar chart and the sales
+ * area chart side by side.
+ *
+ * @remarks
+ * Takes no props. On mount it calls `getAdminDashboardDaily`, i.e.
+ * `GET /admin/dashboard/daily`, and keeps the result in local `useState` — the
+ * data is not in a store, so it is refetched on every mount and is lost when
+ * the component unmounts. Nothing polls. A `cancelled` flag in the effect
+ * cleanup stops the late response writing to an unmounted component.
+ *
+ * Trap: the `.catch(() => {})` is silent. A failed request leaves `days` empty
+ * and both charts render blank axes with no message, exactly as a shop with
+ * no activity would.
+ *
+ * The seven buckets are IST calendar days computed on the server, and the X
+ * axis renders the server-formatted `label` as-is. Orders are bucketed by the
+ * list's `createdAt` and sales by its `paidAt`, so the two charts can peak on
+ * different days for the same order.
+ *
+ * While loading it renders two pulsing 268px placeholders so the grid keeps
+ * its height.
+ */
 export function DashboardCharts() {
   const [days, setDays] = useState<DashboardDailyPoint[]>([]);
   const [loading, setLoading] = useState(true);

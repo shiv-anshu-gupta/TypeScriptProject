@@ -1,3 +1,13 @@
+/**
+ * The promos table: one row per promo code, with edit and delete controls.
+ *
+ * @remarks
+ * Presentational only. It receives the already-filtered list from the page and
+ * raises `onEdit` / `onDelete`; it holds no state and makes no API call.
+ *
+ * @packageDocumentation
+ */
+
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -10,6 +20,13 @@ import {
 import type { Promo } from "@/features/admin/promo/types";
 import { Pencil, Trash2 } from "lucide-react";
 
+/**
+ * Props for {@link PromoTable}.
+ *
+ * @remarks
+ * `promos` is expected to be the filtered list, not the raw one — the search
+ * filter is applied in {@link useAdminPromos}, not here.
+ */
 type PromoTableProps = {
   promos: Promo[];
   loading: boolean;
@@ -33,10 +50,40 @@ const iconButtonClass = "rounded-none";
 const deleteButtonClass =
   "rounded-none text-destructive hover:text-destructive";
 
+/**
+ * Formats an ISO timestamp as a date for the "valid From" / "Valid Till"
+ * columns.
+ *
+ * @remarks
+ * Despite the name it prints the date only — `toLocaleDateString` drops the
+ * time — and it uses the browser's locale, so the same row reads differently on
+ * a differently-configured machine. An unparsable value renders as
+ * "Invalid Date" rather than throwing.
+ *
+ * @param value - ISO timestamp from `Promo.startsAt` or `Promo.endsAt`.
+ * @returns The locale date string.
+ */
 function formatDateTime(value: string) {
   return new Date(value).toLocaleDateString();
 }
 
+/**
+ * Renders the promo rows, or a single full-width cell while loading or when the
+ * list is empty.
+ *
+ * @remarks
+ * Columns are code, discount percentage, count, minimum order value, valid
+ * from, valid till, then an edit and a delete button. Dates go through
+ * {@link formatDateTime}. There is no sorting and no pagination — every promo
+ * the server returned is drawn.
+ *
+ * The delete button does not confirm here; the `window.confirm` prompt lives in
+ * `removePromo` inside {@link useAdminPromos}.
+ *
+ * @param deletingPromoId - Id of the promo whose delete request is in flight.
+ * Only that row's delete button is disabled; the rest stay live.
+ * @returns The table.
+ */
 function PromoTable({
   promos,
   loading,
