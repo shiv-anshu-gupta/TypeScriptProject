@@ -132,7 +132,7 @@ stateDiagram-v2
   pending --> paid : confirm — valid HMAC signature
   [*] --> paid : pay-with-points — written as paid, with a synthetic points id
   paid --> [*]
-  pending --> [*] : abandoned; nothing cancels or expires it
+  pending --> [*] : abandoned — nothing cancels or expires it
 
   note right of pending
     The enum also allows "failed",

@@ -745,7 +745,7 @@ sequenceDiagram
     S->>S: "status = 'priced', pricedAt = now,<br/>seenByCustomer = false<br/>server/…:186-188"
     S->>C: "await notifyUser('Your list is priced',<br/>'List #… — total ₹N')<br/>server/…:195-202 → utils/push.ts (Expo)"
     S-->>A: "{ items: [...] } — whole list"
-    A->>A: "setLists(...); drop this list's drafts<br/>use-admin-grocery-lists.ts"
+    A->>A: "setLists(...) and drops this list's drafts<br/>use-admin-grocery-lists.ts"
     A-->>K: "badge → 'Priced — sent to customer'"
     C-->>K: "customer sees the total and replies in chat"
 

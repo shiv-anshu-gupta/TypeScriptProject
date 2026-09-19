@@ -141,7 +141,7 @@ sequenceDiagram
     participant DB as MongoDB
     participant K as Shopkeeper
 
-    C->>D: types items; rows persist after 500 ms
+    C->>D: types items, rows persist after 500 ms
     C->>S: taps Send
     S->>S: at least one named row, every name 2+ chars
     S->>API: POST /customer/grocery-lists

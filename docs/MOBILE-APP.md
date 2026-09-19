@@ -752,7 +752,7 @@ sequenceDiagram
         Note right of Sheet: on Android the sheet covers the whole app,<br/>so the login would open behind it
         Send->>Clerk: navigate("SignIn") → AuthPanel
         C->>Clerk: Google, or email + 6-digit code
-        Clerk-->>Send: signed in → goBack(); the customer taps Send again
+        Clerk-->>Send: signed in → goBack(), then the customer taps Send again
     end
 
     Send->>GL: customerPhone still null?

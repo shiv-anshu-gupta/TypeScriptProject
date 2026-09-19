@@ -124,7 +124,7 @@ appearing.
 ```mermaid
 stateDiagram-v2
   [*] --> Created : syncDbUser path 3 — User.create
-  Created --> Refreshed : path 1 — known Clerk id; email, name and role refreshed
+  Created --> Refreshed : path 1 — known Clerk id, so email, name and role are refreshed
   Refreshed --> Refreshed : every later /auth/sync
   Created --> Relinked : path 2 — new Clerk id, same VERIFIED email
   Relinked --> Refreshed : clerkUserId rewritten in place

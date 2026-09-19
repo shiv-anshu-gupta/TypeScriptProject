@@ -98,7 +98,7 @@ sequenceDiagram
     participant API as Express (Vercel)
     participant Mongo
 
-    App->>Clerk: getToken() (cached; 8s timeout)
+    App->>Clerk: getToken() (cached, 8s timeout)
     Clerk-->>App: JWT
     App->>API: GET /customer/... (Authorization: Bearer)
     API->>API: clerkMiddleware() verifies the token

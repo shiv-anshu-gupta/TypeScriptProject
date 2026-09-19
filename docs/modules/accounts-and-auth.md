@@ -146,7 +146,7 @@ sequenceDiagram
     end
     Sync-->>API: user document
     API-->>App: id, email, name, role
-    App->>App: store role; the panel's RoleGuard reads only this
+    App->>App: store role — the panel's RoleGuard reads only this
 ```
 
 Rules that are not obvious from the code:
