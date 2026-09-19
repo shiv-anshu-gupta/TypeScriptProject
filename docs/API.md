@@ -32,14 +32,14 @@ The port is `process.env.PORT || 5000` (`server/src/server.ts`). There is no
 `server/src/server.ts`, applied before any route:
 
 1. **CORS** — origins from `CORS_ORIGINS` (comma-separated), default
- `http://localhost:3000`, `credentials: true`. An origin not on the list gets a
- browser-side CORS failure, not a JSON error.
+   `http://localhost:3000`, `credentials: true`. An origin not on the list gets a
+   browser-side CORS failure, not a JSON error.
 2. **`express.json({ limit: "100kb" })`** — JSON bodies only. A body over
- 100 kB is rejected by body-parser; see § 7 for what the caller actually sees.
+   100 kB is rejected by body-parser; see § 7 for what the caller actually sees.
 3. **`morgan("dev")`** — request logging.
-4. **`clerkMiddleware`** — verifies the `Authorization: Bearer <JWT>`
- header and attaches the Clerk auth state. It never rejects a request by
- itself; unauthenticated requests simply carry no `userId`.
+4. **`clerkMiddleware()`** — verifies the `Authorization: Bearer <JWT>`
+   header and attaches the Clerk auth state. It never rejects a request by
+   itself; unauthenticated requests simply carry no `userId`.
 
 Then `notFound` and `errorHandler` close the chain.
 
@@ -52,14 +52,14 @@ Multipart bodies bypass `express.json` and are parsed per-route by `multer`
 
 ```ts
 type ApiEnvelope<T> = {
- status: "success" | "error";
- data: T | null;
- meta?: Record<string, unknown>;
- errors?: Array<{ message: string; code?: string }>;
+  status: "success" | "error";
+  data: T | null;
+  meta?: Record<string, unknown>;
+  errors?: Array<{ message: string; code?: string }>;
 };
 ```
 
-Success (`ok`, `envelope.ts`):
+Success (`ok()`, `envelope.ts`):
 
 ```json
 { "status": "success", "data": { "...": "..." } }
@@ -68,7 +68,7 @@ Success (`ok`, `envelope.ts`):
 `meta` is never populated by any route in this codebase — every call site passes
 only `data`, so the key is omitted from the JSON.
 
-Failure (`fail`, `envelope.ts`):
+Failure (`fail()`, `envelope.ts`):
 
 ```json
 { "status": "error", "data": null, "errors": [{ "message": "List not found", "code": "APP_ERROR" }] }
@@ -98,11 +98,11 @@ so a rejected promise reaches `errorHandler` rather than hanging the request.
 Three small helpers produce most 400/404s (`utils/helpers.ts`):
 
 - `requireText(value, message, statusCode = 400)` — throws when
- `String(value || "").trim` is empty.
+  `String(value || "").trim()` is empty.
 - `requireNumber(value, message, statusCode = 400)` — throws only when the value
- is `NaN`. It does **not** reject negatives or non-numbers that coerce.
+  is `NaN`. It does **not** reject negatives or non-numbers that coerce.
 - `requireFound(value, message, statusCode = 404)` — throws when falsy, returns
- the value otherwise.
+  the value otherwise.
 
 ### 1.5 Authentication
 
@@ -122,7 +122,7 @@ Authorization: Bearer <clerk session token>
 
 Admin-ness is not set through the API. `syncDbUser` promotes a user to `admin`
 when their Clerk email is listed in the `ADMIN_EMAILS` env var
-(`services/user-sync.ts`,,,).
+(`services/user-sync.ts`).
 
 The mobile client gives Clerk 8 seconds to produce a token and then sends the
 request **without** one (`mobile/src/lib/api.ts`), so a slow Clerk turns
@@ -135,23 +135,23 @@ Every authenticated handler calls `getDbUserFromReq(req)` (`auth.ts`):
 1. `getAuth(req)` → `userId`; no `userId` → 401.
 2. `User.findOne({ clerkUserId: userId })` → return it if found.
 3. Otherwise `syncDbUser(userId)` — create or re-link the record now, so a
- signed-in customer always has one.
+   signed-in customer always has one.
 
 `syncDbUser` (`services/user-sync.ts`) reads the Clerk profile
-(`clerkClient.users.getUser`,) and then:
+(`clerkClient.users.getUser`) and then:
 
 - **Known Clerk id** — refresh email (only if not taken by another
- record), fill `name` if empty, promote to admin if the email is in
- `ADMIN_EMAILS`. Saves only if something changed.
+  record), fill `name` if empty, promote to admin if the email is in
+  `ADMIN_EMAILS`. Saves only if something changed.
 - **Same *verified* email under an older Clerk id** — re-link the
- existing record to the new Clerk id, case-insensitively
- (`collation({ locale: "en", strength: 2 })`,). This exists because moving
- Clerk from test to production gave every returning customer a new id while the
- `users` collection has a unique index on `email`.
+  existing record to the new Clerk id, case-insensitively
+  (`collation({ locale: "en", strength: 2 })`). This exists because moving
+  Clerk from test to production gave every returning customer a new id while the
+  `users` collection has a unique index on `email`.
 - **New customer** — `User.create`. On duplicate-key (11000) it retries
- the `clerkUserId` lookup (a concurrent request won the race); if that also
- fails it throws **409** `"This email is already used by another sKirana account.
- Please contact the shop."`
+  the `clerkUserId` lookup (a concurrent request won the race); if that also
+  fails it throws **409** `"This email is already used by another sKirana account.
+  Please contact the shop."`
 
 Consequence for callers: **any** authenticated endpoint can return 401, and (very
 rarely) 409 from this path, or 500 if Clerk itself is unreachable.
@@ -310,7 +310,7 @@ No parameters, no auth.
 { "status": "success", "data": { "message": "Server is healthy/in running state" } }
 ```
 
-Side effects: none. Note the server only starts listening after `connectDB`
+Side effects: none. Note the server only starts listening after `connectDB()`
 resolves (`server.ts`), so a 200 here also implies Mongo connected **at boot**
 — not that it is reachable right now.
 
@@ -322,12 +322,12 @@ an env change and no deploy.
 
 ```json
 {
- "status": "success",
- "data": {
- "latestVersion": "1.0.2",
- "minVersion": "1.0.0",
- "androidPackage": "com.skirana.app"
- }
+  "status": "success",
+  "data": {
+    "latestVersion": "1.0.2",
+    "minVersion": "1.0.0",
+    "androidPackage": "com.skirana.app"
+  }
 }
 ```
 
@@ -348,16 +348,16 @@ Body: none read. Called by both apps immediately after login.
 
 ```json
 {
- "status": "success",
- "data": {
- "user": {
- "id": "6703f1a2b9c4d5e6f7a8b9c0",
- "clerkUserId": "user_2xAbCdEfGhIjKlMnOpQrStUv",
- "email": "customer@example.com",
- "name": "Rohit Sharma",
- "role": "user"
- }
- }
+  "status": "success",
+  "data": {
+    "user": {
+      "id": "6703f1a2b9c4d5e6f7a8b9c0",
+      "clerkUserId": "user_2xAbCdEfGhIjKlMnOpQrStUv",
+      "email": "customer@example.com",
+      "name": "Rohit Sharma",
+      "role": "user"
+    }
+  }
 }
 ```
 
@@ -390,57 +390,57 @@ create-on-demand path.
 No parameters. Four queries in parallel:
 
 - banners — `liveBannerFilter(now)` (`models/Banner.ts`: `isActive !== false`
- and inside any `startsAt`/`endsAt` window), sorted `sortOrder` then newest,
- limited to `HOME_BANNER_LIMIT` = **8**.
+  and inside any `startsAt`/`endsAt` window), sorted `sortOrder` then newest,
+  limited to `HOME_BANNER_LIMIT` = **8**.
 - categories — all, A→Z.
 - recentProducts — `status: "active"`, newest **4**.
 - coupons — promos live now with `count > 0`, **4**.
 
 Banner tap targets are resolved and downgraded to `{ "type": "none" }` when the
-category or product they point at is gone or inactive (`resolveBannerLinks`,).
+category or product they point at is gone or inactive (`resolveBannerLinks`).
 
 ```json
 {
- "status": "success",
- "data": {
- "banners": [
- {
- "_id": "670b1c2d3e4f5a6b7c8d9e01",
- "imageUrl": "https://res.cloudinary.com/dnlqyxhpg/image/upload/f_webp,q_auto,c_limit,w_1200/v1712345678/ecommerce-monster-video/banners/diwali.jpg",
- "title": "diwali offer",
- "link": { "type": "category", "targetId": "670b1c2d3e4f5a6b7c8d9e02" },
- "createdAt": "2026-09-01T06:12:44.000Z"
- }
- ],
- "categories": [
- {
- "_id": "670b1c2d3e4f5a6b7c8d9e02",
- "name": "Atta / आटा",
- "imageUrl": "https://res.cloudinary.com/dnlqyxhpg/image/upload/f_webp,q_auto,c_limit,w_200/v1712345678/ecommerce-monster-video/categories/atta.jpg"
- }
- ],
- "recentProducts": [
- {
- "_id": "670b1c2d3e4f5a6b7c8d9e03",
- "title": "Aashirvaad Multigrain Atta 5 kg",
- "brand": "Aashirvaad",
- "image": "https://res.cloudinary.com/dnlqyxhpg/image/upload/f_webp,q_auto,c_limit,w_500/v1712345678/ecommerce-monster-video/products/atta5.jpg",
- "unit": "kg",
- "unitValue": 5,
- "createAt": "2026-09-14T11:02:00.000Z"
- }
- ],
- "coupons": [
- {
- "_id": "670b1c2d3e4f5a6b7c8d9e04",
- "code": "DIWALI10",
- "percentage": 10,
- "count": 50,
- "minimumOrderValue": 500,
- "endsAt": "2026-11-05T18:29:59.000Z"
- }
- ]
- }
+  "status": "success",
+  "data": {
+    "banners": [
+      {
+        "_id": "670b1c2d3e4f5a6b7c8d9e01",
+        "imageUrl": "https://res.cloudinary.com/dnlqyxhpg/image/upload/f_webp,q_auto,c_limit,w_1200/v1712345678/ecommerce-monster-video/banners/diwali.jpg",
+        "title": "diwali offer",
+        "link": { "type": "category", "targetId": "670b1c2d3e4f5a6b7c8d9e02" },
+        "createdAt": "2026-09-01T06:12:44.000Z"
+      }
+    ],
+    "categories": [
+      {
+        "_id": "670b1c2d3e4f5a6b7c8d9e02",
+        "name": "Atta / आटा",
+        "imageUrl": "https://res.cloudinary.com/dnlqyxhpg/image/upload/f_webp,q_auto,c_limit,w_200/v1712345678/ecommerce-monster-video/categories/atta.jpg"
+      }
+    ],
+    "recentProducts": [
+      {
+        "_id": "670b1c2d3e4f5a6b7c8d9e03",
+        "title": "Aashirvaad Multigrain Atta 5 kg",
+        "brand": "Aashirvaad",
+        "image": "https://res.cloudinary.com/dnlqyxhpg/image/upload/f_webp,q_auto,c_limit,w_500/v1712345678/ecommerce-monster-video/products/atta5.jpg",
+        "unit": "kg",
+        "unitValue": 5,
+        "createAt": "2026-09-14T11:02:00.000Z"
+      }
+    ],
+    "coupons": [
+      {
+        "_id": "670b1c2d3e4f5a6b7c8d9e04",
+        "code": "DIWALI10",
+        "percentage": 10,
+        "count": 50,
+        "minimumOrderValue": 500,
+        "endsAt": "2026-11-05T18:29:59.000Z"
+      }
+    ]
+  }
 }
 ```
 
@@ -462,18 +462,18 @@ CDN-resized here (unlike `/customer/home`).
 
 ```json
 {
- "status": "success",
- "data": [
- {
- "_id": "670b1c2d3e4f5a6b7c8d9e02",
- "name": "Atta / आटा",
- "imageUrl": "https://res.cloudinary.com/dnlqyxhpg/image/upload/v1712345678/ecommerce-monster-video/categories/atta.jpg",
- "imagePublicId": "ecommerce-monster-video/categories/atta",
- "createdAt": "2026-08-02T09:00:00.000Z",
- "updatedAt": "2026-08-02T09:00:00.000Z",
- "__v": 0
- }
- ]
+  "status": "success",
+  "data": [
+    {
+      "_id": "670b1c2d3e4f5a6b7c8d9e02",
+      "name": "Atta / आटा",
+      "imageUrl": "https://res.cloudinary.com/dnlqyxhpg/image/upload/v1712345678/ecommerce-monster-video/categories/atta.jpg",
+      "imagePublicId": "ecommerce-monster-video/categories/atta",
+      "createdAt": "2026-08-02T09:00:00.000Z",
+      "updatedAt": "2026-08-02T09:00:00.000Z",
+      "__v": 0
+    }
+  ]
 }
 ```
 
@@ -497,33 +497,33 @@ Query parameters (all optional, all trimmed —):
 
 ```json
 {
- "status": "success",
- "data": [
- {
- "_id": "670b1c2d3e4f5a6b7c8d9e03",
- "title": "Aashirvaad Multigrain Atta 5 kg",
- "description": "Multigrain atta, 5 kg pack.",
- "category": { "_id": "670b1c2d3e4f5a6b7c8d9e02", "name": "Atta / आटा" },
- "brand": "Aashirvaad",
- "stock": 12,
- "images": [
- {
- "url": "https://res.cloudinary.com/dnlqyxhpg/image/upload/f_webp,q_auto,c_limit,w_500/v1712345678/ecommerce-monster-video/products/atta5.jpg",
- "publicId": "ecommerce-monster-video/products/atta5",
- "isCover": true
- }
- ],
- "colors": [],
- "sizes": [],
- "unit": "kg",
- "unitValue": 5,
- "status": "active",
- "createdBy": "6703f1a2b9c4d5e6f7a8b9c0",
- "createdAt": "2026-09-14T11:02:00.000Z",
- "updatedAt": "2026-09-14T11:02:00.000Z",
- "__v": 0
- }
- ]
+  "status": "success",
+  "data": [
+    {
+      "_id": "670b1c2d3e4f5a6b7c8d9e03",
+      "title": "Aashirvaad Multigrain Atta 5 kg",
+      "description": "Multigrain atta, 5 kg pack.",
+      "category": { "_id": "670b1c2d3e4f5a6b7c8d9e02", "name": "Atta / आटा" },
+      "brand": "Aashirvaad",
+      "stock": 12,
+      "images": [
+        {
+          "url": "https://res.cloudinary.com/dnlqyxhpg/image/upload/f_webp,q_auto,c_limit,w_500/v1712345678/ecommerce-monster-video/products/atta5.jpg",
+          "publicId": "ecommerce-monster-video/products/atta5",
+          "isCover": true
+        }
+      ],
+      "colors": [],
+      "sizes": [],
+      "unit": "kg",
+      "unitValue": 5,
+      "status": "active",
+      "createdBy": "6703f1a2b9c4d5e6f7a8b9c0",
+      "createdAt": "2026-09-14T11:02:00.000Z",
+      "updatedAt": "2026-09-14T11:02:00.000Z",
+      "__v": 0
+    }
+  ]
 }
 ```
 
@@ -542,15 +542,15 @@ the same category, newest first.
 
 ```json
 {
- "status": "success",
- "data": {
- "product": { "...": "sizedProduct(..., \"detail\") — images at w_900" },
- "relatedProducts": [ { "...": "sizedProduct(..., \"card\") — images at w_500" } ]
- }
+  "status": "success",
+  "data": {
+    "product": { "...": "sizedProduct(..., \"detail\") — images at w_900" },
+    "relatedProducts": [ { "...": "sizedProduct(..., \"card\") — images at w_500" } ]
+  }
 }
 ```
 
-Errors: **404** `"Product not found"` (, also for an inactive product);
+Errors: **404** `"Product not found"` (an inactive product answers the same way);
 **500** if `id` is not a valid ObjectId (CastError). Side effects: none.
 
 ---
@@ -563,24 +563,24 @@ Shared mapper `mapGroceryList` — used by every list endpoint below:
 
 ```json
 {
- "_id": "670c9f1a2b3c4d5e6f708192",
- "code": "6F708192",
- "items": [
- { "name": "Aashirvaad Atta", "quantity": "5 kg", "rate": 60, "price": 300, "available": true }
- ],
- "totalItems": 1,
- "totalAmount": 300,
- "status": "priced",
- "paymentMethod": "at_shop",
- "paymentStatus": "pending",
- "seenByCustomer": false,
- "note": "please pack in a cloth bag",
- "pricedAt": "2026-09-18T07:40:12.000Z",
- "packedAt": null,
- "readyAt": null,
- "completedAt": null,
- "paidAt": null,
- "createdAt": "2026-09-18T07:20:00.000Z"
+  "_id": "670c9f1a2b3c4d5e6f708192",
+  "code": "6F708192",
+  "items": [
+    { "name": "Aashirvaad Atta", "quantity": "5 kg", "rate": 60, "price": 300, "available": true }
+  ],
+  "totalItems": 1,
+  "totalAmount": 300,
+  "status": "priced",
+  "paymentMethod": "at_shop",
+  "paymentStatus": "pending",
+  "seenByCustomer": false,
+  "note": "please pack in a cloth bag",
+  "pricedAt": "2026-09-18T07:40:12.000Z",
+  "packedAt": null,
+  "readyAt": null,
+  "completedAt": null,
+  "paidAt": null,
+  "createdAt": "2026-09-18T07:20:00.000Z"
 }
 ```
 
@@ -597,14 +597,14 @@ Success:
 
 ```json
 {
- "status": "success",
- "data": {
- "readable": true,
- "items": [
- { "name": "आटा", "quantity": "5 kg", "confidence": "high" },
- { "name": "surf chota", "quantity": "", "confidence": "medium" }
- ]
- }
+  "status": "success",
+  "data": {
+    "readable": true,
+    "items": [
+      { "name": "आटा", "quantity": "5 kg", "confidence": "high" },
+      { "name": "surf chota", "quantity": "", "confidence": "medium" }
+    ]
+  }
 }
 ```
 
@@ -642,7 +642,7 @@ Request body:
 | Field | Type | Rules |
 |---|---|---|
 | `items` | array | Required in practice. Passed to `cleanItems` (`utils/sanitizeItem.ts`). |
-| `items[].name` | string | `cleanField(..., 60, true)`: control/zero-width/bidi characters stripped, then everything outside `\p{L} \p{M} \p{N} whitespace., & ' - / % ×` removed, whitespace collapsed, trimmed, cut to **60** chars. Rows shorter than **2** chars after cleaning are silently **dropped**. |
+| `items[].name` | string | `cleanField(..., 60, true)`: control/zero-width/bidi characters stripped, then everything outside `\p{L} \p{M} \p{N} whitespace . , & ' - / ( ) % ×` removed, whitespace collapsed, trimmed, cut to **60** chars. Rows shorter than **2** chars after cleaning are silently **dropped**. |
 | `items[].quantity` | string | Same cleaning, cut to **12** chars. Optional. |
 | `note` | string | `cleanField(..., 300)` — control characters stripped but special characters kept. |
 | `phone` | string | `normalizeMobile` (`utils/phone.ts`): digits only, strips `+91`/leading `0`, must match `^[6-9]\d{9}$`. An invalid value is silently ignored (no error). |
@@ -656,35 +656,35 @@ Behaviour:
 1. If `phone` normalises and differs from the stored one, it is saved on the user.
 2. `cleanItems` runs. `> 500` raw rows → 400; `> 50` surviving rows → 400.
 3. If the customer has a list with `status: "received"`,
- `paymentStatus: "pending"` and `updatedAt` within **6 hours**, the new items
- are **appended to it** instead of creating a new list. Merged total > **100**
- items → 400.
+   `paymentStatus: "pending"` and `updatedAt` within **6 hours**, the new items
+   are **appended to it** instead of creating a new list. Merged total > **100**
+   items → 400.
 4. Otherwise a new list is created with `status: "received"`,
- `paymentMethod: "at_shop"`, `paymentStatus: "pending"`,
- `seenByCustomer: true`, `totalAmount: 0`, and `customerName` falling back to
- the user's email.
+   `paymentMethod: "at_shop"`, `paymentStatus: "pending"`,
+   `seenByCustomer: true`, `totalAmount: 0`, and `customerName` falling back to
+   the user's email.
 
 Success: **201** for a new list, **200** for a merge. Body is `mapGroceryList`
 plus a `merged` boolean:
 
 ```json
 {
- "status": "success",
- "data": {
- "_id": "670c9f1a2b3c4d5e6f708192",
- "code": "6F708192",
- "items": [{ "name": "Aashirvaad Atta", "quantity": "5 kg", "rate": 0, "price": 0, "available": true }],
- "totalItems": 1,
- "totalAmount": 0,
- "status": "received",
- "paymentMethod": "at_shop",
- "paymentStatus": "pending",
- "seenByCustomer": true,
- "note": "",
- "pricedAt": null, "packedAt": null, "readyAt": null, "completedAt": null, "paidAt": null,
- "createdAt": "2026-09-18T07:20:00.000Z",
- "merged": false
- }
+  "status": "success",
+  "data": {
+    "_id": "670c9f1a2b3c4d5e6f708192",
+    "code": "6F708192",
+    "items": [{ "name": "Aashirvaad Atta", "quantity": "5 kg", "rate": 0, "price": 0, "available": true }],
+    "totalItems": 1,
+    "totalAmount": 0,
+    "status": "received",
+    "paymentMethod": "at_shop",
+    "paymentStatus": "pending",
+    "seenByCustomer": true,
+    "note": "",
+    "pricedAt": null, "packedAt": null, "readyAt": null, "completedAt": null, "paidAt": null,
+    "createdAt": "2026-09-18T07:20:00.000Z",
+    "merged": false
+  }
 }
 ```
 
@@ -707,13 +707,13 @@ No parameters. All of the caller's lists, newest first. No pagination.
 
 ```json
 {
- "status": "success",
- "data": {
- "items": [ { "...": "mapGroceryList" } ],
- "unseenCount": 2,
- "upi": { "id": "shop@upi", "name": "sKirana" },
- "customerPhone": "9876543210"
- }
+  "status": "success",
+  "data": {
+    "items": [ { "...": "mapGroceryList" } ],
+    "unseenCount": 2,
+    "upi": { "id": "shop@upi", "name": "sKirana" },
+    "customerPhone": "9876543210"
+  }
 }
 ```
 
@@ -724,6 +724,7 @@ badge. `upi.id` ← `SHOP_UPI_ID` (default `""`), `upi.name` ← `SHOP_NAME`
 Errors: **401**. Side effects: none beyond the possible user create-on-demand.
 
 #### `PATCH /customer/grocery-lists/:listId/seen`
+
 
 Path parameter `listId`. No body. Sets `seenByCustomer = true` on a list the
 caller owns.
@@ -737,6 +738,7 @@ on a malformed `listId` (CastError).
 Side effects: one DB write.
 
 #### `PATCH /customer/grocery-lists/:listId/remove-item`
+
 
 Path parameter `listId`. Body: `{ "index": 0 }` — must be an integer ≥ 0.
 
@@ -757,6 +759,7 @@ sees the change on their next poll.
 
 #### `PATCH /customer/grocery-lists/:listId/pay-at-shop`
 
+
 Path parameter `listId`. No body. Sets `paymentMethod = "at_shop"`.
 
 Response: `mapGroceryList`.
@@ -768,6 +771,7 @@ Side effects: one DB write.
 
 #### `POST /customer/grocery-lists/:listId/pay-online`
 
+
 Path parameter `listId`. No body fields read.
 
 Creates a Razorpay order for `totalAmount` (rupees → paise via `toSubUnits`,
@@ -776,16 +780,16 @@ Creates a Razorpay order for `totalAmount` (rupees → paise via `toSubUnits`,
 
 ```json
 {
- "status": "success",
- "data": {
- "razorpay": {
- "keyId": "rzp_live_xxxxxxxx",
- "orderId": "order_PqRsTuVwXyZ123",
- "amount": 30000,
- "currency": "INR"
- },
- "list": { "...": "mapGroceryList" }
- }
+  "status": "success",
+  "data": {
+    "razorpay": {
+      "keyId": "rzp_live_xxxxxxxx",
+      "orderId": "order_PqRsTuVwXyZ123",
+      "amount": 30000,
+      "currency": "INR"
+    },
+    "list": { "...": "mapGroceryList" }
+  }
 }
 ```
 
@@ -800,6 +804,7 @@ server boots only if `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` are set —
 
 #### `POST /customer/grocery-lists/:listId/confirm-payment`
 
+
 Path parameter `listId`. Body — all required, all trimmed:
 
 | Field | Type |
@@ -810,7 +815,7 @@ Path parameter `listId`. Body — all required, all trimmed:
 
 Verifies `HMAC-SHA256(razorpay_order_id + "|" + razorpay_payment_id)` with
 `RAZORPAY_KEY_SECRET`. An already-paid list returns **200** with the list
-unchanged (idempotent,).
+unchanged (idempotent).
 
 Response: `mapGroceryList` with `paymentStatus: "paid"`, `paymentMethod:
 "online"`, `paymentId` and `paidAt` set.
@@ -825,23 +830,24 @@ list was paid online.
 
 #### `GET /customer/grocery-lists/:listId/messages`
 
+
 Path parameter `listId`. Ownership is checked before reading. All
 messages for the list, oldest first. No pagination.
 
 ```json
 {
- "status": "success",
- "data": {
- "messages": [
- {
- "_id": "670cabc1d2e3f4a5b6c7d8e9",
- "sender": "customer",
- "senderName": "Rohit Sharma",
- "text": "Please add 1 kg sugar",
- "createdAt": "2026-09-18T07:25:00.000Z"
- }
- ]
- }
+  "status": "success",
+  "data": {
+    "messages": [
+      {
+        "_id": "670cabc1d2e3f4a5b6c7d8e9",
+        "sender": "customer",
+        "senderName": "Rohit Sharma",
+        "text": "Please add 1 kg sugar",
+        "createdAt": "2026-09-18T07:25:00.000Z"
+      }
+    ]
+  }
 }
 ```
 
@@ -854,8 +860,9 @@ Side effects: none.
 
 #### `POST /customer/grocery-lists/:listId/messages`
 
+
 Path parameter `listId`. Body: `{ "text": "..." }` — trimmed, non-empty, ≤ 1000
-characters (; the schema enforces the same cap at `models/Message.ts`).
+characters; the schema enforces the same cap in `models/Message.ts`.
 
 `senderName` is the user's name, else email, else `"Customer"`.
 
@@ -879,7 +886,7 @@ failures.
 { "status": "success", "data": { "name": "Rohit Sharma", "email": "customer@example.com", "phone": "9876543210" } }
 ```
 
-Missing values come back as `""`, never `null` (`mapProfile`,).
+Missing values come back as `""`, never `null` (`mapProfile`).
 
 Errors: **401**. Side effects: none beyond create-on-demand.
 
@@ -908,19 +915,19 @@ lists deliberately keep their historical snapshot.
 
 ```json
 {
- "status": "success",
- "data": {
- "items": [
- {
- "_id": "670cdd01e2f3a4b5c6d7e8f9",
- "fullName": "Rohit Sharma",
- "address": "12, MG Road",
- "state": "Karnataka",
- "postalCode": "560001",
- "isDefault": true
- }
- ]
- }
+  "status": "success",
+  "data": {
+    "items": [
+      {
+        "_id": "670cdd01e2f3a4b5c6d7e8f9",
+        "fullName": "Rohit Sharma",
+        "address": "12, MG Road",
+        "state": "Karnataka",
+        "postalCode": "560001",
+        "isDefault": true
+      }
+    ]
+  }
 }
 ```
 
@@ -929,6 +936,7 @@ Sorted default-first. Mapper: `mapAddress`.
 Errors: **404** `User not found`; **401**.
 
 #### `POST /customer/addresses`
+
 
 Body — all four required and trimmed; **no length limits and no sanitiser** on
 these fields:
@@ -949,6 +957,7 @@ Side effects: one DB write on the user document.
 
 #### `PATCH /customer/addresses/:addressId`
 
+
 Path parameter `addressId` (the embedded sub-document `_id`). Body: the same four
 required fields as POST — this is a **full replacement of those fields**, not a
 partial patch. `isDefault: true` promotes this address and demotes the rest;
@@ -960,6 +969,7 @@ Errors: **400** `Address id is required`; the four field 400s; **404** `Address
 not found`; **404** `User not found`; **401**.
 
 #### `DELETE /customer/addresses/:addressId`
+
 
 Path parameter `addressId`. No body. If the deleted address was the default and
 others remain, the first survivor becomes the default.
@@ -989,33 +999,28 @@ Side effects: one DB write. Tokens are only used by `notifyUser`
 
 ### 3.6 Customer — cart, wishlist, promo, checkout, orders
 
-> Most of this section is **unreachable from the shipped clients** — the cart,
-> promo, checkout and order routes are inherited from the e-commerce template
-> this project grew out of, and nothing calls them (see § 7.2).
->
-> The **wishlist** routes are the exception: the mobile app does call
-> `/customer/wishlist` and `/customer/wishlist/items` — that is the heart on a
-> product card.
+> Every endpoint in this section is **unreachable from the shipped clients** — see
+> § 7.2. They are documented because they are live on the server.
 
 Shared response shapes (`cart-wishlist.routes.ts`):
 
 ```json
 {
- "status": "success",
- "data": {
- "items": [
- {
- "productId": "670b1c2d3e4f5a6b7c8d9e03",
- "title": "Aashirvaad Multigrain Atta 5 kg",
- "brand": "Aashirvaad",
- "image": "https://res.cloudinary.com/.../f_webp,q_auto,c_limit,w_500/...jpg",
- "quantity": 2,
- "color": "red",
- "size": "M"
- }
- ],
- "totalQuantity": 2
- }
+  "status": "success",
+  "data": {
+    "items": [
+      {
+        "productId": "670b1c2d3e4f5a6b7c8d9e03",
+        "title": "Aashirvaad Multigrain Atta 5 kg",
+        "brand": "Aashirvaad",
+        "image": "https://res.cloudinary.com/.../f_webp,q_auto,c_limit,w_500/...jpg",
+        "quantity": 2,
+        "color": "red",
+        "size": "M"
+      }
+    ],
+    "totalQuantity": 2
+  }
 }
 ```
 
@@ -1023,7 +1028,7 @@ Wishlist responses are the same without `quantity`, `color`, `size` and
 `totalQuantity`. Cart/wishlist rows whose product was deleted are dropped from
 the response rather than returned as `null`.
 
-Variant rules (`getSelectedvariant`,): if the product has any `colors`, a
+Variant rules (`getSelectedvariant`): if the product has any `colors`, a
 `color` is **required** and must be one of them; likewise `sizes`. Products with
 empty `colors`/`sizes` ignore those inputs.
 
@@ -1049,7 +1054,7 @@ Side effects: one DB write. **Known bug:** the "already in cart" branch tests
 a duplicate row rather than incrementing it.
 
 #### `PATCH /customer/cart/items/:productId/increase` —
-Path parameter `productId`. **Query** parameters `color`, `size` (not body —). Adds 1, refusing to exceed stock.
+Path parameter `productId`. **Query** parameters `color`, `size` (not the body). Adds 1, refusing to exceed stock.
 
 Errors: **400** `Product id is required`; **404** `Cart not found`; **404**
 `Product not found`; the four variant 400s; **400** `Cart item not found here`;
@@ -1062,7 +1067,7 @@ Errors: as above minus the stock error.
 
 #### `DELETE /customer/cart/items/:productId` —
 Path parameter `productId`; query `color`, `size`. With no cart at all it returns
-`{ "items": [], "totalQuantity": 0 }` (**200**,).
+`{ "items": [], "totalQuantity": 0 }` (**200**).
 
 Errors: **400** `Product id is required`; **404** `Product not found`; the variant
 400s; **401**.
@@ -1074,7 +1079,7 @@ silently; quantities are clamped to stock.
 
 **Two defects make this endpoint unusable as written:** with no existing cart it
 calls `cart.create(...)` on a `null` → TypeError → **500**; and both
-`cart.save` and `res.json` sit **inside** the per-item loop, so a
+`cart.save()` and `res.json()` sit **inside** the per-item loop, so a
 two-item sync writes the response twice (Express logs `ERR_HTTP_HEADERS_SENT`) and
 an empty `items` array sends **no response at all** until the client times out.
 
@@ -1122,11 +1127,11 @@ Prices the cart server-side from the current product records, applying
 
 ```json
 {
- "status": "success",
- "data": {
- "razorpay": { "keyId": "rzp_live_xxxxxxxx", "orderId": "order_Pq...", "amount": 67500, "currency": "INR" },
- "order": { "_id": "670ce0112233445566778899", "totalItems": 3, "discountAmount": 75, "totalAmount": 675 }
- }
+  "status": "success",
+  "data": {
+    "razorpay": { "keyId": "rzp_live_xxxxxxxx", "orderId": "order_Pq...", "amount": 67500, "currency": "INR" },
+    "order": { "_id": "670ce0112233445566778899", "totalItems": 3, "discountAmount": 75, "totalAmount": 675 }
+  }
 }
 ```
 
@@ -1142,9 +1147,10 @@ Side effects: **Razorpay order created**; an `orders` document written. Stock is
 
 #### `POST /customer/checkout/confirm`
 
+
 Body: `orderId`, `razorpay_payment_id`, `razorpay_order_id`,
 `razorpay_signature` — all required. Already-paid orders return **200** with
-`{ "_id": "..." }` (idempotent,).
+`{ "_id": "..." }` (idempotent).
 
 Response: `{ "status": "success", "data": { "_id": "670ce011..." } }`.
 
@@ -1166,6 +1172,7 @@ Errors: **404** `User not found`; **401**.
 
 #### `POST /customer/checkout/pay-with-points`
 
+
 Body: `addressId` (required), `promoCode` (optional). Prices the cart exactly as
 `create-session` does, then pays the whole total from `users.points`.
 
@@ -1183,8 +1190,8 @@ deduction the points are credited back in a `catch` — but stock
 already decremented is **not** restored.
 
 **Observation:** the balance is read with `.select("name email addresses")`, which does not include `points`, so `foundUser.points` is `undefined` and
-the pre-check `totalAmount > foundUser.points` at is always false. The
-only real guard is the conditional `updateOne` at, which does hold —
+the pre-check `totalAmount > foundUser.points` is always false. The
+only real guard is the conditional `updateOne`, which does hold —
 so the outcome is correct, but the friendly early error never fires.
 
 #### `GET /customer/orders`
@@ -1194,29 +1201,30 @@ No parameters. All of the caller's `Order` documents, newest first, no paginatio
 
 ```json
 {
- "status": "success",
- "data": {
- "items": [
- {
- "_id": "670ce0112233445566778899",
- "code": "66778899",
- "totalItems": 3,
- "totalAmount": 675,
- "paymentStatus": "paid",
- "orderStatus": "delivered",
- "paidAt": "2026-09-10T10:00:00.000Z",
- "deliveredAt": "2026-09-12T09:30:00.000Z",
- "returnedAt": null,
- "createdAt": "2026-09-10T09:55:00.000Z"
- }
- ]
- }
+  "status": "success",
+  "data": {
+    "items": [
+      {
+        "_id": "670ce0112233445566778899",
+        "code": "66778899",
+        "totalItems": 3,
+        "totalAmount": 675,
+        "paymentStatus": "paid",
+        "orderStatus": "delivered",
+        "paidAt": "2026-09-10T10:00:00.000Z",
+        "deliveredAt": "2026-09-12T09:30:00.000Z",
+        "returnedAt": null,
+        "createdAt": "2026-09-10T09:55:00.000Z"
+      }
+    ]
+  }
 }
 ```
 
 Errors: **401**.
 
 #### `PATCH /customer/orders/:orderId/return`
+
 
 Path parameter `orderId`. No body. Allowed only when `orderStatus ===
 "delivered"` and within **7 days** of `deliveredAt`.
@@ -1239,43 +1247,43 @@ the status check, and no notification.
 Router guard: `requireAdmin` (`admin/grocery-list.routes.ts`).
 
 Seven of these ten endpoints answer with **the entire list collection**
-(`getAllGroceryLists`,) rather than the one record you changed — the admin
+(`getAllGroceryLists`) rather than the one record you changed — the admin
 panel treats each mutation as a full refresh. `mapGroceryList` here differs
 from the customer one: it adds `customerName`, `customerEmail`, `customerPhone`
 and `updatedAt`, and **omits `seenByCustomer`**.
 
 ```json
 {
- "status": "success",
- "data": {
- "items": [
- {
- "_id": "670c9f1a2b3c4d5e6f708192",
- "code": "6F708192",
- "customerName": "Rohit Sharma",
- "customerEmail": "customer@example.com",
- "customerPhone": "9876543210",
- "items": [{ "name": "Aashirvaad Atta", "quantity": "5 kg", "rate": 60, "price": 300, "available": true }],
- "totalItems": 1,
- "totalAmount": 300,
- "status": "priced",
- "paymentMethod": "at_shop",
- "paymentStatus": "pending",
- "note": "",
- "pricedAt": "2026-09-18T07:40:12.000Z",
- "packedAt": null, "readyAt": null, "completedAt": null, "paidAt": null,
- "createdAt": "2026-09-18T07:20:00.000Z",
- "updatedAt": "2026-09-18T07:40:12.000Z"
- }
- ]
- }
+  "status": "success",
+  "data": {
+    "items": [
+      {
+        "_id": "670c9f1a2b3c4d5e6f708192",
+        "code": "6F708192",
+        "customerName": "Rohit Sharma",
+        "customerEmail": "customer@example.com",
+        "customerPhone": "9876543210",
+        "items": [{ "name": "Aashirvaad Atta", "quantity": "5 kg", "rate": 60, "price": 300, "available": true }],
+        "totalItems": 1,
+        "totalAmount": 300,
+        "status": "priced",
+        "paymentMethod": "at_shop",
+        "paymentStatus": "pending",
+        "note": "",
+        "pricedAt": "2026-09-18T07:40:12.000Z",
+        "packedAt": null, "readyAt": null, "completedAt": null, "paidAt": null,
+        "createdAt": "2026-09-18T07:20:00.000Z",
+        "updatedAt": "2026-09-18T07:40:12.000Z"
+      }
+    ]
+  }
 }
 ```
 
 Customer identity falls back through the populated `user` document
 (`name` → `email`) for lists created before the snapshot fields existed.
 Sorting is by **`updatedAt`** descending, not `createdAt`, so a list that absorbed
-a merge bubbles to the top (, with the reason at).
+a merge bubbles to the top, and `mapList` records why.
 
 #### `GET /admin/grocery-lists` —
 No parameters. Response as above. **Every list ever created**, unpaginated.
@@ -1298,7 +1306,7 @@ Path parameter `listId`. Body:
 `name` and `quantity` sent by the shop are **ignored** — the customer's text stays
 the source of truth. The computed `totalAmount` must be ≥ 1.
 
-Response: `{ items: [...every list... ] }`.
+Response: `{ items: [ ...every list... ] }`.
 
 Errors: **400** `List id is required`; **400** `Items are required`; **404** `List
 not found`; **400** `Item count does not match the customer's list`; **400** `Each
@@ -1322,7 +1330,7 @@ An unpriced list (`totalAmount < 1`) can only be moved to `cancelled`.
 `packedAt`, `readyAt` and `completedAt` are stamped the first time each status is
 reached.
 
-Response: `{ items: [...every list... ] }`.
+Response: `{ items: [ ...every list... ] }`.
 
 Errors: **400** `List id is required`; **400** `Status is required`; **400**
 `Invalid status`; **404** `List not found`; **400** `Price the list before moving
@@ -1403,24 +1411,24 @@ longer exist are filtered out.
 
 ```json
 {
- "status": "success",
- "data": {
- "conversations": [
- {
- "listId": "670c9f1a2b3c4d5e6f708192",
- "code": "6F708192",
- "customerName": "Rohit Sharma",
- "customerPhone": "9876543210",
- "status": "priced",
- "messageCount": 4,
- "lastMessage": {
- "text": "Please add 1 kg sugar",
- "sender": "customer",
- "createdAt": "2026-09-18T07:25:00.000Z"
- }
- }
- ]
- }
+  "status": "success",
+  "data": {
+    "conversations": [
+      {
+        "listId": "670c9f1a2b3c4d5e6f708192",
+        "code": "6F708192",
+        "customerName": "Rohit Sharma",
+        "customerPhone": "9876543210",
+        "status": "priced",
+        "messageCount": 4,
+        "lastMessage": {
+          "text": "Please add 1 kg sugar",
+          "sender": "customer",
+          "createdAt": "2026-09-18T07:25:00.000Z"
+        }
+      }
+    ]
+  }
 }
 ```
 
@@ -1560,9 +1568,9 @@ Errors: the same field 400s as POST; **404** `Category not found`; **404**
 nothing); **401**; **403**.
 
 Side effects: **Cloudinary uploads** for new files and **Cloudinary deletes** for
-every stored image no longer in `existingImages` (,
-`deleteFromCloudinary` at `utils/cloudinary.ts`, which swallows failures).
-Note the deletes run **before** the `mergedImages.length` check at — a
+every stored image no longer in `existingImages`, through
+`deleteFromCloudinary` (`utils/cloudinary.ts`), which swallows failures.
+Note the deletes run **before** the `mergedImages.length` check — a
 request that removes every image deletes the Cloudinary assets and *then* fails
 with 400, leaving the product pointing at dead URLs.
 
@@ -1586,24 +1594,24 @@ Every banner endpoint answers with the whole collection plus the carousel cap:
 
 ```json
 {
- "status": "success",
- "data": {
- "items": [
- {
- "_id": "670b1c2d3e4f5a6b7c8d9e01",
- "imageUrl": "https://res.cloudinary.com/.../f_webp,q_auto,c_limit,w_1200/...diwali.jpg",
- "imagePublicId": "ecommerce-monster-video/banners/diwali",
- "title": "diwali offer",
- "isActive": true,
- "sortOrder": 0,
- "link": { "type": "category", "targetId": "670b1c2d3e4f5a6b7c8d9e02", "targetName": "Atta / आटा" },
- "startsAt": "2026-10-20T00:00:00.000Z",
- "endsAt": "2026-11-06T00:00:00.000Z",
- "createdAt": "2026-09-01T06:12:44.000Z"
- }
- ],
- "limit": 8
- }
+  "status": "success",
+  "data": {
+    "items": [
+      {
+        "_id": "670b1c2d3e4f5a6b7c8d9e01",
+        "imageUrl": "https://res.cloudinary.com/.../f_webp,q_auto,c_limit,w_1200/...diwali.jpg",
+        "imagePublicId": "ecommerce-monster-video/banners/diwali",
+        "title": "diwali offer",
+        "isActive": true,
+        "sortOrder": 0,
+        "link": { "type": "category", "targetId": "670b1c2d3e4f5a6b7c8d9e02", "targetName": "Atta / आटा" },
+        "startsAt": "2026-10-20T00:00:00.000Z",
+        "endsAt": "2026-11-06T00:00:00.000Z",
+        "createdAt": "2026-09-01T06:12:44.000Z"
+      }
+    ],
+    "limit": 8
+  }
 }
 ```
 
@@ -1624,7 +1632,7 @@ Errors: **401**, **403**.
 `image/jpeg` · `image/png` · `image/webp`.
 
 Each file becomes a banner appended after the current highest `sortOrder`. The title is derived from the file name — extension dropped,
-`-`/`_` → spaces, cleaned and cut to 80 characters (`titleFromFileName`,).
+`-`/`_` → spaces, cleaned and cut to 80 characters (`titleFromFileName`).
 
 Response: the full banner list (**200**).
 
@@ -1637,7 +1645,7 @@ Side effects: **Cloudinary uploads** to `ecommerce-monster-video/banners`; one
 `insertMany`.
 
 #### `PUT /admin/settings/banners/order` —
-Body: `{ "ids": ["<id1>", "<id2>",...] }` — must be **every** banner id, each
+Body: `{ "ids": ["<id1>", "<id2>", ...] }` — must be **every** banner id, each
 valid, each exactly once. Anything else is a conflict, not a validation error.
 
 Response: the full banner list.
@@ -1649,8 +1657,8 @@ non-ObjectId member); **409** `The banner list changed - refresh and try again`
 Side effects: one `bulkWrite` setting `sortOrder` to the array index.
 
 #### `PATCH /admin/settings/banners/:bannerId` —
-Path parameter `bannerId`. Body — only the keys **present** are changed (`in`
-checks at):
+Path parameter `bannerId`. Body — only the keys **present** are changed (each is guarded by an `in`
+check):
 
 | Field | Rules |
 |---|---|
@@ -1686,21 +1694,21 @@ No parameters. Newest first, unpaginated.
 
 ```json
 {
- "status": "success",
- "data": {
- "items": [
- {
- "_id": "670b1c2d3e4f5a6b7c8d9e04",
- "code": "DIWALI10",
- "percentage": 10,
- "count": 50,
- "minimumOrderValue": 500,
- "startsAt": "2026-10-20T00:00:00.000Z",
- "endsAt": "2026-11-05T18:29:59.000Z",
- "createdAt": "2026-09-01T06:00:00.000Z"
- }
- ]
- }
+  "status": "success",
+  "data": {
+    "items": [
+      {
+        "_id": "670b1c2d3e4f5a6b7c8d9e04",
+        "code": "DIWALI10",
+        "percentage": 10,
+        "count": 50,
+        "minimumOrderValue": 500,
+        "startsAt": "2026-10-20T00:00:00.000Z",
+        "endsAt": "2026-11-05T18:29:59.000Z",
+        "createdAt": "2026-09-01T06:00:00.000Z"
+      }
+    ]
+  }
 }
 ```
 
@@ -1762,15 +1770,15 @@ No parameters. Counters are computed from **grocery lists**, not Orders.
 
 ```json
 {
- "status": "success",
- "data": {
- "totalProducts": 84,
- "totalCategories": 12,
- "totalSales": 18750,
- "totalOrders": 96,
- "pendingOrders": 4,
- "completedOrders": 61
- }
+  "status": "success",
+  "data": {
+    "totalProducts": 84,
+    "totalCategories": 12,
+    "totalSales": 18750,
+    "totalOrders": 96,
+    "pendingOrders": 4,
+    "completedOrders": 61
+  }
 }
 ```
 
@@ -1781,23 +1789,23 @@ No parameters. Counters are computed from **grocery lists**, not Orders.
 Errors: **401**, **403**.
 
 #### `GET /admin/dashboard/daily` —
-No parameters. Seven IST calendar days ending today (`istDayKey`,, a fixed
+No parameters. Seven IST calendar days ending today (`istDayKey`, a fixed
 +5:30 offset).
 
 ```json
 {
- "status": "success",
- "data": {
- "days": [
- { "date": "2026-09-13", "label": "Sun, 13", "orders": 7, "sales": 2450 }
- ]
- }
+  "status": "success",
+  "data": {
+    "days": [
+      { "date": "2026-09-13", "label": "Sun, 13", "orders": 7, "sales": 2450 }
+    ]
+  }
 }
 ```
 
 `orders` counts non-cancelled lists by `createdAt`; `sales` sums `totalAmount` of
 paid lists by `paidAt`. `label` is produced with
-`toLocaleDateString("en-IN",...)` on the **server's** locale data.
+`toLocaleDateString("en-IN", ...)` on the **server's** locale data.
 
 Errors: **401**, **403**.
 
@@ -1816,7 +1824,7 @@ Errors: **400** `Push token is required`; **401**; **403**.
 
 ## 4. Multipart endpoints
 
-Four endpoints accept `multipart/form-data`. All use `multer.memoryStorage` —
+Four endpoints accept `multipart/form-data`. All use `multer.memoryStorage()` —
 files never touch disk on the server.
 
 ### 4.1 `POST /customer/grocery-lists/read-photo` — reading a handwritten list
@@ -1826,8 +1834,8 @@ files never touch disk on the server.
 | Property | Value |
 |---|---|
 | Field name | **`photos`** (repeated) |
-| Files | 1–3 (`MAX_PHOTOS_PER_READ`,) |
-| Size | ≤ **6 MB** each (`MAX_PHOTO_BYTES`,) |
+| Files | 1–3 (`MAX_PHOTOS_PER_READ`) |
+| Size | ≤ **6 MB** each (`MAX_PHOTO_BYTES`) |
 | Types | `image/jpeg`, `image/png`, `image/webp` — checked on the declared MIME type, not the bytes |
 | Storage | memory only |
 
@@ -1845,20 +1853,21 @@ call.
 
 ### 4.2 `POST` / `PUT /admin/categories[/:id]` — category image
 
-`server/src/routes/admin/product.routes.ts`,,
+`server/src/routes/admin/product.routes.ts`
 
 | Property | Value |
 |---|---|
 | Field name | **`image`** (single) |
 | Files | 0 or 1 |
-| Size | **5 MB** per file |
+| Size | **5 MB** per file (`MAX_IMAGE_BYTES`) |
 | Types | **JPEG, PNG, WebP** — anything else is refused by the file filter |
 | Storage | memory, then Cloudinary folder `ecommerce-monster-video/categories` |
 
-The multer config sets `limits: { fileSize: 5 MB, files: 10 }` with a
+The multer config sets `limits: { fileSize: MAX_IMAGE_BYTES, files: 10 }` and a
 `fileFilter` on the declared MIME type. It previously set `fieldSize`, which caps
-**non-file text fields** and left uploads unbounded; that was fixed after this
-document was first written, so an older copy of this section is wrong.
+**non-file text fields** and left uploads unbounded; that was corrected after this
+document was first written, so an older copy of this section reads differently.
+The platform's own request-body cap (§ 6.3) still applies underneath it.
 
 What happens to the file: uploaded to Cloudinary with `crop: "limit"` at
 1600×1600 and `quality: auto:good` (`utils/cloudinary.ts`), so it is only
@@ -1867,7 +1876,7 @@ Replacing an image does **not** delete the previous Cloudinary asset.
 
 ### 4.3 `POST` / `PUT /admin/products[/:id]` — product images
 
-`server/src/routes/admin/product.routes.ts`,
+`server/src/routes/admin/product.routes.ts`
 
 | Property | Value |
 |---|---|
@@ -1888,13 +1897,13 @@ translate multer errors.
 
 ### 4.4 `POST /admin/settings/banners` — banner upload
 
-`server/src/routes/admin/settings.routes.ts`,
+`server/src/routes/admin/settings.routes.ts`
 
 | Property | Value |
 |---|---|
 | Field name | **`images`** (repeated) |
-| Files | 1–10 (`MAX_FILES`,) |
-| Size | ≤ **5 MB** each (`MAX_FILE_BYTES`,) |
+| Files | 1–10 (`MAX_FILES`) |
+| Size | ≤ **5 MB** each (`MAX_FILE_BYTES`) |
 | Types | `image/jpeg`, `image/png`, `image/webp` |
 | Storage | memory, then Cloudinary folder `ecommerce-monster-video/banners` |
 
@@ -1911,45 +1920,45 @@ its Cloudinary asset (best-effort).
 
 ```mermaid
 sequenceDiagram
- actor C as Customer
- participant App as Mobile app
- participant API as Express (Vercel)
- participant DB as MongoDB
- participant FCM as Firebase (admin browser)
- participant TG as Telegram
- participant Shop as Admin panel
+    actor C as Customer
+    participant App as Mobile app
+    participant API as Express (Vercel)
+    participant DB as MongoDB
+    participant FCM as Firebase (admin browser)
+    participant TG as Telegram
+    participant Shop as Admin panel
 
- C->>App: writes items + optional note
- App->>API: POST /customer/grocery-lists<br/>Bearer <clerk jwt>
- API->>API: clerkMiddleware → requireAuth
- API->>DB: find user by clerkUserId<br/>(create/re-link if absent)
- API->>API: normalizeMobile(phone)
- opt new valid mobile
- API->>DB: save users.phone
- end
- API->>API: cleanItems — strip, cap 60/12 chars,<br/>drop <2-char names, max 50 per send
- API->>DB: find "received" + "pending" list<br/>updated within 6 h
- alt merge target found
- DB-->>API: existing list
- API->>API: append items (reject if >100 total)
- API->>DB: save list (updatedAt bumps)
- API->>FCM: notifyAdmins("List updated")
- API->>TG: "Order updated — N more items"
- API-->>App: 200 {...list, merged: true }
- else no recent unpriced list
- API->>DB: create list (status received,<br/>at_shop, pending, total 0)
- API->>FCM: notifyAdmins("New grocery list")
- API->>TG: "New order — name, phone, #CODE"
- API-->>App: 201 {...list, merged: false }
- end
- FCM-->>Shop: browser notification
- Shop->>API: GET /admin/grocery-lists (poll)
- Shop->>API: PATCH /admin/grocery-lists/:id/prices
- API->>DB: items priced, status → priced,<br/>seenByCustomer → false
- API->>App: Expo push "Your list is priced — ₹N"
+    C->>App: writes items + optional note
+    App->>API: POST /customer/grocery-lists<br/>Bearer <clerk jwt>
+    API->>API: clerkMiddleware → requireAuth
+    API->>DB: find user by clerkUserId<br/>(create/re-link if absent)
+    API->>API: normalizeMobile(phone)
+    opt new valid mobile
+        API->>DB: save users.phone
+    end
+    API->>API: cleanItems() — strip, cap 60/12 chars,<br/>drop <2-char names, max 50 per send
+    API->>DB: find "received" + "pending" list<br/>updated within 6 h
+    alt merge target found
+        DB-->>API: existing list
+        API->>API: append items (reject if >100 total)
+        API->>DB: save list (updatedAt bumps)
+        API->>FCM: notifyAdmins("List updated")
+        API->>TG: "Order updated — N more items"
+        API-->>App: 200 { ...list, merged: true }
+    else no recent unpriced list
+        API->>DB: create list (status received,<br/>at_shop, pending, total 0)
+        API->>FCM: notifyAdmins("New grocery list")
+        API->>TG: "New order — name, phone, #CODE"
+        API-->>App: 201 { ...list, merged: false }
+    end
+    FCM-->>Shop: browser notification
+    Shop->>API: GET /admin/grocery-lists (poll)
+    Shop->>API: PATCH /admin/grocery-lists/:id/prices
+    API->>DB: items priced, status → priced,<br/>seenByCustomer → false
+    API->>App: Expo push "Your list is priced — ₹N"
 ```
 
-Both notification calls are **awaited** (`grocery-list.routes.ts`,,,) because Vercel freezes the function the moment the response is
+Both notification calls are **awaited** (`grocery-list.routes.ts`) because Vercel freezes the function the moment the response is
 written; an un-awaited push would be killed in flight. Neither helper throws, so
 neither can fail the customer's request.
 
@@ -1957,43 +1966,43 @@ neither can fail the customer's request.
 
 ```mermaid
 sequenceDiagram
- actor C as Customer
- participant App as Mobile app
- participant MW as multer (memory)
- participant API as Route handler
- participant P as photo-list-parser
- participant G as Gemini REST
+    actor C as Customer
+    participant App as Mobile app
+    participant MW as multer (memory)
+    participant API as Route handler
+    participant P as photo-list-parser
+    participant G as Gemini REST
 
- C->>App: camera or gallery (1-3 photos)
- App->>MW: POST /customer/grocery-lists/read-photo<br/>multipart "photos", axios timeout 60 s
- MW->>MW: fileFilter: jpeg/png/webp only<br/>limits: 6 MB each, 3 files
- alt rejected by multer
- MW-->>App: 400 "Each photo must be under 6 MB" /<br/>"Send at most 3 photos at a time" /<br/>"Send a JPG, PNG or WebP photo"
- end
- MW->>API: req.files (buffers in memory)
- API->>API: requireAuth → getDbUserFromReq
- API->>P: parseGroceryListPhotos(files, userId)
- P->>P: GEMINI_API_KEY set?
- alt not configured
- P-->>App: 503 "Reading photos isn't switched on yet."
- end
- P->>P: already reading for this user? → 429<br/>< 5 s since last finish? → 429<br/>≥ 12 calls this minute? → 503
- P->>G: POST :generateContent<br/>system prompt + inline base64 images<br/>responseSchema, temperature 0<br/>AbortSignal.timeout(45 s)
- alt network failure or 45 s abort
- G--xP: —
- P-->>App: 503 "Could not reach the photo-reading service."
- else Gemini 429 / non-2xx
- G-->>P: error
- P-->>App: 503 "The photo reader is busy right now." /<br/>"The photo could not be read just now."
- else ok
- G-->>P: JSON { readable, items[] }
- P->>P: zod parse (max 200 items)
- P->>P: cleanField on every name/quantity,<br/>drop <2 chars, slice to 50
- P-->>API: { readable, items }
- end
- API-->>App: 200 { readable, items }
- App->>C: items written into the editable draft list
- Note over App,G: the photo is never stored — not on disk,<br/>not in Cloudinary, not on the list
+    C->>App: camera or gallery (1-3 photos)
+    App->>MW: POST /customer/grocery-lists/read-photo<br/>multipart "photos", axios timeout 60 s
+    MW->>MW: fileFilter: jpeg/png/webp only<br/>limits: 6 MB each, 3 files
+    alt rejected by multer
+        MW-->>App: 400 "Each photo must be under 6 MB" /<br/>"Send at most 3 photos at a time" /<br/>"Send a JPG, PNG or WebP photo"
+    end
+    MW->>API: req.files (buffers in memory)
+    API->>API: requireAuth → getDbUserFromReq
+    API->>P: parseGroceryListPhotos(files, userId)
+    P->>P: GEMINI_API_KEY set?
+    alt not configured
+        P-->>App: 503 "Reading photos isn't switched on yet."
+    end
+    P->>P: already reading for this user? → 429<br/>< 5 s since last finish? → 429<br/>≥ 12 calls this minute? → 503
+    P->>G: POST :generateContent<br/>system prompt + inline base64 images<br/>responseSchema, temperature 0<br/>AbortSignal.timeout(45 s)
+    alt network failure or 45 s abort
+        G--xP: —
+        P-->>App: 503 "Could not reach the photo-reading service."
+    else Gemini 429 / non-2xx
+        G-->>P: error
+        P-->>App: 503 "The photo reader is busy right now." /<br/>"The photo could not be read just now."
+    else ok
+        G-->>P: JSON { readable, items[] }
+        P->>P: zod parse (max 200 items)
+        P->>P: cleanField on every name/quantity,<br/>drop <2 chars, slice to 50
+        P-->>API: { readable, items }
+    end
+    API-->>App: 200 { readable, items }
+    App->>C: items written into the editable draft list
+    Note over App,G: the photo is never stored — not on disk,<br/>not in Cloudinary, not on the list
 ```
 
 The customer then edits the draft and sends it through flow 5.1. That correction
@@ -2005,7 +2014,7 @@ step is the point: a misread item would otherwise become a wrong bill.
 
 ### 6.1 The Gemini brake
 
-`server/src/services/photo-list-parser.ts`,
+`server/src/services/photo-list-parser.ts`
 
 | Control | Value | What the caller sees |
 |---|---|---|
@@ -2038,7 +2047,7 @@ No other endpoint in this API is rate-limited at all.
 | Timeout | Value | Effect |
 |---|---|---|
 | `REQUEST_TIMEOUT_MS` | **20 s** | axios aborts; the app throws `"timeout of 20000ms exceeded"` through `getErrorMsg` |
-| `TOKEN_TIMEOUT_MS` | **8 s** | Clerk's `getToken` is raced against this; on timeout the request goes out **unauthenticated**, so a protected endpoint answers 401 and the app reads it as "signed out" |
+| `TOKEN_TIMEOUT_MS` | **8 s** | Clerk's `getToken()` is raced against this; on timeout the request goes out **unauthenticated**, so a protected endpoint answers 401 and the app reads it as "signed out" |
 | Per-call override | **60 s** for `read-photo` (`mobile/src/features/customer/grocery-list/api.ts`) | the only call allowed to outlive the 20 s default |
 
 Note the arithmetic: the server permits a 45 s Gemini call, the app waits 60 s —
@@ -2057,7 +2066,7 @@ them.
 | Request body size | **4.5 MB** per serverless invocation | The platform rejects the upload before Express or multer runs — an HTML/plain `413`, **not** the JSON envelope. This is smaller than the route's own 6 MB photo cap (§ 4.1), so `"Each photo must be under 6 MB"` can never fire in production for a single large photo; three 2 MB photos also exceed it. |
 | Response body size | **4.5 MB** | A `502`/`500` from the platform instead of JSON. Relevant to the unpaginated collection responses in § 7.1. |
 | Function duration | **10–15 s default**, raisable per plan | The invocation is killed mid-flight; the caller sees a platform `504`. A 45 s Gemini call cannot complete under a 10 s cap, so `read-photo` requires the duration to have been raised. |
-| Cold start | — | Adds `connectDB` latency to the first request after idle (`server.ts`). |
+| Cold start | — | Adds `connectDB()` latency to the first request after idle (`server.ts`). |
 
 ### 6.4 External services and their failure modes
 
@@ -2066,7 +2075,7 @@ them.
 | **Clerk** | every authenticated request | `CLERK_SECRET_KEY`, `CLERK_PUBLISHABLE_KEY` | Token verification fails → 401. `syncDbUser` calling `users.getUser` fails → **500** |
 | **MongoDB Atlas** | everything | `MONGO_URI` | The server does not start (`server.ts`); at runtime a query error → **500** |
 | **Cloudinary** | product, category, banner images | `CLOUDINARY_CLOUD_NAME`, `_API_KEY`, `_API_SECRET` | Upload throws → **500**. Deletes are best-effort and only log (`utils/cloudinary.ts`) |
-| **Google Gemini** | `read-photo` only | `GEMINI_API_KEY`, `GEMINI_MODEL` | Every failure becomes a **503** with a plain sentence; the real cause is logged (`photo-list-parser.ts`,,) |
+| **Google Gemini** | `read-photo` only | `GEMINI_API_KEY`, `GEMINI_MODEL` | Every failure becomes a **503** with a plain sentence; the real cause is logged (`photo-list-parser.ts`) |
 | **Expo push** | customer notifications | none (token-based) | `sendPushNotifications` swallows everything (`utils/push.ts`); the request still succeeds |
 | **Firebase FCM (web push)** | admin browser alerts | `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` | Unconfigured → silent no-op (`utils/webPush.ts`). Dead tokens are pruned from `users.webPushTokens` |
 | **Telegram** | shop order alerts | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` (comma-separated) | Unconfigured → silent no-op; send failures are swallowed (`utils/telegram.ts`) |
@@ -2088,16 +2097,16 @@ whole collection on every call:
 
 | Endpoint | Returns | Evidence |
 |---|---|---|
-| `GET /admin/grocery-lists` | every list ever created, with all items | `admin/grocery-list.routes.ts` — `GroceryList.find` with no limit |
-| Seven admin list mutations | the **whole collection again** after each change |,,,,, all call `getAllGroceryLists` |
+| `GET /admin/grocery-lists` | every list ever created, with all items | `admin/grocery-list.routes.ts` — `GroceryList.find()` with no limit |
+| Six admin list mutations | the **whole collection again** after each change | prices, status, mark-paid, item availability, item edit and item add in `admin/grocery-list.routes.ts` all answer with `getAllGroceryLists()` |
 | `GET /customer/grocery-lists` | all of one customer's lists | `customer/grocery-list.routes.ts` |
 | `GET /customer/products`, `GET /admin/products` | every matching product | `customer/product.routes.ts`, `admin/product.routes.ts` |
 | `GET /customer/orders`, `GET /admin/orders` | every order | `customer/orders.routes.ts`, `admin/orders.routes.ts` |
-| `GET /admin/promos`, `GET /admin/settings/banners`, `GET /customer/categories`, `GET /admin/categories` | everything | respective `find` calls |
+| `GET /admin/promos`, `GET /admin/settings/banners`, `GET /customer/categories`, `GET /admin/categories` | everything | respective `find()` calls |
 | `*/grocery-lists/:listId/messages` | every message on the list | only bounded by the 30-day TTL (`models/Message.ts`) |
 
 The only bounded reads are `/customer/home` (8 banners, 4 products, 4 coupons)
-and `/admin/grocery-lists/conversations` (`$limit: 100`,). With a 4.5 MB
+and `/admin/grocery-lists/conversations` (`$limit: 100`). With a 4.5 MB
 response cap (§ 6.3), `GET /admin/grocery-lists` is the first one likely to break:
 its payload grows with every order ever placed, and it is re-sent after every
 pricing, status change and item edit.
@@ -2106,10 +2115,13 @@ pricing, status change and item edit.
 
 The web client's router has **no customer routes** — only `/`, `/privacy`,
 `/terms`, `/delete-account`, `/sign-in`, `/sign-up` and `/admin/*`
-(`client/src/router.tsx`). The mobile app calls only: `/auth/me`,
-`/auth/sync`, `/customer/home`, `/customer/categories`, `/customer/products[/:id]`,
-`/customer/profile`, `/customer/push-token`, `/customer/wishlist[/items]` and the
-`/customer/grocery-lists` family.
+(`client/src/router.tsx`). The mobile app calls only: `/auth/sync`,
+`/app-version`, `/customer/home`, `/customer/categories`,
+`/customer/products[/:id]`, `/customer/profile`, `/customer/push-token`,
+`/customer/wishlist[/items]` and the `/customer/grocery-lists` family. It does
+**not** call `/auth/me` — `getMe` in `mobile/src/features/auth/api.ts` is
+exported and imported by nothing; `useBootstrapAuth` uses `syncUser`. Only the
+admin web reaches `/auth/me`.
 
 Never reachable from any shipped client:
 
@@ -2122,113 +2134,117 @@ Never reachable from any shipped client:
 | `/customer/orders`, `/customer/orders/:id/return` | the Order collection is superseded by grocery lists, which the dashboard counts instead (`admin/dashboard.routes.ts`) |
 | `/admin/orders`, `/admin/orders/:id/status` | the admin router has no `orders` page (`client/src/router.tsx`) |
 | `/customer/grocery-lists/:listId/pay-online`, `/confirm-payment` | grepping `mobile/src` and `client/src` for `pay-online` / `confirm-payment` finds nothing; the app offers pay-at-shop and a UPI deep link instead |
+| `DELETE /admin/push-token` | `client/src/features/admin/notifications/api.ts` imports only `apiPost` and defines no delete. It is also unnecessary: `notifyAdmins` prunes dead tokens itself |
+| `GET /health` | no call site in either client; it exists for uptime checks |
 
 They are still live, still authenticated, and `/customer/checkout/*` still creates
 real Razorpay orders and mutates stock and points. The `razorpay` module also
 still gates server boot (§ 6.4).
 
 `GET /admin/products/:id` is defined in the client's API module
-(`getAdminProductById`) but no component calls it **[unverified — grep-based]**.
+(`getAdminProductById`), exported, and imported by nothing — the product form
+seeds itself from the list response instead.
 
 ### 7.3 Behaviour that looks wrong
 
 1. **A body over 100 kB returns 500, not 413.** `express.json({ limit: "100kb" })`
- (`server.ts`) makes body-parser throw a `PayloadTooLargeError` with
- `status: 413`, but `errorHandler` only special-cases `AppError`
- (`errorhandler.ts`) and turns everything else into
- `500 "Internal server error"`. The same applies to every Mongoose `CastError`
- — **any malformed ObjectId in a path parameter is a 500**, e.g.
- `GET /customer/grocery-lists/abc/messages`.
+   (`server.ts`) makes body-parser throw a `PayloadTooLargeError` with
+   `status: 413`, but `errorHandler` only special-cases `AppError`
+   (`errorhandler.ts`) and turns everything else into
+   `500 "Internal server error"`. The same applies to every Mongoose `CastError`
+   — **any malformed ObjectId in a path parameter is a 500**, e.g.
+   `GET /customer/grocery-lists/abc/messages`.
 
 2. **`POST /customer/cart/items` duplicates the first cart row.** tests
- `if (itemIndex > 0)` where every other comparable check uses `>= 0`. Re-adding the product at index 0 falls into the
- `else` branch and pushes a second identical row.
+   `if (itemIndex > 0)` where every other comparable check uses `>= 0`. Re-adding the product at index 0 falls into the
+   `else` branch and pushes a second identical row.
 
 3. **`POST /customer/cart/sync` cannot work.** With no existing cart it calls
- `cart.create(...)` on the `null` it just checked for — a TypeError, so
- 500. And `await cart.save` and `res.json(...)` are both **inside** the
- per-item loop: two items write the response twice
- (`ERR_HTTP_HEADERS_SENT`), and an empty `items` array writes no response at
- all, hanging until the client's 20 s timeout.
+   `cart.create(...)` on the `null` it just checked for — a TypeError, so
+   500. And `await cart.save()` and `res.json(...)` are both **inside** the
+   per-item loop: two items write the response twice
+   (`ERR_HTTP_HEADERS_SENT`), and an empty `items` array writes no response at
+   all, hanging until the client's 20 s timeout.
 
 4. **The points pre-check is dead.** `pay-with-points` selects
- `"name email addresses"` but reads `foundUser.points` at, which
- is `undefined`; `totalAmount > undefined` is always `false`. The atomic
- `updateOne({ points: { $gte: totalAmount } })` at still protects the
- balance, so the outcome is right — only the friendly 400 is unreachable.
+   `"name email addresses"` but reads `foundUser.points`, which
+   is `undefined`; `totalAmount > undefined` is always `false`. The atomic
+   `updateOne({ points: { $gte: totalAmount } })` at still protects the
+   balance, so the outcome is right — only the friendly 400 is unreachable.
 
-5. ~~**Product images are uploaded with no size limit.**~~ **Fixed.**
- `admin/product.routes.ts` set `fieldSize` (a cap on text fields) where
- `fileSize` was meant, so an uploaded image had no size bound and no type
- check. It now matches the banner and list-photo uploads: 5 MB, JPEG/PNG/WebP
- only.
+5. **Fixed: product uploads had no size limit.** `admin/product.routes.ts` used
+   to set `fieldSize` (a cap on text fields) where `fileSize` was meant, so a file
+   of any size reached Cloudinary. It now matches the banner and list-photo
+   uploads — 5 MB, JPEG/PNG/WebP (`settings.routes.ts`,
+   `customer/grocery-list.routes.ts`).
 
 6. **Product/category multipart errors surface as 500.** `read-photo` and banner
- upload translate `MulterError` into a clean 400 (`grocery-list.routes.ts`,
- `settings.routes.ts`); the product and category routes do not, so
- uploading an 11th file gives `Internal server error`.
+   upload translate `MulterError` into a clean 400 (`grocery-list.routes.ts`,
+   `settings.routes.ts`); the product and category routes do not, so
+   uploading an 11th file gives `Internal server error`.
 
 7. **`PUT /admin/products/:id` deletes images before validating.** The Cloudinary
- deletes run at; the "at least one image" check is at. A
- request that removes every image destroys the assets and then fails with 400,
- leaving the product's stored URLs pointing at deleted files.
+   deletes run **before** the "at least one image" check. A
+   request that removes every image destroys the assets and then fails with 400,
+   leaving the product's stored URLs pointing at deleted files.
 
 8. **Deleting a product or category leaves its Cloudinary images behind.**
- `admin/product.routes.ts` and do no image clean-up. Banner
- deletion does (`settings.routes.ts`).
+   `admin/product.routes.ts` and do no image clean-up. Banner
+   deletion does (`settings.routes.ts`).
 
 9. **`GET /admin/settings/banners` writes to the database.** A read request
- renumbers every banner's `sortOrder` when duplicates exist
- (`settings.routes.ts`). Deliberate and self-limiting, but surprising in
- a GET.
+   renumbers every banner's `sortOrder` when duplicates exist
+   (`settings.routes.ts`). Deliberate and self-limiting, but surprising in
+   a GET.
 
 10. **The `sort` query parameter on `/customer/products` does nothing.** It is
- typed at `customer/product.routes.ts` and then ignored: `sortOption` is
- hard-coded to `{ createdAt: -1 }`.
+    typed at `customer/product.routes.ts` and then ignored: `sortOption` is
+    hard-coded to `{ createdAt: -1 }`.
 
 11. **`/customer/home` sorts coupons by a field that does not exist.**
- `home.routes.ts` sorts by `createAt` (missing "e"); the schema field is
- `createdAt` (`models/Promo.ts`). Which four coupons you get is therefore
- unspecified. The same typo appears as an output key in `recentProducts`, so clients read `createAt` there.
+    `home.routes.ts` sorts by `createAt` (missing "e"); the schema field is
+    `createdAt` (`models/Promo.ts`). Which four coupons you get is therefore
+    unspecified. The same typo appears as an output key in `recentProducts`, so clients read `createAt` there.
 
 12. **Two promo validation messages are wrong.** `"Percentage must be between 1
- and 10"` guards a 1–100 range (`admin/promo.routes.ts`), and `"Promo count
- must be atleast 0 or more"` is the `minimumOrderValue` message.
+    and 10"` guards a 1–100 range (`admin/promo.routes.ts`), and `"Promo count
+    must be atleast 0 or more"` is the `minimumOrderValue` message.
 
 13. **`POST /admin/products` returns un-resized image URLs** while
- `PUT` returns `sizedProduct(..., "card")` — the same resource has two
- image-URL shapes depending on which verb produced it.
+    `PUT` returns `sizedProduct(..., "card")` — the same resource has two
+    image-URL shapes depending on which verb produced it.
 
 14. **`notFound` reports the method, not the path.**
- `` fail(`Route not found ${req.method}`) `` (`middleware/notFound.ts`) —
- every 404 from an unmatched route reads `"Route not found GET"`, which is not
- useful for debugging a typo'd path.
+    `` fail(`Route not found ${req.method}`) `` (`middleware/notFound.ts`) —
+    every 404 from an unmatched route reads `"Route not found GET"`, which is not
+    useful for debugging a typo'd path.
 
 15. **Checkout is not transactional.** `/customer/checkout/confirm` decrements
- stock item by item and throws mid-loop on the first shortfall
- (`checkout.routes.ts`), leaving earlier items decremented and the
- order still `pending`. `pay-with-points` refunds points on failure but not stock.
+    stock item by item and throws mid-loop on the first shortfall
+    (`checkout.routes.ts`), leaving earlier items decremented and the
+    order still `pending`. `pay-with-points` refunds points on failure
+ but not stock.
 
 16. **A customer removing an item does not notify the shop.**
- `/customer/grocery-lists/:listId/remove-item` writes the change and returns
- (`customer/grocery-list.routes.ts`) — no push, no Telegram — while every
- shop-side change pushes to the customer. The shopkeeper finds out on their
- next poll.
+    `/customer/grocery-lists/:listId/remove-item` writes the change and returns
+    (`customer/grocery-list.routes.ts`) — no push, no Telegram — while every
+    shop-side change pushes to the customer. The shopkeeper finds out on their
+    next poll.
 
 17. **`cleanItems` is imported but unused** in `admin/grocery-list.routes.ts`.
- Harmless, but it suggests an intended bulk-edit path that was never built.
+    Harmless, but it suggests an intended bulk-edit path that was never built.
 
 18. **`DELETE` endpoints that require a JSON body.** `/customer/push-token` and
- `/admin/push-token` read `req.body.token` on a DELETE
- (`customer/push-token.routes.ts`, `admin/push-token.routes.ts`). axios
- sends it, but many HTTP clients, proxies and `fetch` implementations drop a
- DELETE body — a caller that does gets **400 "Push token is required"**.
+    `/admin/push-token` read `req.body.token` on a DELETE
+    (`customer/push-token.routes.ts`, `admin/push-token.routes.ts`). axios
+    sends it, but many HTTP clients, proxies and `fetch` implementations drop a
+    DELETE body — a caller that does gets **400 "Push token is required"**.
 
 19. **`requireText` is used for object presence checks.**
- `admin/product.routes.ts` and pass a Mongoose document to a helper
- that stringifies its argument. It works only because a missing document is
- `null` (→ `""` → throws) and a present one stringifies to `"[object Object]"`
- (truthy). It is correct by accident.
+    `admin/product.routes.ts` and pass a Mongoose document to a helper
+    that stringifies its argument. It works only because a missing document is
+    `null` (→ `""` → throws) and a present one stringifies to `"[object Object]"`
+    (truthy). It is correct by accident.
 
 ---
 

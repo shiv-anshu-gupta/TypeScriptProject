@@ -1,6 +1,0 @@
-# Generated API reference, built from the TSDoc comments in the source by
-# `npm run docs` inside server/, mobile/ or client/. Not committed - it would
-# be a large diff on every comment change, and it is a build output. Run the
-# script and open the HTML.
-*
-!.gitignore

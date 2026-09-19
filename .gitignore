@@ -1,0 +1,7 @@
+# Build outputs of the documentation site.
+# `mkdocs build` regenerates docs-site/ from docs/ in about ten seconds,
+# and docs/.typedoc/ is TypeDoc's JSON, the input to docs/tools/build-reference.mjs.
+docs-site/
+docs/.typedoc/
+
+.DS_Store

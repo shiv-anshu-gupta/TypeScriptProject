@@ -41,7 +41,7 @@ flowchart TB
     end
 
     subgraph Shop
-        ADMIN["Admin panel<br/>React + Vite SPA<br/>www.skirana.com/app"]
+        ADMIN["Admin panel<br/>React + Vite SPA<br/>www.skirana.com/admin"]
     end
 
     subgraph Public
@@ -199,7 +199,11 @@ them into chat.**
 | Vercel → admin project | `VITE_BACKEND_URL` · `VITE_CLERK_PUBLISHABLE_KEY` · `VITE_FIREBASE_*` (browser push for the shop) |
 | `mobile/.env` (in git, public values only) | `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` (`pk_live_…`), `EXPO_PUBLIC_BACKEND_URL` |
 
-(The list above is every variable actually read by the code — `grep -rho "process\.env\.[A-Z_]*" server/src` and the `import.meta.env` equivalent in `client/src`. If you add one, add it here.)
+(The list above is every variable this system needs. Most of them are what
+`grep -rho "process\.env\.[A-Z_]*" server/src` and the `import.meta.env`
+equivalent in `client/src` return, but two are not: `CLERK_SECRET_KEY` and
+`CLERK_PUBLISHABLE_KEY` are read by `@clerk/express` itself, never by our own
+code. If you add one, add it here.)
 
 Rules that have already cost time once:
 

@@ -1,18 +1,23 @@
 {
   "$schema": "https://typedoc.org/schema.json",
-  "entryPoints": ["src"],
+  "entryPoints": [
+    "src"
+  ],
   "entryPointStrategy": "expand",
-  "out": "../docs/reference/server",
+  "out": "../docs/.typedoc/html-server",
   "name": "sKirana server",
   "readme": "none",
   "includeVersion": true,
   "excludePrivate": false,
   "excludeInternal": true,
   "categorizeByGroup": true,
-  "sort": ["source-order"],
+  "sort": [
+    "source-order"
+  ],
   "validation": {
     "notExported": false,
     "invalidLink": true,
     "notDocumented": false
-  }
+  },
+  "json": "../docs/.typedoc/server.json"
 }

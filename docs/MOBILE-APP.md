@@ -15,7 +15,7 @@ Companion documents:
 > cart and no checkout in this app. Trust this document and the code, not that one.
 >
 > **`mobile/AGENTS.md` is also wrong**: it points at Expo SDK 57 docs, while
-> `mobile/package.json:17` pins `expo ^54.0.35`. Read the **SDK 54** docs.
+> `mobile/package.json` pins `expo ^54.0.35`. Read the **SDK 54** docs.
 
 ---
 
@@ -27,20 +27,20 @@ There is **no cart and no checkout**. Prices are not published. The app is a
 notebook that the customer writes a grocery list into and sends to **one** shop.
 
 1. **Write.** The customer types items and quantities onto a paper-styled list
- (`mobile/src/components/GroceryListEditor.tsx`), or photographs a
- handwritten list and lets the server read it into the same editable lines
- (`mobile/src/components/ScanListPhoto.tsx`). They can also browse the
- catalogue and tap "+" on a product card, which adds it to that same list
- (`mobile/src/components/ProductCard.tsx`).
+   (`mobile/src/components/GroceryListEditor.tsx`), or photographs a
+   handwritten list and lets the server read it into the same editable lines
+   (`mobile/src/components/ScanListPhoto.tsx`). They can also browse the
+   catalogue and tap "+" on a product card, which adds it to that same list
+   (`mobile/src/components/ProductCard.tsx`).
 2. **Send.** One Send flow, shared everywhere
- (`mobile/src/features/customer/draft-list/use-send-draft.ts`). It requires
- a signed-in account and, the first time, a mobile number.
+   (`mobile/src/features/customer/draft-list/use-send-draft.ts`). It requires
+   a signed-in account and, the first time, a mobile number.
 3. **Get price.** The shop prices the list in the admin panel. The customer
- watches the status move through `received → priced → packing → packed → ready`
- (`mobile/src/features/customer/grocery-list/types.ts`), and can chat with the
- shop about the order (`mobile/src/components/ChatSheet.tsx`).
+   watches the status move through `received → priced → packing → packed → ready`
+   (`mobile/src/features/customer/grocery-list/types.ts`), and can chat with the
+   shop about the order (`mobile/src/components/ChatSheet.tsx`).
 4. **Collect.** They pay over UPI (a deep link into GPay/PhonePe —
- `mobile/src/lib/upi.ts`) or at the counter, and collect in person.
+   `mobile/src/lib/upi.ts`) or at the counter, and collect in person.
 
 Bilingual, Hindi-first: the app defaults to Hindi
 (`mobile/src/lib/i18n/index.ts`) and asks the language on first launch
@@ -50,29 +50,29 @@ Bilingual, Hindi-first: the app defaults to Hindi
 
 ```
 src/
- navigation/ RootNavigator (native stack) + TabNavigator (bottom tabs) + param types
- screens/ One file per screen. Also SplashScreen + LanguagePicker, which are
- NOT navigator screens — App.tsx renders them directly.
- components/ Shared components. `ui/` holds the primitives: Sheet, Button, Badge, Card.
- `auth/` holds the login panel and the page that wraps it.
- features/ The data layer, grouped by domain.
- auth/ store, api, types, useBootstrapAuth
- customer/
- account/ the customer's saved profile (name + mobile the shop sees)
- draft-list/ THE unsent list: store, quantity maths, use-send-draft
- grocery-list/ sent lists: store, api, types, journey-stage
- grocery-sheet/ open/closed state of the list sheet
- home/ home payload: banners, categories, recent products
- products/ catalogue list + details + shared helpers
- push/ Expo push token registration and hand-back
- quantity-sheet/ which product the single root quantity picker is asking about
- wishlist/ saved products
- lib/ api, env, i18n, toast, phone, upi, clean-text, token-cache,
- clerk-session, push, utils, keyboard hooks
+  navigation/     RootNavigator (native stack) + TabNavigator (bottom tabs) + param types
+  screens/        One file per screen. Also SplashScreen + LanguagePicker, which are
+                  NOT navigator screens — App.tsx renders them directly.
+  components/     Shared components. `ui/` holds the primitives: Sheet, Button, Badge, Card.
+                  `auth/` holds the login panel and the page that wraps it.
+  features/       The data layer, grouped by domain.
+    auth/                     store, api, types, useBootstrapAuth
+    customer/
+      account/                the customer's saved profile (name + mobile the shop sees)
+      draft-list/             THE unsent list: store, quantity maths, use-send-draft
+      grocery-list/           sent lists: store, api, types, journey-stage
+      grocery-sheet/          open/closed state of the list sheet
+      home/                   home payload: banners, categories, recent products
+      products/               catalogue list + details + shared helpers
+      push/                   Expo push token registration and hand-back
+      quantity-sheet/         which product the single root quantity picker is asking about
+      wishlist/               saved products
+  lib/            api, env, i18n, toast, phone, upi, clean-text, token-cache,
+                  clerk-session, push, utils, keyboard hooks
 ```
 
-Path alias `@/*` → `./src/*` (`mobile/tsconfig.json:5`), and `strict: true`
-(`mobile/tsconfig.json:4`).
+Path alias `@/*` → `./src/*` (`mobile/tsconfig.json`), and `strict: true`
+(`mobile/tsconfig.json`).
 
 ### Naming conventions actually used
 
@@ -84,10 +84,10 @@ Path alias `@/*` → `./src/*` (`mobile/tsconfig.json:5`), and `strict: true`
 | Zustand hook | `use<Domain>Store` | `useDraftListStore`, `useCustomerGroceryListStore` |
 | Customer-facing types | prefixed `Customer…` | `CustomerGroceryList`, `CustomerProduct` |
 | Styling | NativeWind `className`; inline `style` only for computed values (shadows, measured sizes) | `mobile/src/components/ProductCard.tsx` vs |
-| Colours | Semantic Tailwind tokens (`bg-primary`, `text-muted-foreground`) defined in `mobile/tailwind.config.js:12`. Raw hex appears only where a non-Tailwind API needs it (`@expo/vector-icons` `color`, SVG `fill`) | `mobile/src/components/CustomTabBar.tsx` |
+| Colours | Semantic Tailwind tokens (`bg-primary`, `text-muted-foreground`) defined in `mobile/tailwind.config.js`. Raw hex appears only where a non-Tailwind API needs it (`@expo/vector-icons` `color`, SVG `fill`) | `mobile/src/components/CustomTabBar.tsx` |
 | Comments | Explain **why**, not what. Several are load-bearing — see §11 | `mobile/src/components/ProductCard.tsx` |
 
-The app is **light-only** (`mobile/app.json:9`), and the theme has no dark
+The app is **light-only** (`mobile/app.json`), and the theme has no dark
 variants — don't add `dark:` classes expecting them to work.
 
 ### The root provider tree
@@ -95,28 +95,28 @@ variants — don't add `dark:` classes expecting them to work.
 Order matters. From `mobile/App.tsx`:
 
 ```
-GestureHandlerRootView App.tsx — required by the Sheet's pan gesture
+GestureHandlerRootView                     App.tsx   — required by the Sheet's pan gesture
 └─ ClerkProvider (tokenCache = SecureStore) App.tsx
- └─ SafeAreaProvider App.tsx
- ├─ NavigationContainer App.tsx
- │ └─ PortalProvider App.tsx — INSIDE the container on purpose
- │ ├─ <Bootstrap/> App.tsx — renders null; runs the startup effects
- │ ├─ <RootNavigator/> App.tsx
- │ ├─ <GroceryListSheet/> App.tsx — the list paper
- │ ├─ <QuantitySheetHost/> App.tsx — the ONE quantity picker (§11)
- │ ├─ <UpdatePrompt/> App.tsx — OTA
- │ └─ <StoreUpdatePrompt/> App.tsx — Play Store
- └─ <Toaster/> App.tsx — ABOVE the sheets, not inside them
+   └─ SafeAreaProvider                      App.tsx
+      ├─ NavigationContainer                App.tsx
+      │  └─ PortalProvider                  App.tsx   — INSIDE the container on purpose
+      │     ├─ <Bootstrap/>                 App.tsx   — renders null; runs the startup effects
+      │     ├─ <RootNavigator/>             App.tsx
+      │     ├─ <GroceryListSheet/>          App.tsx   — the list paper
+      │     ├─ <QuantitySheetHost/>         App.tsx   — the ONE quantity picker (§11)
+      │     ├─ <UpdatePrompt/>              App.tsx   — OTA
+      │     └─ <StoreUpdatePrompt/>         App.tsx   — Play Store
+      └─ <Toaster/>                         App.tsx   — ABOVE the sheets, not inside them
 ```
 
 Two placements are deliberate and have bitten before:
 
 - `PortalProvider` sits **inside** `NavigationContainer` (`mobile/App.tsx`)
- because sheet contents are ordinary screen code that calls `useNavigation` —
- the list sheet's Send navigates to the Lists tab. Outside the container that
- call throws and takes the tree down.
+  because sheet contents are ordinary screen code that calls `useNavigation()` —
+  the list sheet's Send navigates to the Lists tab. Outside the container that
+  call throws and takes the tree down.
 - `Toaster` sits **outside** `PortalProvider` (`mobile/App.tsx`) so a
- message the customer must read isn't drawn behind an open sheet.
+  message the customer must read isn't drawn behind an open sheet.
 
 ---
 
@@ -124,45 +124,45 @@ Two placements are deliberate and have bitten before:
 
 ```mermaid
 flowchart TD
- subgraph RootStack["RootNavigator — native stack (navigation/RootNavigator.tsx)"]
- direction TB
- Tabs["<b>Tabs</b><br/>headerShown false"]
- PD["<b>ProductDetails</b><br/>params: productId<br/>empty title"]
- WLS["<b>Wishlist</b><br/>title: account.savedProducts"]
- SI["<b>SignIn</b> 🔓<br/>presentation: modal<br/>draws its own close bar"]
- LG["<b>Legal</b><br/>privacy policy + terms"]
- end
+    subgraph RootStack["RootNavigator — native stack (navigation/RootNavigator.tsx)"]
+        direction TB
+        Tabs["<b>Tabs</b><br/>headerShown false"]
+        PD["<b>ProductDetails</b><br/>params: productId<br/>empty title"]
+        WLS["<b>Wishlist</b><br/>title: account.savedProducts"]
+        SI["<b>SignIn</b> 🔓<br/>presentation: modal<br/>draws its own close bar"]
+        LG["<b>Legal</b><br/>privacy policy + terms"]
+    end
 
- subgraph TabNav["TabNavigator — CustomTabBar, freezeOnBlur (navigation/TabNavigator.tsx)"]
- direction LR
- H["<b>Home</b><br/>public"]
- S["<b>Shop</b><br/>public<br/>params: category / openSearch / browseAll"]
- L["<b>Lists</b> 🔒<br/>params: tab<br/>badge + pulsing icon"]
- A["<b>Account</b> 🔒"]
- end
+    subgraph TabNav["TabNavigator — CustomTabBar, freezeOnBlur (navigation/TabNavigator.tsx)"]
+        direction LR
+        H["<b>Home</b><br/>public"]
+        S["<b>Shop</b><br/>public<br/>params: category / openSearch / browseAll"]
+        L["<b>Lists</b> 🔒<br/>params: tab<br/>badge + pulsing icon"]
+        A["<b>Account</b> 🔒"]
+    end
 
- Tabs --> TabNav
+    Tabs --> TabNav
 
- CTR(["Centre tab button<br/>CustomTabBar.tsx"]) -.opens.-> GLS
- GLS["<b>GroceryListSheet</b><br/>portal, not a screen<br/>mounted at App.tsx"]
+    CTR(["Centre tab button<br/>CustomTabBar.tsx"]) -.opens.-> GLS
+    GLS["<b>GroceryListSheet</b><br/>portal, not a screen<br/>mounted at App.tsx"]
 
- H -- "tap category / View all / search" --> S
- H -- "ListProgressCard: write or send" --> GLS
- H -- "ListProgressCard: track an order" --> L
- H -- "avatar" --> A
- H -- "product card" --> PD
- S -- "product card" --> PD
- S -- "sticky 'view and send' bar" --> L
- A -- "Saved products" --> WLS
- A -- "Terms" --> LG
- WLS -- "tap item" --> PD
- PD -- "related product (push)" --> PD
- GLS -- "Send while signed out" --> SI
- L -- "Send while signed out" --> SI
- SI -- "goBack once signed in" --> GLS
+    H -- "tap category / View all / search" --> S
+    H -- "ListProgressCard: write or send" --> GLS
+    H -- "ListProgressCard: track an order" --> L
+    H -- "avatar" --> A
+    H -- "product card" --> PD
+    S -- "product card" --> PD
+    S -- "sticky 'view and send' bar" --> L
+    A -- "Saved products" --> WLS
+    A -- "Terms" --> LG
+    WLS -- "tap item" --> PD
+    PD -- "related product (push)" --> PD
+    GLS -- "Send while signed out" --> SI
+    L -- "Send while signed out" --> SI
+    SI -- "goBack once signed in" --> GLS
 
- classDef locked fill:#fdeaea,stroke:#c0492f
- class L,A locked
+    classDef locked fill:#fdeaea,stroke:#c0492f
+    class L,A locked
 ```
 
 **Legend.** 🔒 = the screen renders the login in place of its content when signed
@@ -182,7 +182,7 @@ screen decides:
 | Wishlist heart (details) | Toast "sign in to save" | `mobile/src/features/customer/products/details/store.ts` |
 
 **Two screens are not in any navigator.** `SplashScreen` and `LanguagePicker` are
-rendered directly by `App.tsx` (`mobile/App.tsx`,) before and
+rendered directly by `App.tsx` (`mobile/App.tsx`) before and
 over the navigator. The splash is drawn **on top** of a mounted app so Clerk, the
 Home request and the customer's lists all load behind it (`mobile/App.tsx`).
 
@@ -194,7 +194,7 @@ once applied, so tapping the same shortcut twice works
 
 `freezeOnBlur: true` (`mobile/src/navigation/TabNavigator.tsx`) means an
 off-screen tab stops re-rendering but **stays mounted**. That is the cause of
-several `useIsFocused` guards — see §11.
+several `useIsFocused()` guards — see §11.
 
 ---
 
@@ -205,13 +205,13 @@ several `useIsFocused` guards — see §11.
 **Purpose.** The landing page: where the customer is in their list journey, plus
 the shop's banners, categories and newest products.
 
-**Loads.** `loadHome` on mount, then `loadHome({ refresh: true })` on
-every focus, plus `loadLists` when signed in. The refresh is
+**Loads.** `loadHome()` on mount, then `loadHome({ refresh: true })` on
+every focus, plus `loadLists()` when signed in. The refresh is
 rate-limited to once a minute and does not blank the screen
-(`mobile/src/features/customer/home/store.ts`,).
+(`mobile/src/features/customer/home/store.ts`).
 
 **Stores.** `useCustomerHomeStore`, `useCustomerGroceryListStore`
-(, for the journey card's data), `useCustomerDisplayName` (, which
+(for the journey card's data), `useCustomerDisplayName` (which
 reads `useCustomerAccountStore`).
 
 **Renders.** `ProfileAvatar`, `ListProgressCard`, `SearchEntry`, `BannerCarousel`,
@@ -229,7 +229,8 @@ keyboard's search key reads as broken.
 **Purpose.** The catalogue: a vertical category rail on the left (Blinkit-style)
 and a 2-column product grid.
 
-**Loads.** Everything through `useCustomerProductList(route.params?.category)` — a hook, not a store
+**Loads.** Everything through `useCustomerProductList(route.params?.category)`
+ — a hook, not a store
 (`mobile/src/features/customer/products/use-customer-collections.ts`). It
 fetches categories once and re-fetches products whenever the filter/sort/search
 query changes, with search debounced 300 ms.
@@ -241,58 +242,60 @@ sticky "N items in your list — view & send" bar when the draft is non-empty.
 
 **Non-obvious.**
 - The tab stays mounted, so the hook's *initial* category is read only once.
- Three effects apply later hand-offs from Home, each
- calling `startFresh` to drop leftover filters and search, then clearing its
- own param.
+  Three effects apply later hand-offs from Home, each
+  calling `startFresh()` to drop leftover filters and search, then clearing its
+  own param.
 - `searchFocusKey` is bumped to **remount** the search field so
- it takes focus even when it was already open from an earlier visit.
-- `cards` is memoised and `renderCard`/`openProduct` are `useCallback` — a fresh object literal per render would defeat the memoised
- `ProductCard`.
+  it takes focus even when it was already open from an earlier visit.
+- `cards` is memoised and `renderCard`/`openProduct` are `useCallback`
+ — a fresh object literal per render would defeat the memoised
+  `ProductCard`.
 - `sortOptions` currently has exactly one entry, `recent`. The filter
- machinery for brand/colour/size exists in the hook but has no UI.
+  machinery for brand/colour/size exists in the hook but has no UI.
 
 ### MyListsScreen (the "Lists" tab) — `mobile/src/screens/MyListsScreen.tsx`
 
 **Purpose.** The customer's sent orders, plus their unsent draft.
 
-**Loads.** `loadLists` on focus when signed in, and pull-to-refresh.
+**Loads.** `loadLists()` on focus when signed in, and pull-to-refresh.
 
 **Stores.** `useCustomerGroceryListStore`, `useDraftListStore`.
 
-**Renders.** Status tabs (`active` / `completed` / `cancelled`,), a
+**Renders.** Status tabs (`active` / `completed` / `cancelled`), a
 `DraftCard` wrapping the shared `GroceryList` editor on the active tab, and a `ListCard` per order.
 
 **Non-obvious.**
-- `ListCard` marks a list seen only when the tab **is focused**. Without `useIsFocused`, a background tab would silently
- clear the "New update" badge the customer never saw.
+- `ListCard` marks a list seen only when the tab **is focused**. Without `useIsFocused()`, a background tab would silently
+  clear the "New update" badge the customer never saw.
 - Each card subscribes to *only* its own busy flag, because subscribing
- to the whole store re-renders every card and its chat sheet on any change.
-- "The shop is busy" after 30 minutes is computed purely from the list's age — no backend field, no shopkeeper action.
+  to the whole store re-renders every card and its chat sheet on any change.
+- "The shop is busy" after 30 minutes is computed purely from the list's age
+ — no backend field, no shopkeeper action.
 - Item removal is position-based, so only one removal may be in flight and the
- position is re-read at confirm time, not at alert-open time.
+  position is re-read at confirm time, not at alert-open time.
 - Payment buttons appear only when priced **and** still live — a cancelled or
- completed order must never ask for money again.
+  completed order must never ask for money again.
 
 ### AccountScreen — `mobile/src/screens/AccountScreen.tsx`
 
 **Purpose.** Identity, saved details, order counters, settings, sign out.
 
-**Loads.** `loadLists` + `loadProfile` on focus.
+**Loads.** `loadLists()` + `loadProfile()` on focus.
 
-**Stores.** `useCustomerGroceryListStore`, `useCustomerAccountStore`, plus Clerk's `useUser`.
+**Stores.** `useCustomerGroceryListStore`, `useCustomerAccountStore`, plus Clerk's `useUser()`.
 
 **Renders.** `ProfileAvatar`, an info card, three `StatCard`s, a settings card
-(`MenuRow` × N, plus the inline `LanguageRow` at), and `ProfileEditSheet`.
+(`MenuRow` × N, plus an inline `LanguageRow`), and `ProfileEditSheet`.
 
 **Non-obvious.**
 - Display values prefer the **saved profile** (what the shop sees on an order)
- and fall back to Clerk.
+  and fall back to Clerk.
 - Sign out hands this device's push token back to the server **before** ending
- the session — otherwise the next person on a shared phone keeps
- getting the previous customer's order alerts
- (`mobile/src/features/customer/push/registry.ts`).
-- The Help row is hidden unless `EXPO_PUBLIC_SHOP_WHATSAPP` is set (,
- `mobile/src/lib/env.ts`).
+  the session — otherwise the next person on a shared phone keeps
+  getting the previous customer's order alerts
+  (`mobile/src/features/customer/push/registry.ts`).
+- The Help row is hidden unless `EXPO_PUBLIC_SHOP_WHATSAPP` is set
+  (`mobile/src/lib/env.ts`).
 - "Member since" shows whole months once there is at least one, else days.
 
 ### ProductDetailsScreen — `mobile/src/screens/ProductDetailsScreen.tsx`
@@ -311,25 +314,26 @@ action bar.
 **Non-obvious.** Product pages **stack** — a related product does
 `navigation.push` — yet they all share **one** store. Hence the
 `productId` guard on focus and inside the store itself
-(`mobile/src/features/customer/products/details/store.ts`,). Colours and
+(`mobile/src/features/customer/products/details/store.ts`). Colours and
 sizes are apparel leftovers; they render only when the product has them.
 
 ### AuthScreen — `mobile/src/screens/AuthScreen.tsx`
 
 A thin wrapper: `<AuthView>` with a close bar, presented as a modal
-(`mobile/src/navigation/RootNavigator.tsx`), calling `navigation.goBack`
+(`mobile/src/navigation/RootNavigator.tsx`), calling `navigation.goBack()`
 once signed in.
 
 ### WishlistScreen — `mobile/src/screens/WishlistScreen.tsx`
 
-Saved products as a plain `ScrollView` list. `loadWishlist` on mount when
+Saved products as a plain `ScrollView` list. `loadWishlist()` on mount when
 signed in. Three states: signed-out message, empty message, list.
 
 ### LegalScreen — `mobile/src/screens/LegalScreen.tsx`
 
 Static privacy policy + terms, hard-coded in the file. **`SHOP_NAME`,
 `CONTACT_EMAIL` and `LAST_UPDATED` at must be edited for a real shop
-before publishing.** It documents the photo flow (photo is read and discarded, of the rendered text) — keep it in step with `ScanListPhoto`.
+before publishing.** It documents the photo flow (photo is read and discarded,
+ of the rendered text) — keep it in step with `ScanListPhoto`.
 
 ### SplashScreen — `mobile/src/screens/SplashScreen.tsx`
 
@@ -364,7 +368,7 @@ survives a restart writes to AsyncStorage by hand.
 | `useToastStore` | `lib/toast.ts` | `toasts[]` | The `toast.*` helpers | No |
 
 `lib/i18n/index.ts` also persists the chosen language to AsyncStorage under
-`app_language` (`mobile/src/lib/i18n/index.ts`,) — not a store, but the
+`app_language` (`mobile/src/lib/i18n/index.ts`) — not a store, but the
 app's other piece of durable state.
 
 ### The draft store, in detail
@@ -373,28 +377,29 @@ It is the heart of the app, so it earns its own notes
 (`mobile/src/features/customer/draft-list/store.ts`):
 
 - **One source of truth for "how many items".** `isSendableRow` (a row with a
- non-empty name,) and `countSendableRows` back the tab badge, the
- centre-button badge, the Shop sticky bar, the sheet header and Send — so they
- cannot disagree.
+  non-empty name) and `countSendableRows` back the tab badge, the
+  centre-button badge, the Shop sticky bar, the sheet header and Send — so they
+  cannot disagree.
 - **The paper grows itself.** `withTrailingBlank` keeps exactly one blank
- line at the end, so there is no item limit. `ensureRows(count)` tops it
- up to fill a tall screen; the list sheet measures its viewport and calls it
- (`mobile/src/components/GroceryListSheet.tsx`).
+  line at the end, so there is no item limit. `ensureRows(count)` tops it
+  up to fill a tall screen; the list sheet measures its viewport and calls it
+  (`mobile/src/components/GroceryListSheet.tsx`).
 - **Writes are debounced 500 ms** because saving is a native disk
- write and typing a list would do one per keystroke. An `AppState` listener
- flushes immediately when the app leaves the foreground, so nothing
- is lost.
-- **Hydration is picky.** `hydrate` restores the saved rows **only if at least
- one row is filled**; otherwise it starts fresh at 8 rows rather than
- carrying over a wall of blanks from a grown list.
+  write and typing a list would do one per keystroke. An `AppState` listener
+  flushes immediately when the app leaves the foreground, so nothing
+  is lost.
+- **Hydration is picky.** `hydrate()` restores the saved rows **only if at least
+  one row is filled**; otherwise it starts fresh at 8 rows rather than
+  carrying over a wall of blanks from a grown list.
 - **Adding an existing product bumps rather than duplicates.** `addProduct`
- increments a leading integer quantity and leaves free text like
- "half kg" alone. `addProductWithQuantity` **sets** the quantity outright — that is what the quantity picker and the details screen use.
+  increments a leading integer quantity and leaves free text like
+  "half kg" alone. `addProductWithQuantity` **sets** the quantity outright
+ — that is what the quantity picker and the details screen use.
 - **Scanned lines are ordinary lines**. A misread word must be fixable
- before the shop sees it, so nothing about the photo is kept.
+  before the shop sees it, so nothing about the photo is kept.
 - Every text write passes through `stripSpecials`
- (`mobile/src/lib/clean-text.ts`) — a blocklist, not a `\p{L}` allowlist, so
- it is safe on Hermes and keeps Devanagari intact.
+  (`mobile/src/lib/clean-text.ts`) — a blocklist, not a `\p{L}` allowlist, so
+  it is safe on Hermes and keeps Devanagari intact.
 
 ### The "stale answer" pattern
 
@@ -402,9 +407,9 @@ Three stores use a module-level ticket so a late response never overwrites newer
 state, and a failed refresh never empties the screen:
 
 - `grocery-list/store.ts` (`loadTicket`) + (`inFlight`, so bootstrap and
- a focused tab share one request). A failed load keeps the previous items.
+  a focused tab share one request). A failed load keeps the previous items.
 - `account/store.ts` — specifically so a profile still loading when the
- customer signs out cannot land afterwards and show the next person their name.
+  customer signs out cannot land afterwards and show the next person their name.
 - `wishlist/store.ts`.
 
 `home/store.ts` does the same with `lastLoadedAt` + `inFlight`, and
@@ -414,21 +419,21 @@ state, and a failed refresh never empties the screen:
 ### Hydration path at app start (`mobile/App.tsx`)
 
 ```
-App mounts
- ├─ effect App.tsx getStoredLanguage → i18n.changeLanguage(lang)
- │ · no stored language → show <LanguagePicker/> (App.tsx)
- │ · until it resolves → show <SplashScreen/> (App.tsx)
- ├─ effect App.tsx fake splash progress, 0→100 over ~1.0 s + 700 ms hold
- └─ provider tree mounts immediately, splash drawn OVER it (App.tsx)
- └─ <Bootstrap/> (App.tsx, renders null)
- ├─ useBootstrapAuth features/auth/useBootstrapAuth.ts
- │ ├─ setApiTokenGetter( => clerk.getToken) ← wires lib/api.ts
- │ └─ when Clerk is loaded + signed in: POST /auth/sync → useAuthStore
- ├─ usePushNotifications features/customer/push/use-push-notifications.ts
- │ └─ when signed in and not yet registered: get Expo token → POST /customer/push-token
- ├─ effect App.tsx useDraftListStore.getState.hydrate ← unconditional
- └─ effect App.tsx isSignedIn ? loadLists+loadWishlist+loadProfile
- : clearLists+clearWishlist+clearProfile
+App() mounts
+ ├─ effect App.tsx  getStoredLanguage() → i18n.changeLanguage(lang)
+ │                     · no stored language → show <LanguagePicker/>  (App.tsx)
+ │                     · until it resolves  → show <SplashScreen/>    (App.tsx)
+ ├─ effect App.tsx  fake splash progress, 0→100 over ~1.0 s + 700 ms hold
+ └─ provider tree mounts immediately, splash drawn OVER it  (App.tsx)
+     └─ <Bootstrap/>  (App.tsx, renders null)
+         ├─ useBootstrapAuth()      features/auth/useBootstrapAuth.ts
+         │   ├─ setApiTokenGetter(() => clerk.getToken())   ← wires lib/api.ts
+         │   └─ when Clerk is loaded + signed in: POST /auth/sync → useAuthStore
+         ├─ usePushNotifications()  features/customer/push/use-push-notifications.ts
+         │   └─ when signed in and not yet registered: get Expo token → POST /customer/push-token
+         ├─ effect App.tsx  useDraftListStore.getState().hydrate()   ← unconditional
+         └─ effect App.tsx  isSignedIn ? loadLists()+loadWishlist()+loadProfile()
+                                          : clearLists()+clearWishlist()+clearProfile()
 ```
 
 The draft hydrates regardless of sign-in state; everything else is gated on
@@ -444,13 +449,14 @@ phone leaking the previous customer's data.
 Every bottom sheet in the app is this one component with different children: the
 list paper, the phone prompt, chat, the quantity picker, profile editing.
 
-**Why it is hand-written rather than a library.** The header says it plainly:
+**Why it is hand-written rather than a library.** The header says it plainly
+:
 
 > `@gorhom/bottom-sheet` is written for Reanimated 3, and on **Reanimated 4** —
 > which Expo SDK 54 requires — its sheets simply never open. We tried it; they
 > didn't.
 
-`mobile/package.json:38` pins `react-native-reanimated ~4.1.1`, so this is still
+`mobile/package.json` pins `react-native-reanimated ~4.1.1`, so this is still
 true. Do not "simplify" this file by reaching for the library.
 
 **The portal.** The sheet renders into `<Portal>` from `@gorhom/portal`, whose host is mounted at the app root (`mobile/App.tsx`). That is
@@ -458,18 +464,18 @@ what lets one sheet open **on top of** another — Send inside the list sheet op
 the phone prompt. A `<Modal>` inside a `<Modal>` was unreliable on Android, which
 is what forced each screen to hand-roll its own sheet before.
 
-**The drag-to-close gesture.** A `Gesture.Pan` built fresh per detector (
+**The drag-to-close gesture.** A `Gesture.Pan()` built fresh per detector (
 — one `Gesture` object cannot be shared between two `GestureDetector`s), running
 on the UI thread so the sheet follows the finger:
 
 - `onUpdate` clamps at 0 — dragging **up** does nothing, the sheet is
- already as tall as it gets.
+  already as tall as it gets.
 - `onEnd` closes if dragged past **110 px** or flicked faster than **900**; otherwise it springs back.
 - The backdrop opacity tracks the drag, so a half-dragged sheet
- shows a half-lit screen.
+  shows a half-lit screen.
 - A **tall** sheet (`height` prop) attaches the gesture to the grab bar only, because a scroll and a drag would otherwise fight. A **short**
- sheet makes its whole body draggable; taps still land, because a pan
- only starts once the finger moves.
+  sheet makes its whole body draggable; taps still land, because a pan
+  only starts once the finger moves.
 
 **Keyboard handling.** The sheet's `bottom` rides on the keyboard, so
 nothing inside is ever left underneath it. The listener uses
@@ -480,15 +486,15 @@ bottom would push its header — and Send — off the top of the screen.
 
 **Other essentials.**
 - Android hardware back closes the top sheet. Note
- `predictiveBackGestureEnabled: false` in `mobile/app.json:47`.
+  `predictiveBackGestureEnabled: false` in `mobile/app.json`.
 - It stays mounted until the closing slide finishes, so it
- slides out instead of vanishing.
+  slides out instead of vanishing.
 - `SheetContentGuard` is an error boundary. Before it, an exception
- inside a sheet took the whole app down to a black screen; now the sheet shows
- the message and can be closed.
+  inside a sheet took the whole app down to a black screen; now the sheet shows
+  the message and can be closed.
 - It re-exports `SheetTextInput`, `SheetFlatList`, `SheetScrollView`
- — currently plain RN components, re-exported so a sheet is one import and can
- gain sheet-specific behaviour later without touching every screen.
+  — currently plain RN components, re-exported so a sheet is one import and can
+  gain sheet-specific behaviour later without touching every screen.
 
 ### ProductCard — `mobile/src/components/ProductCard.tsx`
 
@@ -496,7 +502,7 @@ Memoised and given a **stable** `onPress(id)` handler so a grid
 of these doesn't re-render when the search box or draft count changes. Each card
 subscribes to only its **own** saved/not-saved answer rather than the
 whole wishlist array. It reads `clerk.session` at press time instead of
-subscribing to `useAuth`, because `useAuth` re-renders every card each
+subscribing to `useAuth()`, because `useAuth` re-renders every card each
 time Clerk refreshes its token. The "+" opens the **root** quantity picker
 through the store. The `expo-image` props are load-bearing — see §11.
 
@@ -506,15 +512,15 @@ The paper. A view over `useDraftListStore`. Built for typing a whole list withou
 touching the screen: the keyboard's **Next** key goes item → quantity → next item, and the store appends a fresh line as the last one fills.
 
 - `ROW_HEIGHT = 44` and `PAPER_HEADER_HEIGHT = 48` are **exported**
- because `GroceryListSheet` does scroll-into-view maths from them. Change a
- height here and the sheet stays correct; hard-code one there and it won't.
-- Handlers read `useDraftListStore.getState` rather than the render's `rows`, because typing on the last line appends a new one — the list can
- change before a keypress is handled.
+  because `GroceryListSheet` does scroll-into-view maths from them. Change a
+  height here and the sheet stays correct; hard-code one there and it won't.
+- Handlers read `useDraftListStore.getState()` rather than the render's `rows`, because typing on the last line appends a new one — the list can
+  change before a keypress is handled.
 - `compact` shows written lines plus one blank, for the Lists-tab card.
 - `autoFocusOnOpen` waits 350 ms for the sheet's slide-in so the keyboard
- doesn't fight the animation.
+  doesn't fight the animation.
 - The line **number** is pressable and focuses that line, so any tap on
- a row puts the cursor there.
+  a row puts the cursor there.
 
 `GroceryList` (`mobile/src/components/GroceryList.tsx`) is the inline
 composition used on the Lists tab: `compact` editor + `ScanListPhoto` +
@@ -529,18 +535,18 @@ server), and writes the result into ordinary editable lines. The photo is never
 stored — not on the phone, not on the server, not on the order.
 
 - Camera needs a permission; the gallery does **not** on modern Android, because
- the system picker hands over only the chosen photo.
+  the system picker hands over only the chosen photo.
 - Android stops showing the permission dialog after one or two refusals, so a
- permanent denial routes the customer to Settings instead of leaving them
- tapping a dead button.
+  permanent denial routes the customer to Settings instead of leaving them
+  tapping a dead button.
 - It always toasts "please check them" on success: a misread item
- becomes a wrong bill, and this is the one moment fixing it is free.
+  becomes a wrong bill, and this is the one moment fixing it is free.
 
 ### SendListButton — `mobile/src/components/SendListButton.tsx`
 
 Two shapes, one flow. `variant="pill"` is the compact button pinned in the list
 sheet's header; `variant="block"` is the full-width button on the Lists tab. Both
-call `useSendDraft` and both own the `PhonePrompt` that flow may open.
+call `useSendDraft()` and both own the `PhonePrompt` that flow may open.
 It dismisses the keyboard first so the customer can see it sending.
 
 ### Toaster — `mobile/src/components/Toaster.tsx`
@@ -554,23 +560,23 @@ the web client's `sonner` API. Mounted outside the portal (see §1).
 ### Auth components
 
 - **`AuthPanel`** (`mobile/src/components/auth/AuthPanel.tsx`) — the login
- itself. See §7.
+  itself. See §7.
 - **`AuthView`** (`mobile/src/components/auth/AuthView.tsx`) — a scrolling page
- around the panel that keeps the field being typed in above the keyboard. It
- **measures how far its own bottom sits above the screen bottom** and
- pads by the *overlap*, not by the keyboard's full height — inside a
- tab, padding the tab bar's height as well would scroll the active field off the
- top. The `footer` is hidden while typing.
+  around the panel that keeps the field being typed in above the keyboard. It
+  **measures how far its own bottom sits above the screen bottom** and
+  pads by the *overlap*, not by the keyboard's full height — inside a
+  tab, padding the tab bar's height as well would scroll the active field off the
+  top. The `footer` is hidden while typing.
 - **`GoogleAuthButton`** (`mobile/src/components/GoogleAuthButton.tsx`) —
- Clerk SSO via `expo-web-browser`, warmed up on Android
- (`mobile/src/lib/use-warm-up-browser.ts`).
+  Clerk SSO via `expo-web-browser`, warmed up on Android
+  (`mobile/src/lib/use-warm-up-browser.ts`).
 
 ### Also worth knowing
 
 | Component | File | Note |
 |---|---|---|
 | `CustomTabBar` | `components/CustomTabBar.tsx` | The bar is one SVG path, because a CSS `border-radius` cradle always meets the straight edge at a visible kink. The corners beside the arc must be painted the page colour or the navigator's backdrop shows through. |
-| `CurvedCaption` | `components/CurvedCaption.tsx` | Devanagari cannot go through SVG `TextPath` — it advances one codepoint at a time, so matras detach and conjuncts break. This splits the text into aksharas and places each along the arc (, used at `CustomTabBar.tsx`). |
+| `CurvedCaption` | `components/CurvedCaption.tsx` | Devanagari cannot go through SVG `TextPath` — it advances one codepoint at a time, so matras detach and conjuncts break. This splits the text into aksharas and places each along the arc (used by `CustomTabBar.tsx`). |
 | `GroceryListSheet` | `components/GroceryListSheet.tsx` | The list paper as a sheet. Send pinned in the header; fills the page with blank lines; keeps the focused line visible — **on iOS only**. |
 | `QuantitySheetHost` | `components/QuantitySheet.tsx` | The app's single quantity picker. See §11. |
 | `QuantityControl` | `components/QuantityControl.tsx` | Unit-aware stepper + presets, shared by the sheet and the details screen. Shows the exact string the shop will receive. |
@@ -580,7 +586,7 @@ the web client's `sonner` API. Mounted outside the portal (see §1).
 | `PhonePrompt` | `components/PhonePrompt.tsx` | Asked once, the first time a list is sent, with a trust line explaining why. |
 | `ProfileEditSheet` | `components/ProfileEditSheet.tsx` | The phone is optional; it only has to be *valid* if typed. |
 | `UpdatePrompt` / `StoreUpdatePrompt` | `components/UpdatePrompt.tsx` / `StoreUpdatePrompt.tsx` | OTA vs. native release. See §10. |
-| `ui/Button`, `ui/Badge`, `ui/Card` | `components/ui/` | Small NativeWind primitives over `cn` (`lib/utils.ts`). |
+| `ui/Button`, `ui/Badge`, `ui/Card` | `components/ui/` | Small NativeWind primitives over `cn()` (`lib/utils.ts`). |
 
 ---
 
@@ -588,17 +594,17 @@ the web client's `sonner` API. Mounted outside the portal (see §1).
 
 ### `mobile/src/lib/api.ts`
 
-One axios instance, one `request` helper, four verb wrappers.
+One axios instance, one `request()` helper, four verb wrappers.
 
 **Base URL** is `env.backendUrl`, from `EXPO_PUBLIC_BACKEND_URL`
 (`mobile/src/lib/env.ts`).
 
 **Timeouts.**
 - Every request: **20 s**. A request that never settles shows a
- spinner for ever.
+  spinner for ever.
 - Getting the Clerk token: **8 s**. Callers can override the
- request timeout per call — the photo read uses 60 s
- (`mobile/src/features/customer/grocery-list/api.ts`,).
+  request timeout per call — the photo read uses 60 s
+  (`mobile/src/features/customer/grocery-list/api.ts`).
 
 **Token injection**. A module-level `tokenGetter` is installed once by
 `useBootstrapAuth` (`mobile/src/features/auth/useBootstrapAuth.ts`). The
@@ -608,7 +614,7 @@ broken, public screens (Home, Shop, the version check) must still load, so the
 code gives up on the *token*, never on the *request*.
 
 **Envelope unwrapping**. The server always answers
-`{ status, data, meta?, errors? }` (`mobile/src/lib/types.ts`). `request`
+`{ status, data, meta?, errors? }` (`mobile/src/lib/types.ts`). `request()`
 throws when `status === "error"` **or `data` is falsy**, and otherwise
 returns `response.data.data` — so every caller works with the payload directly and
 never sees the envelope. Errors are normalised to a plain `Error` whose message is
@@ -644,16 +650,16 @@ accessors swallow their errors.
 
 ```
 AuthPanel (components/auth/AuthPanel.tsx)
- ├─ "Continue with Google" → GoogleAuthButton → Clerk useSSO
+ ├─ "Continue with Google"  → GoogleAuthButton → Clerk useSSO()
  └─ email → ONE field, no password, no separate "sign up":
- signIn.create({ identifier }) AuthPanel.tsx
- ├─ works → prepareFirstFactor email_code → mode "signIn"
- └─ form_identifier_not_found AuthPanel.tsx
- → signUp.create({ emailAddress }) → mode "signUp"
- → 6-digit code step (CodeBoxes, AuthPanel.tsx)
- → signUp only: also collect a name (AuthPanel.tsx)
- → attemptFirstFactor / attemptEmailAddressVerification
- → finish → useSessionGuard.complete
+      signIn.create({ identifier })                    AuthPanel.tsx
+        ├─ works           → prepareFirstFactor email_code   → mode "signIn"
+        └─ form_identifier_not_found                          AuthPanel.tsx
+                           → signUp.create({ emailAddress })  → mode "signUp"
+      → 6-digit code step (CodeBoxes, AuthPanel.tsx)
+      → signUp only: also collect a name (AuthPanel.tsx)
+      → attemptFirstFactor / attemptEmailAddressVerification
+      → finish() → useSessionGuard().complete()
 ```
 
 Whether it is a sign-in or a sign-up is **decided by the server, never by the
@@ -675,15 +681,15 @@ never answer the same situation differently:
 
 | Function | Line | Behaviour |
 |---|---|---|
-| `clearPending` | | If `clerk.session.status === "pending"`, log the blocking task, `signOut`, return `true` |
+| `clearPending()` | | If `clerk.session.status === "pending"`, log the blocking task, `signOut()`, return `true` |
 | `complete(sessionId, setActive)` | | `setActive`, then `clearPending`. Returns `"done"` / `"onHold"` (held back and cleared) / `"incomplete"` (Clerk wants something this app doesn't collect) |
-| `recoverExisting` | | For a `session_exists` failure. Active session → `"signedIn"`; pending → cleared; Clerk says one exists but none is current → full `signOut` so the next attempt starts clean |
+| `recoverExisting()` | | For a `session_exists` failure. Active session → `"signedIn"`; pending → cleared; Clerk says one exists but none is current → full `signOut()` so the next attempt starts clean |
 
 `messageForOutcome` maps a non-`done` outcome to a translation key, so
 both screens say the same thing. `clerkErrorCode` digs the code out of
 Clerk's `{ errors: [{ code, message }] }` shape.
 
-`AuthPanel` also calls `clearPending` as soon as the login appears,
+`AuthPanel` also calls `clearPending()` as soon as the login appears,
 so a session left pending by an earlier attempt doesn't block the new one.
 
 ### What the app does when Clerk is slow or fails
@@ -693,14 +699,14 @@ so a session left pending by an earlier attempt doesn't block the new one.
 | Clerk hasn't loaded yet | The API interceptor waits at most 8 s, then sends the request **unauthenticated** and logs a warning — public screens still load | `lib/api.ts` |
 | `useBootstrapAuth` before `isLoaded` | Returns early; nothing is cleared, nothing is fetched | `features/auth/useBootstrapAuth.ts` |
 | `/auth/sync` fails | `useAuthStore.setError` — `isBootstrapped` still becomes `true`, so the app is not stuck "loading" | `features/auth/store.ts` |
-| Signed out (or Clerk says so) | `clearAuth`, and `Bootstrap` clears the lists, wishlist and profile stores | `useBootstrapAuth.ts`, `App.tsx` |
+| Signed out (or Clerk says so) | `clearAuth()`, and `Bootstrap` clears the lists, wishlist and profile stores | `useBootstrapAuth.ts`, `App.tsx` |
 | Clerk not ready when Google is tapped | `authSessionResult` is undefined → toast, nothing attempted | `GoogleAuthButton.tsx` |
 | Customer closes the Google window | Silent no-op (not an error) | `GoogleAuthButton.tsx` |
 | Clerk's English-only error messages | The common codes are re-worded and translated | `AuthPanel.tsx` |
 
 **One login, three mounts.** `AuthPanel` is mounted on the Account tab, the Lists
 tab **and** inside the SignIn screen, and Clerk keeps only **one** sign-in attempt
-per device. So every effect in the panel is gated on `useIsFocused`, and a copy
+per device. So every effect in the panel is gated on `useIsFocused()`, and a copy
 left on the code step in a hidden tab resets itself to the email step
 — otherwise it would send its code to whichever attempt another screen started
 last, and Resend would mail a different address.
@@ -711,71 +717,71 @@ last, and Resend would mail a different address.
 
 ```mermaid
 sequenceDiagram
- autonumber
- actor C as Customer
- participant Bar as CustomTabBar
- participant Sheet as GroceryListSheet + Editor
- participant Draft as useDraftListStore
- participant AS as AsyncStorage
- participant Send as useSendDraft
- participant Clerk as Clerk
- participant GL as useCustomerGroceryListStore
- participant API as server
+    autonumber
+    actor C as Customer
+    participant Bar as CustomTabBar
+    participant Sheet as GroceryListSheet + Editor
+    participant Draft as useDraftListStore
+    participant AS as AsyncStorage
+    participant Send as useSendDraft
+    participant Clerk as Clerk
+    participant GL as useCustomerGroceryListStore
+    participant API as server
 
- C->>Bar: tap the centre button
- Bar->>Sheet: useGrocerySheetStore.open
- Sheet->>Draft: ensureRows(viewport / 44)
- Sheet->>C: autofocus first empty line (after 350 ms)
+    C->>Bar: tap the centre button
+    Bar->>Sheet: useGrocerySheetStore.open()
+    Sheet->>Draft: ensureRows(viewport / 44)
+    Sheet->>C: autofocus first empty line (after 350 ms)
 
- loop each keystroke
- C->>Sheet: type item / quantity
- Sheet->>Draft: updateRow(id, key, stripSpecials(text))
- Draft->>Draft: withTrailingBlank — append a fresh line if needed
- Draft-->>AS: persist, debounced 500 ms
- end
+    loop each keystroke
+        C->>Sheet: type item / quantity
+        Sheet->>Draft: updateRow(id, key, stripSpecials(text))
+        Draft->>Draft: withTrailingBlank — append a fresh line if needed
+        Draft-->>AS: persist, debounced 500 ms
+    end
 
- C->>Send: tap Send (SendListButton, keyboard dismissed)
- Send->>Send: filledRows.length > 0?
- Note over Send: empty → toast "write at least one item", stop
- Send->>Send: every name >= 2 chars? (MIN_NAME_LEN, mirrors the server)
- Note over Send: too short → toast naming the row, stop
+    C->>Send: tap Send (SendListButton, keyboard dismissed)
+    Send->>Send: filledRows.length > 0?
+    Note over Send: empty → toast "write at least one item", stop
+    Send->>Send: every name >= 2 chars? (MIN_NAME_LEN, mirrors the server)
+    Note over Send: too short → toast naming the row, stop
 
- alt signed out
- Send->>C: toast "sign in to send"
- Send->>Sheet: Keyboard.dismiss + close the sheet FIRST
- Note right of Sheet: on Android the sheet covers the whole app,<br/>so the login would open behind it
- Send->>Clerk: navigate("SignIn") → AuthPanel
- C->>Clerk: Google, or email + 6-digit code
- Clerk-->>Send: signed in → goBack; the customer taps Send again
- end
+    alt signed out
+        Send->>C: toast "sign in to send"
+        Send->>Sheet: Keyboard.dismiss() + close the sheet FIRST
+        Note right of Sheet: on Android the sheet covers the whole app,<br/>so the login would open behind it
+        Send->>Clerk: navigate("SignIn") → AuthPanel
+        C->>Clerk: Google, or email + 6-digit code
+        Clerk-->>Send: signed in → goBack(); the customer taps Send again
+    end
 
- Send->>GL: customerPhone still null?
- GL->>API: GET /customer/grocery-lists
- API-->>GL: items, unseenCount, upi, customerPhone
+    Send->>GL: customerPhone still null?
+    GL->>API: GET /customer/grocery-lists
+    API-->>GL: items, unseenCount, upi, customerPhone
 
- alt no number on file
- Send->>C: open PhonePrompt (sheet over the sheet, via the portal)
- C->>Send: enter a 10-digit mobile → submitWithPhone(phone)
- end
+    alt no number on file
+        Send->>C: open PhonePrompt (sheet over the sheet, via the portal)
+        C->>Send: enter a 10-digit mobile → submitWithPhone(phone)
+    end
 
- Send->>GL: submitList({ items, phone? })
- GL->>API: POST /customer/grocery-lists
- Note over API: only TEXT is ever sent —<br/>a photo was read into these lines earlier and discarded
- API-->>GL: the created list (merged? true if appended to an unpriced one)
- GL->>C: toast "sent to shop" / "merged into your list"
- GL-)API: loadLists in the background
+    Send->>GL: submitList({ items, phone? })
+    GL->>API: POST /customer/grocery-lists
+    Note over API: only TEXT is ever sent —<br/>a photo was read into these lines earlier and discarded
+    API-->>GL: the created list (merged? true if appended to an unpriced one)
+    GL->>C: toast "sent to shop" / "merged into your list"
+    GL-)API: loadLists() in the background
 
- Send->>Draft: clearDraft
- Send->>Sheet: Keyboard.dismiss + close the sheet
- Send->>C: navigate to Tabs › Lists, params { tab: "active" }
+    Send->>Draft: clearDraft()
+    Send->>Sheet: Keyboard.dismiss() + close the sheet
+    Send->>C: navigate to Tabs › Lists, params { tab: "active" }
 ```
 
-Code: `use-send-draft.ts` (`send`), (`doSubmit`),
+Code: `use-send-draft.ts` (`send`), (`doSubmit`)
 (`submitWithPhone`); `grocery-list/store.ts` (`submitList`).
 
 **The re-entrancy guard.** `sending` is a `useRef`, not the store's `submitting`
-(`use-send-draft.ts`): `submitting` covers only the POST, but `send` can
-`await loadLists` before that, and a second tap in that gap would send the whole
+(`use-send-draft.ts`): `submitting` covers only the POST, but `send()` can
+`await loadLists()` before that, and a second tap in that gap would send the whole
 list twice.
 
 ---
@@ -791,7 +797,7 @@ The stored choice is applied at launch and the first-launch picker sets it
 
 **Key structure.** Exactly **two levels** — `namespace.key` — with one exception:
 `lists.timeline.*` and `lists.tabs.*` go three deep, because they are looked up
-dynamically by status (`MyListsScreen.tsx`,). Namespaces are
+dynamically by status (`MyListsScreen.tsx`). Namespaces are
 `common`, `tabs`, `journey`, `home`, `phone`, `photos`, `lists`, `shop`,
 `product`, `auth`, `chat`, `wishlist`, `account`, `update`, `storeUpdate`
 (`mobile/src/lib/i18n/en.ts`).
@@ -801,7 +807,7 @@ an interpolated `{{count}}`, and always called as `t("key", { count })`:
 
 ```ts
 // mobile/src/lib/i18n/en.ts
-itemCount_one: "{{count}} item",
+itemCount_one:   "{{count}} item",
 itemCount_other: "{{count}} items",
 ```
 
@@ -812,11 +818,11 @@ the two suffixes suffice there too (`mobile/src/lib/i18n/hi.ts`).
 source of truth:
 
 ```ts
-export type Translations = typeof en; // mobile/src/lib/i18n/en.ts
+export type Translations = typeof en;   // mobile/src/lib/i18n/en.ts
 ```
 
 ```ts
-export const hi: Translations = { … }; // mobile/src/lib/i18n/hi.ts
+export const hi: Translations = { … };  // mobile/src/lib/i18n/hi.ts
 ```
 
 Because `Translations` is derived from the English object, **a key added to
@@ -828,10 +834,10 @@ Because `Translations` is derived from the English object, **a key added to
 1. Add it to the right namespace in `mobile/src/lib/i18n/en.ts`.
 2. Add the same key to `mobile/src/lib/i18n/hi.ts`.
 3. For a countable thing, add `_one` **and** `_other` in both files, and use
- `{{count}}`.
-4. Use it with `const { t } = useTranslation` in a component, or the default
- `i18n.t(...)` import outside React — stores do this
- (`mobile/src/features/customer/grocery-list/store.ts`,).
+   `{{count}}`.
+4. Use it with `const { t } = useTranslation()` in a component, or the default
+   `i18n.t(...)` import outside React — stores do this
+   (`mobile/src/features/customer/grocery-list/store.ts`).
 5. Run `npx tsc --noEmit`.
 
 Note that `stripSpecials` deliberately preserves Devanagari
@@ -858,13 +864,13 @@ Note that `stripSpecials` deliberately preserves Devanagari
 releases. Two consequences:
 
 1. **An OTA only reaches installs whose app version matches.** Bumping `version`
- in `app.json` therefore *cuts off* every phone still on the old version until
- they install a new binary from the Play Store. Do not bump it casually.
+   in `app.json` therefore *cuts off* every phone still on the old version until
+   they install a new binary from the Play Store. Do not bump it casually.
 2. It makes `Updates.runtimeVersion` equal to the **installed binary's** version —
- it is baked into the native build and does not change when an OTA is applied.
- `StoreUpdatePrompt` relies on exactly that to compare the installed version
- against `GET /app-version` (`mobile/src/components/StoreUpdatePrompt.tsx`,), which is what makes the whole Play-Store-nag feature shippable over the
- air with no native module.
+   it is baked into the native build and does not change when an OTA is applied.
+   `StoreUpdatePrompt` relies on exactly that to compare the installed version
+   against `GET /app-version` (`mobile/src/components/StoreUpdatePrompt.tsx`), which is what makes the whole Play-Store-nag feature shippable over the
+   air with no native module.
 
 ### What can ship over the air, and what cannot
 
@@ -877,20 +883,20 @@ releases. Two consequences:
 
 **The two prompts.**
 - `UpdatePrompt` (`mobile/src/components/UpdatePrompt.tsx`) — OTA. It re-checks
- on every foreground so a freshly published update lands without a
- cold start, and re-asks if a *different* update arrives after "Later".
- Inert in Expo Go / dev, where `Updates.isEnabled` is false.
- *(The comment at states `checkAutomatically: ON_LOAD`; that is
- `expo-updates`' default — it is **not** configured in `app.json`. Unverified
- against the installed module.)*
+  on every foreground so a freshly published update lands without a
+  cold start, and re-asks if a *different* update arrives after "Later".
+  Inert in Expo Go / dev, where `Updates.isEnabled` is false.
+  *(The comment at states `checkAutomatically: ON_LOAD`; that is
+  `expo-updates`' default — it is **not** configured in `app.json`. Unverified
+  against the installed module.)*
 - `StoreUpdatePrompt` (`mobile/src/components/StoreUpdatePrompt.tsx`) — a new
- Play Store build. Android only. Below the server's `minVersion`
- the update is **mandatory** — no "Later".
+  Play Store build. Android only. Below the server's `minVersion`
+  the update is **mandatory** — no "Later".
 
 ### `npm run ota` and its preflight guard
 
 ```jsonc
-// mobile/package.json:58
+// mobile/package.json
 "ota": "node scripts/preflight-ota.cjs && eas update --branch production --clear-cache"
 ```
 
@@ -922,7 +928,7 @@ reach the bundle.
 `cli.appVersionSource: "remote"` — EAS owns the build number. `npm run ota`
 publishes to **branch** `production`, which maps to the `production` **channel**.
 
-### Other scripts — `mobile/package.json:53`
+### Other scripts — `mobile/package.json`
 
 `npm start` (Metro), `npm run android` / `ios` (`expo run:*` — a local native
 build, not Expo Go), `npm run web`.
@@ -930,8 +936,8 @@ build, not Expo Go), `npm run web`.
 ### Stack (verified from `mobile/package.json`)
 
 Expo `^54.0.35`, React Native `0.81.5`, React `19.1.0`, expo-updates `~29.0.19`,
-NativeWind `^4.2.6` (Babel `jsxImportSource` at `mobile/babel.config.js:5`, Metro
-at `mobile/metro.config.js:6`), zustand `^5.0.14`, `@clerk/clerk-expo ^2.19.31`,
+NativeWind `^4.2.6` (Babel `jsxImportSource` at `mobile/babel.config.js`, Metro
+at `mobile/metro.config.js`), zustand `^5.0.14`, `@clerk/clerk-expo ^2.19.31`,
 i18next `^26.4.0`, expo-image `~3.0.11`, gesture-handler `~2.28.0`, reanimated
 `~4.1.1` + `react-native-worklets 0.5.1`, React Navigation 7.
 
@@ -985,7 +991,7 @@ photo.
 
 ### 4. Env file precedence can ship a test Clerk key to every customer
 
-`mobile/scripts/preflight-ota.cjs:1-6`, guard at.
+`mobile/scripts/preflight-ota.cjs`.
 
 Expo loads `.env.local` **before** `.env`, even for a production bundle. It has
 already happened once. Publish only via `npm run ota`; put test keys in
@@ -1015,12 +1021,12 @@ That is why `Sheet.tsx` exists. See §5.
 
 `mobile/src/navigation/TabNavigator.tsx`. Three consequences already fixed:
 
-- `MyListsScreen.tsx`, — without `useIsFocused`, a background tab
- marks lists "seen" and clears a badge the customer never saw.
+- `MyListsScreen.tsx`, — without `useIsFocused()`, a background tab
+  marks lists "seen" and clears a badge the customer never saw.
 - `AuthPanel.tsx` — a hidden copy on the code step hijacks the device's
- single Clerk sign-in attempt.
+  single Clerk sign-in attempt.
 - `AuthPanel.tsx` — a hidden copy would swallow the Android back press
- meant for the visible screen.
+  meant for the visible screen.
 
 ### 8. Close the sheet *before* navigating on Android
 
@@ -1039,7 +1045,7 @@ That is why `Sheet.tsx` exists. See §5.
 So `SCROLL_FOCUSED_LINE_FROM_JS` is `Platform.OS === "ios"`, and `onScroll` /
 `scrollEventThrottle` / `onRowFocus` are all wired **only** on iOS.
 
-### 10. Do not gate UPI on `Linking.canOpenURL`
+### 10. Do not gate UPI on `Linking.canOpenURL()`
 
 `mobile/src/lib/upi.ts`.
 
@@ -1051,7 +1057,7 @@ So `SCROLL_FOCUSED_LINE_FROM_JS` is `Platform.OS === "ios"`, and `onScroll` /
 ### 11. A sheet's error used to black-screen the whole app
 
 `mobile/src/components/ui/Sheet.tsx`. The known cause was sheet contents
-calling `useNavigation` while the portal host sat outside `NavigationContainer`
+calling `useNavigation()` while the portal host sat outside `NavigationContainer`
 — which is why `PortalProvider` is inside it (`mobile/App.tsx`). The
 `SheetContentGuard` boundary now shows a message instead.
 
