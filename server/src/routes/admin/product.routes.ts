@@ -24,11 +24,19 @@ const CATEGORY_IMAGE_FOLDER = "ecommerce-monster-video/categories";
 
 export const adminProductRouter = Router();
 
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+
+// `fileSize`, not `fieldSize`: fieldSize caps ordinary text fields and leaves
+// the FILE unbounded, which is what this used to do - a 50 MB upload would be
+// read into memory before anything checked it. The banner upload in
+// settings.routes.ts has always had this right; this now matches it.
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: {
-    fieldSize: 5 * 1024 * 1024,
-    files: 10,
+  limits: { fileSize: MAX_IMAGE_BYTES, files: 10 },
+  fileFilter: (_req, file, done) => {
+    if (ALLOWED_IMAGE_TYPES.has(file.mimetype)) done(null, true);
+    else done(new AppError(400, "Only JPG, PNG or WebP images can be uploaded"));
   },
 });
 

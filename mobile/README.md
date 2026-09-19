@@ -1,86 +1,66 @@
-# Monster E-commerce — Mobile (React Native / Expo)
+# sKirana — mobile app
 
-A React Native (Expo) port of the customer-facing storefront. It **reuses the
-existing backend** in `../server` and mirrors the web client's data layer
-(Zustand stores, axios API modules, types) while rebuilding the UI with React
-Native primitives + [NativeWind](https://www.nativewind.dev/) (Tailwind for RN).
+The customer's app: write a grocery list (or photograph a handwritten one), send
+it to the shop, see the price the shop sends back, and collect the order.
 
-## What's included
+Full developer reference: **[../docs/MOBILE-APP.md](../docs/MOBILE-APP.md)** —
+screens, stores, components, auth, release and the traps worth knowing.
+System overview and the production runbook: **[../docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md)**.
 
-Customer flows only (admin panel is intentionally excluded — data tables and
-image upload are a poor fit for mobile):
+## Stack
 
-- **Home** — banners, categories, coupons, new arrivals
-- **Shop** — product grid with sort + category/size/color filters
-- **Product details** — image gallery, color/size selection, add to cart, wishlist
-- **Cart & checkout** — quantity controls, promo codes, address selection, points checkout
-- **Wishlist**, **Orders** (with return), **Account** (profile + address CRUD)
-- **Auth** — Clerk email/password sign-in & sign-up with email verification
+Expo SDK 54 · React Native 0.81 · New Architecture · NativeWind · zustand ·
+Clerk (Google + email code) · i18next (English + Hindi) · expo-updates (OTA).
 
-## Prerequisites
+## Run it
 
-- Node 20+ and npm
-- The **Expo Go** app on a physical phone (iOS/Android), or an Android
-  emulator / iOS simulator
-- The backend running and reachable (deployed, or local on your LAN)
+```bash
+npm install
+npx expo start          # then open in a development build
+```
+
+A **development build** is required — this app uses native modules Expo Go does
+not carry (Clerk, notifications, image picker):
+
+```bash
+eas build --platform android --profile development
+```
 
 ## Configure
 
-Environment variables live in `.env` (already created):
+`.env` holds only public values and is committed:
 
 ```
-EXPO_PUBLIC_BACKEND_URL=https://type-script-project-jtdk.vercel.app
-EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
+EXPO_PUBLIC_BACKEND_URL=...        # the deployed API
+EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_live_...
 ```
 
-- `EXPO_PUBLIC_BACKEND_URL` defaults to the **deployed** backend so the app
-  works from a phone out of the box. To hit a **local** backend, use your
-  machine's LAN IP (e.g. `http://192.168.1.5:5000`) — `localhost` / `127.0.0.1`
-  will NOT resolve from a phone or emulator.
-- The Clerk publishable key is the same Clerk project as the web client.
+To point at a server on your own machine, use your LAN IP
+(`http://192.168.x.x:5000`) — `localhost` does not resolve from a phone — and add
+that origin to the server's `CORS_ORIGINS`.
 
-> ⚠️ If you point at a local backend, add the Expo dev origin to the server's
-> `CORS_ORIGINS`. (Native requests don't send an `Origin` header, but the
-> Metro/web preview does.)
+> **Test keys go in `.env.development.local`, never `.env.local`.** Expo reads
+> `.env.local` for production bundles too, so a test key there would ship to
+> customers. `npm run ota` refuses to publish unless the key resolves to
+> `pk_live_`.
 
-## Run
+## Release
 
-```bash
-cd mobile
-npm install          # already done (uses .npmrc legacy-peer-deps for RN 0.86 / React 19)
-npm run start        # then press 'a' (Android), 'i' (iOS), or scan the QR in Expo Go
-```
+| What changed | How it ships |
+|---|---|
+| JavaScript, styles, strings, images | `npm run ota` — reaches installs of the same app version, applies on the **second** launch |
+| A permission, a native module, the SDK, the version | `eas build --platform android --profile production`, then upload the `.aab` to Play |
 
-The project has been validated with `npx tsc --noEmit` (clean) and
-`npx expo export --platform android` (bundles successfully).
+`runtimeVersion` follows `version` in `app.json`, so an OTA only reaches builds
+of that same version.
 
-## Known limitations
-
-| Area | Status | Notes |
-|------|--------|-------|
-| **Card payments (Razorpay)** | Disabled in Expo Go | `react-native-razorpay` is a **native module** and needs a custom dev build. The checkout button shows a clear message; use **"Pay with points"** to complete an order end-to-end in Expo Go. See `src/lib/razorpay.ts` for the 4-step enable guide. |
-| Guest cart | In-memory + AsyncStorage | RN has no synchronous `localStorage`; the guest cart hydrates from AsyncStorage on launch and mirrors writes back. |
-| Filters | Local state | Web used URL search params; mobile uses component state (same behaviour, no deep-linkable filters). |
-
-## Enabling real card payments (dev build)
-
-```bash
-npm install react-native-razorpay
-npx expo prebuild
-npx expo run:android      # or run:ios (macOS)
-```
-
-Then implement `openRazorpayCheckout` in `src/lib/razorpay.ts` as documented in
-that file. The rest of the checkout flow (session creation + confirmation) is
-already wired.
-
-## Project layout
+## Layout
 
 ```
 src/
-  lib/          # api, env, utils, toast, storage, token-cache, razorpay
-  features/     # ported data layer: stores, api, types (auth + customer/*)
-  components/   # ui/ primitives (Button, Badge, Card), ProductCard, Toaster
-  navigation/   # RootNavigator (stack) + TabNavigator (bottom tabs)
-  screens/      # Home, Shop, ProductDetails, Cart, Wishlist, Orders, Account, SignIn, SignUp
+  screens/      one file per screen
+  components/   shared UI; components/ui/ is the design system
+  features/     one folder per domain: store.ts, api.ts, types.ts
+  navigation/   tabs and stack
+  lib/          api client, i18n, toast, helpers
 ```
