@@ -13,7 +13,7 @@
  * admin panel. It is carried here only because `/auth/sync` returns the whole
  * user record.
  */
-export type UserRole = "user" | "admin";
+export type UserRole = "user" | "staff" | "admin";
 
 /**
  * The account as the server knows it, returned by `/auth/sync` and

@@ -26,6 +26,14 @@
  * @packageDocumentation
  */
 import { useEffect, useMemo, useRef, useState } from "react";
+
+/**
+ * The marker the server puts at the front of its off-network refusal.
+ *
+ * Matched instead of the prose that follows it, so rewording or translating
+ * the message cannot quietly break this check.
+ */
+const OFF_NETWORK_CODE = "OFF_SHOP_NETWORK";
 import type {
   AdminGroceryList,
   GroceryListStatus,
@@ -134,6 +142,8 @@ export function useAdminGroceryLists() {
   const [statusTab, setStatusTab] = useState<StatusTab>("active");
   const [lists, setLists] = useState<AdminGroceryList[]>([]);
   const [loading, setLoading] = useState(true);
+  /** True while the shop's server is refusing because we are off its network. */
+  const [offNetwork, setOffNetwork] = useState(false);
   const [savingListId, setSavingListId] = useState("");
   const [priceDrafts, setPriceDrafts] = useState<PriceDrafts>({});
   // Optional per-unit rate the shopkeeper types; auto-fills the line price.
@@ -170,6 +180,7 @@ export function useAdminGroceryLists() {
       if (!silent) setLoading(true);
 
       const response = await getAdminGroceryLists();
+      setOffNetwork(false);
       const items = (response ?? { items: [] }).items;
 
       if (seededOnce.current) {
@@ -182,6 +193,16 @@ export function useAdminGroceryLists() {
       seededOnce.current = true;
 
       setLists(items);
+    } catch (error) {
+      // The one failure worth telling apart from "the server is unhappy": a
+      // staff member away from the shop. The page shows them what to do about
+      // it instead of an error that repeats every fifteen seconds.
+      if (error instanceof Error && error.message.includes(OFF_NETWORK_CODE)) {
+        setOffNetwork(true);
+        setLists([]);
+        return;
+      }
+      throw error;
     } finally {
       if (!silent) setLoading(false);
     }
@@ -232,7 +253,9 @@ export function useAdminGroceryLists() {
         (list) =>
           list.code.toLowerCase().includes(query) ||
           list.customerName.toLowerCase().includes(query) ||
-          list.customerEmail.toLowerCase().includes(query) ||
+          // Both are absent for a staff member - the server does not send a
+          // customer's contact details to them - so neither may be assumed.
+          (list.customerEmail ?? "").toLowerCase().includes(query) ||
           (list.customerPhone ?? "").includes(query),
       );
     }
@@ -619,6 +642,7 @@ export function useAdminGroceryLists() {
   }
 
   return {
+    offNetwork,
     search,
     setSearch,
     amountReceived,

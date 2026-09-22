@@ -69,6 +69,7 @@ const listStackClass = "space-y-4";
  */
 function AdminGroceryLists() {
   const {
+    offNetwork,
     search,
     setSearch,
     amountReceived,
@@ -171,14 +172,29 @@ function AdminGroceryLists() {
 
           <Input
             className={searchInputClass}
-            placeholder="Search by code, customer, phone or email"
+            placeholder="Search by code or customer"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
         </CardHeader>
 
         <CardContent>
-          {loading ? (
+          {offNetwork ? (
+            // Staff, away from the shop. Not an error to retry - a rule, and
+            // one they can act on.
+            <div className="mx-auto max-w-md space-y-2 py-10 text-center">
+              <p className="text-base font-medium text-foreground">
+                You are not on the shop&apos;s internet connection
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Orders open only on the shop&apos;s own Wi-Fi. Connect to it and
+                this page will fill by itself.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                दुकान के Wi-Fi से जुड़िए — फिर यह पन्ना अपने-आप खुल जाएगा।
+              </p>
+            </div>
+          ) : loading ? (
             <p className={emptyStateClass}>Loading lists…</p>
           ) : !lists.length ? (
             <p className={emptyStateClass}>No {statusTab} orders.</p>

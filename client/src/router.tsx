@@ -35,6 +35,7 @@ import { SignInPage } from "./pages/auth/Sign-in";
 import { SignUpPage } from "./pages/auth/Sign-up";
 import { ProtectedLayout } from "./components/auth/ProtectedLayout";
 import { RoleGuardLayout } from "./components/auth/RoleGuardLayout";
+import AdminStaff from "./pages/admin/Staff";
 import { AdminLayout } from "./components/layout/AdminLayout";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminProducts from "./pages/admin/Products";
@@ -83,6 +84,13 @@ export const router = createBrowserRouter([
     path: "/delete-account",
     element: <DeleteAccountPage />,
   },
+  // A bookmark to hand the shop's staff. It is only a redirect: their pages
+  // are the same ones the shopkeeper uses, so duplicating the tree under
+  // /staff/* would buy a second copy of every screen and no security at all.
+  {
+    path: "/staff",
+    element: <Navigate to="/admin/grocery-lists" replace />,
+  },
   {
     element: <PublicOnlyLayout />,
     children: [
@@ -100,7 +108,12 @@ export const router = createBrowserRouter([
     element: <ProtectedLayout />,
     children: [
       {
-        element: <RoleGuardLayout allow={["admin"]} />,
+        // Two guards, not one. The shop's staff may reach the list and the
+        // chat; everything else is the shopkeeper's. This is presentation
+        // only — a staff member who types /admin/dashboard is stopped by the
+        // API, which answers 403. The guard exists so they see their own page
+        // instead of a screen of errors.
+        element: <RoleGuardLayout allow={["admin", "staff"]} />,
         children: [
           {
             path: "/admin",
@@ -108,10 +121,30 @@ export const router = createBrowserRouter([
             children: [
               {
                 // Grocery lists is the shop's most-used page — land there by
-                // default so the owner doesn't click through the dashboard.
+                // default so the owner doesn't click through the dashboard,
+                // and so a staff member lands on the only page they use.
                 index: true,
                 element: <Navigate to="/admin/grocery-lists" replace />,
               },
+              {
+                path: "grocery-lists",
+                element: <AdminGroceryLists />,
+              },
+              {
+                path: "messages",
+                element: <AdminMessages />,
+              },
+            ],
+          },
+        ],
+      },
+      {
+        element: <RoleGuardLayout allow={["admin"]} />,
+        children: [
+          {
+            path: "/admin",
+            element: <AdminLayout />,
+            children: [
               {
                 path: "dashboard",
                 element: <AdminDashboard />,
@@ -125,12 +158,8 @@ export const router = createBrowserRouter([
                 element: <AdminCoupons />,
               },
               {
-                path: "grocery-lists",
-                element: <AdminGroceryLists />,
-              },
-              {
-                path: "messages",
-                element: <AdminMessages />,
+                path: "staff",
+                element: <AdminStaff />,
               },
               {
                 path: "settings",

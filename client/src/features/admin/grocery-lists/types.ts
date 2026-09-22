@@ -144,8 +144,13 @@ export type AdminGroceryList = {
   _id: string;
   code: string;
   customerName: string;
-  customerEmail: string;
-  customerPhone: string;
+  /**
+   * Absent for a staff member: the server omits it rather than blanking it.
+   * Treat every read of it as possibly `undefined`.
+   */
+  customerEmail?: string;
+  /** Absent for a staff member, for the same reason as `customerEmail`. */
+  customerPhone?: string;
   items: AdminGroceryListItem[];
   totalItems: number;
   totalAmount: number;

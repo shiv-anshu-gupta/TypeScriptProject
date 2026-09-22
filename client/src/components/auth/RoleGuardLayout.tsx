@@ -92,6 +92,15 @@ export function RoleGuardLayout({ allow }: RoleGuardLayoutProps) {
     return <Navigate to="/sign-in" replace />;
   }
 
+  // Signed in as shop staff, but this page is the shopkeeper's. Send them to
+  // the one page they do use rather than accusing them of not belonging: the
+  // message below offers to sign out, which is the wrong door for someone who
+  // is meant to be here. Safe from a loop because /admin/grocery-lists is
+  // inside the guard that allows staff.
+  if (!allow.includes(user.role) && user.role === "staff") {
+    return <Navigate to="/admin/grocery-lists" replace />;
+  }
+
   // Signed in, but not an admin. We must NOT redirect to "/" here — root now
   // points at /admin, which would bounce right back into this guard (infinite
   // loop). Instead show a clear message with a way out.

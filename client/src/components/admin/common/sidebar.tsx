@@ -18,8 +18,11 @@ import {
   GalleryHorizontal,
   Store,
   type LucideIcon,
+  ShieldCheck,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
+import { useAuthStore } from "@/features/auth/store";
+import type { UserRole } from "@/lib/types";
 
 /** One entry in the admin navigation. */
 type AdminNavItem = {
@@ -29,7 +32,20 @@ type AdminNavItem = {
   href: string;
   /** Lucide icon component, rendered at 18px. */
   icon: LucideIcon;
+  /**
+   * Who sees this entry.
+   *
+   * Cosmetic only. Hiding a link hides nothing: the wall is the server, which
+   * answers 403 to a staff member who types the URL anyway. This exists so
+   * their sidebar shows the one page they can actually use.
+   */
+  roles: UserRole[];
 };
+
+/** Everyone who can sign into the panel. */
+const EVERYONE: UserRole[] = ["admin", "staff"];
+/** The shopkeeper alone. */
+const OWNER: UserRole[] = ["admin"];
 
 // Ordered by how often the shopkeeper needs them: their daily job is pricing
 // and fulfilling grocery lists + orders, so those sit right under Dashboard.
@@ -52,13 +68,26 @@ type AdminNavItem = {
  * not routed, and it should stay off this list.
  */
 export const adminNavItems: AdminNavItem[] = [
-  { label: "Grocery lists", href: "/admin/grocery-lists", icon: ClipboardList },
-  { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-  { label: "Messages", href: "/admin/messages", icon: MessagesSquare },
-  { label: "Products", href: "/admin/products", icon: Package },
-  { label: "Coupons", href: "/admin/coupons", icon: BadgePercent },
-  { label: "Home banners", href: "/admin/settings", icon: GalleryHorizontal },
+  { label: "Grocery lists", href: "/admin/grocery-lists", icon: ClipboardList, roles: EVERYONE },
+  { label: "Messages", href: "/admin/messages", icon: MessagesSquare, roles: EVERYONE },
+  { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard, roles: OWNER },
+  { label: "Products", href: "/admin/products", icon: Package, roles: OWNER },
+  { label: "Coupons", href: "/admin/coupons", icon: BadgePercent, roles: OWNER },
+  { label: "Home banners", href: "/admin/settings", icon: GalleryHorizontal, roles: OWNER },
+  { label: "Staff & security", href: "/admin/staff", icon: ShieldCheck, roles: OWNER },
 ];
+
+/**
+ * The entries one role may see.
+ *
+ * @param role - The signed-in user's role, or `undefined` while it loads.
+ * @returns The visible entries. An unknown role sees nothing, which is the
+ * safe direction: a blank sidebar is a bug report, a full one is a leak.
+ */
+export function navItemsForRole(role: UserRole | undefined): AdminNavItem[] {
+  if (!role) return [];
+  return adminNavItems.filter((item) => item.roles.includes(role));
+}
 
 const sidebarRoot =
   "hidden w-[280px] shrink-0 border-r border-sidebar-border bg-sidebar lg:flex lg:flex-col";
@@ -108,9 +137,10 @@ export function AdminBrand() {
  * always visible.
  */
 export function AdminNavList({ onNavigate }: { onNavigate?: () => void }) {
+  const role = useAuthStore((state) => state.user?.role);
   return (
     <nav className={navWrap}>
-      {adminNavItems.map((item) => {
+      {navItemsForRole(role).map((item) => {
         const Icon = item.icon;
         return (
           <NavLink

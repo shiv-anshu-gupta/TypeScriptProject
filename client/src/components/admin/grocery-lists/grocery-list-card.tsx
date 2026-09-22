@@ -33,6 +33,7 @@ import { Check, Languages, Pencil, Plus, Share2, X } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useAuthStore } from "@/features/auth/store";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -297,6 +298,11 @@ function GroceryListCard({
     setNewName("");
     setNewQty("");
   };
+  // The shopkeeper sees the money and fulfilment controls; the shop's staff
+  // see only what they can actually do, which is quote and chat. Hiding a
+  // button is courtesy, not security - the API refuses a staff member's
+  // mark-paid call whether or not this component draws the button.
+  const isOwner = useAuthStore((state) => state.user?.role) === "admin";
   const isPriced = list.totalAmount > 0;
   const isPaid = list.paymentStatus === "paid";
 
@@ -766,7 +772,7 @@ function GroceryListCard({
             {isPriced ? "Update prices" : "Send prices to customer"}
           </Button>
 
-          {isPriced && !isPaid ? (
+          {isOwner && isPriced && !isPaid ? (
             <Button
               variant="default"
               disabled={saving}
@@ -776,7 +782,7 @@ function GroceryListCard({
             </Button>
           ) : null}
 
-          {isPriced && !isClosed
+          {isOwner && isPriced && !isClosed
             ? FLOW_ACTIONS.map((status) => {
                 const stepIndex = STATUS_FLOW.indexOf(status);
                 const isDone = stepIndex <= currentIndex;

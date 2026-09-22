@@ -12,7 +12,7 @@
  * the role by matching the account's email against its `ADMIN_EMAILS` list.
  * The client never decides this and must never try to.
  */
-export type UserRole = "user" | "admin";
+export type UserRole = "user" | "staff" | "admin";
 
 /**
  * The signed-in account as this app sees it.
