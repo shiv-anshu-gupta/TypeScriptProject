@@ -10,7 +10,8 @@
     "seed": "tsx src/scripts/seed.ts",
     "docs": "typedoc",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "check": "tsc --noEmit && vitest run"
   },
   "keywords": [],
   "author": "",

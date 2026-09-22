@@ -14,5 +14,10 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  // Tests are run by vitest, which compiles them itself. They must stay out of
+  // `tsc`, because this is the production build: a test file would otherwise
+  // be emitted into dist/ and - as happened once - fail the deploy over
+  // syntax vitest accepts and CommonJS does not.
+  "exclude": ["src/**/*.test.ts"]
 }

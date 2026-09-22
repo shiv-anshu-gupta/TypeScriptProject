@@ -51,9 +51,9 @@ vi.mock("../services/audit", () => ({
   },
 }));
 
-const { forgetNetworkCache, requirePermission } = await import(
-  "./requirePermission"
-);
+// A plain import is correct here: vitest hoists every vi.mock() above the
+// imports, so the mocks are in place before this module is evaluated.
+import { forgetNetworkCache, requirePermission } from "./requirePermission";
 
 /**
  * An app with one route per permission under test, and the real error handler
