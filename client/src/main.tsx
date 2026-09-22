@@ -37,6 +37,15 @@ createRoot(document.getElementById("root")!).render(
   <ClerkProvider
     publishableKey={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY!}
     afterSignOutUrl="/sign-in"
+    // Clerk's own default after signing in is "/", and it gets there with a
+    // full page load rather than a router navigation. In production Vercel
+    // checks the filesystem before its rewrites, so "/" serves the static
+    // marketing homepage and the person who just signed in lands on a page
+    // with no panel on it. Both roles belong at /admin, which redirects on to
+    // the lists. "Fallback" means an explicit ?redirect_url still wins, so a
+    // deep link into the panel survives the sign-in.
+    signInFallbackRedirectUrl="/admin"
+    signUpFallbackRedirectUrl="/admin"
     appearance={clerkAppearance}
   >
     <App />

@@ -42,9 +42,16 @@ export function PublicOnlyLayout() {
 
   if (
     isSignedIn &&
-    (location.pathname === "/sign-in" || location.pathname === "sign-up")
+    // startsWith, because these are splat routes: Clerk's own steps live at
+    // /sign-in/factor-one and the like, and an exact match missed every one of
+    // them. "sign-up" was also missing its leading slash, so that half never
+    // matched at all.
+    (location.pathname.startsWith("/sign-in") ||
+      location.pathname.startsWith("/sign-up"))
   ) {
-    return <Navigate to={"/"} replace />;
+    // Not "/": in production that is the static marketing page, served by the
+    // host before any rewrite, and the panel never loads.
+    return <Navigate to="/admin" replace />;
   }
 
   return <Outlet />;
