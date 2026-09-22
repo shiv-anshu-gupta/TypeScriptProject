@@ -19,12 +19,21 @@ import mongoose from "mongoose";
  * What a person may do.
  *
  * @remarks
- * `admin` unlocks the whole admin panel; there is no finer permission. The
- * role is granted from the `ADMIN_EMAILS` environment variable by
- * services/user-sync.ts, never through the app, and that code only ever
- * grants - removing an email does not demote an existing admin.
+ * Three roles, and they are granted by three different authorities:
+ *
+ * - `user` is the default, and is every customer.
+ * - `staff` is granted by an admin from the panel, through a
+ *   {@link ../models/StaffAccess.StaffAccess} row, and revoked the same way.
+ * - `admin` is granted only from the `ADMIN_EMAILS` environment variable, by
+ *   services/user-sync.ts. Nothing inside the app can create one, and that
+ *   code only ever grants - removing an email does not demote an existing
+ *   admin.
+ *
+ * The role by itself decides nothing. What each one may do is
+ * {@link ../auth/permissions.ROLE_PERMISSIONS}, which is also where the type
+ * is declared; this module re-exports it so existing imports keep working.
  */
-export type UserRole = "user" | "admin";
+export type { UserRole } from "../auth/permissions";
 
 /**
  * One delivery address on a customer's record.
@@ -102,7 +111,10 @@ const UserSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["user", "admin"],
+      // Kept in step with `UserRole` in auth/permissions.ts. A value outside
+      // this list is refused by Mongoose, and auth/permissions.ts grants an
+      // unknown role nothing, so the two fail in the same safe direction.
+      enum: ["user", "staff", "admin"],
       default: "user",
     },
     points: {

@@ -27,7 +27,10 @@
  * @packageDocumentation
  */
 import { Router, type Request, type Response } from "express";
-import { requireAdmin } from "../../middleware/auth";
+import { roleOf } from "../../middleware/actor";
+import { requirePermission } from "../../middleware/requirePermission";
+import { recordAudit } from "../../services/audit";
+import { conversationForRole, listForRole } from "../../utils/listForRole";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { ok } from "../../utils/envelope";
 import { requireFound, requireText } from "../../utils/helpers";
@@ -180,7 +183,7 @@ function mapGroceryList(item: GroceryListDocument) {
  * @returns Every list, newest activity first, as {@link mapGroceryList}
  * objects.
  */
-async function getAllGroceryLists() {
+async function getAllGroceryLists(role: string) {
   // Sort by last activity, not creation. When a customer sends a new list that
   // merges into an existing unpriced one, its items/updatedAt change but its
   // createdAt stays — so sorting by createdAt would bury a freshly re-sent
@@ -189,7 +192,10 @@ async function getAllGroceryLists() {
     .sort({ updatedAt: -1 })
     .populate("user", "name email phone");
 
-  return lists.map(mapGroceryList);
+  // The single funnel every list response passes through. Redacting here,
+  // rather than at each of the eight call sites, is what makes it impossible
+  // for a new route to forget: there is nowhere else to get a list from.
+  return lists.map((item) => listForRole(mapGroceryList(item), role));
 }
 
 /**
@@ -222,7 +228,9 @@ function mapMessage(message: MessageDocument) {
 
 export const adminGroceryListRouter = Router();
 
-adminGroceryListRouter.use(requireAdmin);
+// No router-wide gate any more: each route below declares the permission it
+// needs, because they are no longer all the same. The shop's staff may read,
+// price, mark availability and chat; everything else is the shopkeeper's.
 
 /**
  * `GET /admin/grocery-lists` — the whole list collection for the admin panel.
@@ -238,10 +246,11 @@ adminGroceryListRouter.use(requireAdmin);
 // All incoming lists (newest first)
 adminGroceryListRouter.get(
   "/grocery-lists",
-  asyncHandler(async (_req: Request, res: Response) => {
+  requirePermission("lists:read"),
+  asyncHandler(async (req: Request, res: Response) => {
     res.json(
       ok({
-        items: await getAllGroceryLists(),
+        items: await getAllGroceryLists(roleOf(req)),
       }),
     );
   }),
@@ -294,6 +303,7 @@ adminGroceryListRouter.get(
 // sent back to the customer (seenByCustomer=false lights up their badge).
 adminGroceryListRouter.patch(
   "/grocery-lists/:listId/prices",
+  requirePermission("lists:price"),
   asyncHandler(async (req: Request, res: Response) => {
     const listId = String(req.params.listId || "").trim();
     requireText(listId, "List id is required");
@@ -354,6 +364,10 @@ adminGroceryListRouter.patch(
     foundList.seenByCustomer = false;
 
     await foundList.save();
+    void recordAudit(req, "list.priced", {
+      listId: String(foundList._id),
+      detail: `total ₹${foundList.totalAmount}`,
+    });
 
     // MUST be awaited: on Vercel serverless the function freezes as soon as
     // the response is sent, which would kill an un-awaited push mid-flight.
@@ -369,7 +383,7 @@ adminGroceryListRouter.patch(
 
     res.json(
       ok({
-        items: await getAllGroceryLists(),
+        items: await getAllGroceryLists(roleOf(req)),
       }),
     );
   }),
@@ -415,6 +429,7 @@ adminGroceryListRouter.patch(
 // Move a list along: packing -> packed -> ready -> completed
 adminGroceryListRouter.patch(
   "/grocery-lists/:listId/status",
+  requirePermission("lists:status"),
   asyncHandler(async (req: Request, res: Response) => {
     const listId = String(req.params.listId || "").trim();
     const status = String(
@@ -452,6 +467,10 @@ adminGroceryListRouter.patch(
     foundList.seenByCustomer = false;
 
     await foundList.save();
+    void recordAudit(req, "list.status", {
+      listId: String(foundList._id),
+      detail: String(status),
+    });
 
     // Awaited — see the note on the pricing route (Vercel serverless).
     await notifyUser(
@@ -463,7 +482,7 @@ adminGroceryListRouter.patch(
 
     res.json(
       ok({
-        items: await getAllGroceryLists(),
+        items: await getAllGroceryLists(roleOf(req)),
       }),
     );
   }),
@@ -504,6 +523,7 @@ adminGroceryListRouter.patch(
 // There's no automatic reconciliation for direct UPI, so the shop marks it.
 adminGroceryListRouter.patch(
   "/grocery-lists/:listId/mark-paid",
+  requirePermission("lists:markPaid"),
   asyncHandler(async (req: Request, res: Response) => {
     const listId = String(req.params.listId || "").trim();
     requireText(listId, "List id is required");
@@ -516,7 +536,7 @@ adminGroceryListRouter.patch(
     }
 
     if (foundList.paymentStatus === "paid") {
-      res.json(ok({ items: await getAllGroceryLists() }));
+      res.json(ok({ items: await getAllGroceryLists(roleOf(req)) }));
       return;
     }
 
@@ -529,6 +549,10 @@ adminGroceryListRouter.patch(
     foundList.seenByCustomer = false;
 
     await foundList.save();
+    void recordAudit(req, "list.markPaid", {
+      listId: String(foundList._id),
+      detail: `₹${foundList.totalAmount} ${foundList.paymentMethod}`,
+    });
 
     // Awaited — see the note on the pricing route (Vercel serverless).
     await notifyUser(
@@ -542,7 +566,7 @@ adminGroceryListRouter.patch(
 
     res.json(
       ok({
-        items: await getAllGroceryLists(),
+        items: await getAllGroceryLists(roleOf(req)),
       }),
     );
   }),
@@ -587,6 +611,7 @@ adminGroceryListRouter.patch(
 // the customer is notified.
 adminGroceryListRouter.patch(
   "/grocery-lists/:listId/items/:index/availability",
+  requirePermission("lists:availability"),
   asyncHandler(async (req: Request, res: Response) => {
     const listId = String(req.params.listId || "").trim();
     const index = Number(req.params.index);
@@ -622,6 +647,10 @@ adminGroceryListRouter.patch(
     );
     foundList.seenByCustomer = false;
     await foundList.save();
+    void recordAudit(req, "list.availability", {
+      listId: String(foundList._id),
+      detail: `item ${index + 1} ${available ? "in stock" : "out of stock"}`,
+    });
 
     if (!available) {
       const code = String(foundList._id).slice(-8).toUpperCase();
@@ -633,7 +662,7 @@ adminGroceryListRouter.patch(
       );
     }
 
-    res.json(ok({ items: await getAllGroceryLists() }));
+    res.json(ok({ items: await getAllGroceryLists(roleOf(req)) }));
   }),
 );
 
@@ -686,6 +715,7 @@ adminGroceryListRouter.patch(
 // customer's badge re-lights so they see the change next time they open it.
 adminGroceryListRouter.patch(
   "/grocery-lists/:listId/items/:index",
+  requirePermission("lists:editItem"),
   asyncHandler(async (req: Request, res: Response) => {
     const listId = String(req.params.listId || "").trim();
     const index = Number(req.params.index);
@@ -730,8 +760,12 @@ adminGroceryListRouter.patch(
     foundList.set("items", items);
     foundList.seenByCustomer = false;
     await foundList.save();
+    void recordAudit(req, "list.itemEdited", {
+      listId: String(foundList._id),
+      detail: `item ${index + 1}`,
+    });
 
-    res.json(ok({ items: await getAllGroceryLists() }));
+    res.json(ok({ items: await getAllGroceryLists(roleOf(req)) }));
   }),
 );
 
@@ -775,6 +809,7 @@ adminGroceryListRouter.patch(
 // Shop adds an item the customer mentioned in person / on the phone / later.
 adminGroceryListRouter.post(
   "/grocery-lists/:listId/items",
+  requirePermission("lists:addItem"),
   asyncHandler(async (req: Request, res: Response) => {
     const listId = String(req.params.listId || "").trim();
     const name = cleanField(req.body.name, MAX_NAME_LEN, true);
@@ -815,6 +850,10 @@ adminGroceryListRouter.post(
     foundList.totalItems = items.length;
     foundList.seenByCustomer = false;
     await foundList.save();
+    void recordAudit(req, "list.itemAdded", {
+      listId: String(foundList._id),
+      detail: String(name),
+    });
 
     const code = String(foundList._id).slice(-8).toUpperCase();
     await notifyUser(
@@ -824,7 +863,7 @@ adminGroceryListRouter.post(
       { listId: String(foundList._id), type: "item_added" },
     );
 
-    res.json(ok({ items: await getAllGroceryLists() }));
+    res.json(ok({ items: await getAllGroceryLists(roleOf(req)) }));
   }),
 );
 
@@ -859,7 +898,8 @@ adminGroceryListRouter.post(
 // page, so the shop sees every chat in one place instead of order by order.
 adminGroceryListRouter.get(
   "/grocery-lists/conversations",
-  asyncHandler(async (_req: Request, res: Response) => {
+  requirePermission("lists:chat"),
+  asyncHandler(async (req: Request, res: Response) => {
     const grouped = await Message.aggregate([
       { $sort: { createdAt: -1 } },
       {
@@ -888,7 +928,10 @@ adminGroceryListRouter.get(
           email?: string;
           phone?: string;
         } | null;
-        return {
+        // Redacted for staff on the way out, exactly as a list is: this row
+        // carries a phone number of its own and would otherwise be the one
+        // place the customer's contact details still reached them.
+        return conversationForRole({
           listId: String(l._id),
           code: String(l._id).slice(-8).toUpperCase(),
           customerName:
@@ -901,7 +944,7 @@ adminGroceryListRouter.get(
             sender: g.last.sender as "customer" | "staff",
             createdAt: g.last.createdAt as Date,
           },
-        };
+        }, roleOf(req));
       })
       .filter((c) => c !== null);
 
@@ -934,6 +977,7 @@ adminGroceryListRouter.get(
 // Chat: the shop reads the conversation for one list.
 adminGroceryListRouter.get(
   "/grocery-lists/:listId/messages",
+  requirePermission("lists:chat"),
   asyncHandler(async (req: Request, res: Response) => {
     const listId = String(req.params.listId || "").trim();
     requireText(listId, "List id is required");
@@ -986,6 +1030,7 @@ adminGroceryListRouter.get(
 // customer's phone (they may not have the chat open).
 adminGroceryListRouter.post(
   "/grocery-lists/:listId/messages",
+  requirePermission("lists:chat"),
   asyncHandler(async (req: Request, res: Response) => {
     const listId = String(req.params.listId || "").trim();
     const text = String(req.body.text || "").trim();
@@ -1009,6 +1054,13 @@ adminGroceryListRouter.post(
     });
 
     const code = String(foundList._id).slice(-8).toUpperCase();
+
+    // The shop speaks to the customer with one voice, so the message itself
+    // carries no name. The log is where it is recorded who actually typed it.
+    void recordAudit(req, "list.chatSent", {
+      listId: String(foundList._id),
+      detail: text.slice(0, 60),
+    });
 
     // Awaited — see the note on the pricing route (Vercel serverless).
     await notifyUser(

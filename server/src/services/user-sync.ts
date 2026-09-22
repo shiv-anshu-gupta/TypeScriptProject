@@ -13,6 +13,8 @@
  * @packageDocumentation
  */
 import { clerkClient } from "@clerk/express";
+import { decideRole } from "../auth/decideRole";
+import { StaffAccessModel } from "../models/StaffAccess";
 import { User } from "../models/User";
 import { AppError } from "../utils/AppError";
 
@@ -124,9 +126,27 @@ const CASE_INSENSITIVE = { locale: "en", strength: 2 } as const;
  */
 export async function syncDbUser(clerkUserId: string) {
   const identity = await readClerkIdentity(clerkUserId);
-  const shouldBeAdmin = identity.email
+  const isAdminEmail = identity.email
     ? adminEmails().has(identity.email)
     : false;
+  // The shop's own roster. One indexed lookup by a unique key, on a collection
+  // with a handful of rows, so this costs nothing worth avoiding.
+  const isStaffEmail = identity.email
+    ? Boolean(await StaffAccessModel.exists({ email: identity.email }))
+    : false;
+
+  /**
+   * The role for this account, given who granted what. See auth/decideRole.ts
+   * for the rules - in particular that an unverified email elevates nobody.
+   */
+  const roleFor = (currentRole?: string) =>
+    decideRole({
+      email: identity.email,
+      emailVerified: identity.emailVerified,
+      isAdminEmail,
+      isStaffEmail,
+      currentRole,
+    });
 
   // 1. Already known under this Clerk id: refresh what Clerk owns. The name is
   //    only filled in when empty - the customer may have changed it in the
@@ -148,8 +168,12 @@ export async function syncDbUser(clerkUserId: string) {
       existing.name = identity.name;
       changed = true;
     }
-    if (shouldBeAdmin && existing.role !== "admin") {
-      existing.role = "admin";
+    // Recomputed every sign-in, so a staff member removed from the roster
+    // drops back to `user` here. The permission gate has already stopped them
+    // on their previous request; this is the record catching up.
+    const role = roleFor(existing.role);
+    if (role !== existing.role) {
+      existing.role = role;
       changed = true;
     }
     if (changed) await existing.save();
@@ -167,7 +191,7 @@ export async function syncDbUser(clerkUserId: string) {
       const oldId = previous.clerkUserId;
       previous.clerkUserId = clerkUserId;
       if (!previous.name && identity.name) previous.name = identity.name;
-      if (shouldBeAdmin) previous.role = "admin";
+      previous.role = roleFor(previous.role);
       await previous.save();
       console.info(
         `[user-sync] re-linked user ${String(previous._id)} from ${oldId} to ${clerkUserId}`,
@@ -182,7 +206,7 @@ export async function syncDbUser(clerkUserId: string) {
       clerkUserId,
       email: identity.email ?? undefined,
       name: identity.name,
-      role: shouldBeAdmin ? "admin" : "user",
+      role: roleFor(undefined),
     });
   } catch (error) {
     if (!isDuplicateKey(error)) throw error;
