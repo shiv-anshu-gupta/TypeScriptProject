@@ -4,9 +4,10 @@
  *
  * @remarks
  * Mounted at `/admin` in `server/src/server.ts`, so the paths below read
- * `/admin/categories...` and `/admin/products...`. The router is guarded end
- * to end by `requireAdmin`, so every route answers 401 to a caller with no
- * Clerk session and 403 to a signed-in customer. The customer-facing twins
+ * `/admin/categories...` and `/admin/products...`. Every route asks for
+ * `products:manage`, which only an admin holds, so each answers 401 to a
+ * caller with no Clerk session and 403 to a customer or to the shop's own
+ * staff. The customer-facing twins
  * live in `routes/customer/product.routes.ts` and show only active products.
  *
  * Four routes take `multipart/form-data` rather than JSON, through the
@@ -27,7 +28,8 @@
  */
 import { Router, type Request, type Response } from "express";
 import multer from "multer";
-import { getDbUserFromReq, requireAdmin } from "../../middleware/auth";
+import { getDbUserFromReq } from "../../middleware/auth";
+import { requirePermission } from "../../middleware/requirePermission";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { escapeRegex } from "../../utils/regex";
 import { Category } from "../../models/Category";
@@ -116,7 +118,11 @@ const upload = multer({
   },
 });
 
-adminProductRouter.use(requireAdmin);
+// No router-wide gate. `router.use(...)` runs for every request that enters the
+// router - including paths that belong to a DIFFERENT router mounted on the
+// same "/admin" prefix - so a blanket guard here refused the shop's staff on
+// routes this file knows nothing about. Each route below states its own
+// permission instead.
 
 // categories
 
@@ -134,6 +140,7 @@ adminProductRouter.use(requireAdmin);
  */
 adminProductRouter.get(
   "/categories",
+  requirePermission("products:manage"),
   asyncHandler(async (_req: Request, res: Response) => {
     const categories = await Category.find({}).sort({
       name: 1,
@@ -172,6 +179,7 @@ adminProductRouter.get(
  */
 adminProductRouter.post(
   "/categories",
+  requirePermission("products:manage"),
   upload.single("image"),
   asyncHandler(async (req: Request, res: Response) => {
     const name = String(req.body.name || "").trim();
@@ -226,6 +234,7 @@ adminProductRouter.post(
  */
 adminProductRouter.put(
   "/categories/:id",
+  requirePermission("products:manage"),
   upload.single("image"),
   asyncHandler(async (req: Request, res: Response) => {
     const name = String(req.body.name || "").trim();
@@ -277,6 +286,7 @@ adminProductRouter.put(
  */
 adminProductRouter.delete(
   "/categories/:id",
+  requirePermission("products:manage"),
   asyncHandler(async (req: Request, res: Response) => {
     const extractCategoryId = req.params.id as string;
 
@@ -328,6 +338,7 @@ adminProductRouter.delete(
 // products
 adminProductRouter.get(
   "/products",
+  requirePermission("products:manage"),
   asyncHandler(async (req: Request, res: Response) => {
     const search = String(req.query.search || "").trim();
 
@@ -369,6 +380,7 @@ adminProductRouter.get(
  */
 adminProductRouter.get(
   "/products/:id",
+  requirePermission("products:manage"),
   asyncHandler(async (req: Request, res: Response) => {
     const productId = req.params.id as string;
 
@@ -441,6 +453,7 @@ adminProductRouter.get(
  */
 adminProductRouter.post(
   "/products",
+  requirePermission("products:manage"),
   upload.array("images", 10),
   asyncHandler(async (req: Request, res: Response) => {
     const title = String(req.body.title || "").trim();
@@ -567,6 +580,7 @@ adminProductRouter.post(
  */
 adminProductRouter.put(
   "/products/:id",
+  requirePermission("products:manage"),
   upload.array("images", 10),
   asyncHandler(async (req: Request, res: Response) => {
     const productId = req.params.id as string;
@@ -717,6 +731,7 @@ adminProductRouter.put(
  */
 adminProductRouter.delete(
   "/products/:id",
+  requirePermission("products:manage"),
   asyncHandler(async (req: Request, res: Response) => {
     const productId = req.params.id as string;
 

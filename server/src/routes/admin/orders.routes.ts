@@ -5,7 +5,7 @@
  * Mounted at `/admin` in `server/src/server.ts`, giving `GET /admin/orders`
  * and `PATCH /admin/orders/:orderId/status`.
  *
- * Both routes require an admin (`requireAdmin` is applied router-wide).
+ * Both routes ask for `orders:manage`, which only an admin holds.
  *
  * These are cart-and-checkout orders, not grocery lists. The shop now runs on
  * grocery lists and the admin panel has no orders page, so no shipped client
@@ -17,7 +17,7 @@
 import { Router, type Request, type Response } from "express";
 import { Types } from "mongoose";
 import { Order, OrderStatus, PaymentStatus } from "../../models/Order";
-import { requireAdmin } from "../../middleware/auth";
+import { requirePermission } from "../../middleware/requirePermission";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { ok } from "../../utils/envelope";
 import { requireFound, requireText } from "../../utils/helpers";
@@ -57,7 +57,11 @@ type AdminOrderRow = {
 
 export const adminOrderRouter = Router();
 
-adminOrderRouter.use(requireAdmin);
+// No router-wide gate. `router.use(...)` runs for every request that enters the
+// router - including paths that belong to a DIFFERENT router mounted on the
+// same "/admin" prefix - so a blanket guard here refused the shop's staff on
+// routes this file knows nothing about. Each route below states its own
+// permission instead.
 
 /**
  * `GET /admin/orders` — every order in the collection, newest first.
@@ -78,6 +82,7 @@ adminOrderRouter.use(requireAdmin);
  */
 adminOrderRouter.get(
   "/orders",
+  requirePermission("orders:manage"),
   asyncHandler(async (req: Request, res: Response) => {
     const orders = await Order.find()
       .select(
@@ -140,6 +145,7 @@ adminOrderRouter.get(
  */
 adminOrderRouter.patch(
   "/orders/:orderId/status",
+  requirePermission("orders:manage"),
   asyncHandler(async (req: Request, res: Response) => {
     const orderId = String(req.params.orderId || "").trim();
     const orderStatus = String(

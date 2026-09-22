@@ -6,7 +6,7 @@
  * Mounted at `/admin` in `server/src/server.ts`, giving
  * `GET /admin/dashboard/lite` and `GET /admin/dashboard/daily`.
  *
- * Both routes require an admin (`requireAdmin` is applied router-wide), take
+ * Both routes ask for `dashboard:read`, which only an admin holds; they take
  * no parameters and write nothing.
  *
  * "Orders" here means grocery lists, not the `orders` collection. The shop
@@ -16,7 +16,7 @@
  * @packageDocumentation
  */
 import { Router, type Request, type Response } from "express";
-import { requireAdmin } from "../../middleware/auth";
+import { requirePermission } from "../../middleware/requirePermission";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { Product } from "../../models/Product";
 import { Category } from "../../models/Category";
@@ -30,7 +30,11 @@ type TotalSaleRow = {
 
 export const adminDashboardRouter = Router();
 
-adminDashboardRouter.use(requireAdmin);
+// No router-wide gate. `router.use(...)` runs for every request that enters the
+// router - including paths that belong to a DIFFERENT router mounted on the
+// same "/admin" prefix - so a blanket guard here refused the shop's staff on
+// routes this file knows nothing about. Each route below states its own
+// permission instead.
 
 /**
  * `GET /admin/dashboard/lite` — the six headline counters.
@@ -52,6 +56,7 @@ adminDashboardRouter.use(requireAdmin);
  */
 adminDashboardRouter.get(
   "/dashboard/lite",
+  requirePermission("dashboard:read"),
   asyncHandler(async (_req: Request, res: Response) => {
     // Orders are grocery lists now. Count non-cancelled lists as orders, plus
     // how many still need pricing and how many are completed.
@@ -138,6 +143,7 @@ type DailyList = {
  */
 adminDashboardRouter.get(
   "/dashboard/daily",
+  requirePermission("dashboard:read"),
   asyncHandler(async (_req: Request, res: Response) => {
     const DAYS = 7;
     const now = Date.now();

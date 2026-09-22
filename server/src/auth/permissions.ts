@@ -56,6 +56,8 @@ export type Permission =
   | "products:manage"
   | "promos:manage"
   | "settings:manage"
+  | "orders:manage"
+  | "push:manage"
   // Running the shop's people and its security.
   | "staff:manage"
   | "network:manage"
@@ -80,6 +82,8 @@ export const ALL_PERMISSIONS: readonly Permission[] = [
   "products:manage",
   "promos:manage",
   "settings:manage",
+  "orders:manage",
+  "push:manage",
   "staff:manage",
   "network:manage",
   "audit:read",

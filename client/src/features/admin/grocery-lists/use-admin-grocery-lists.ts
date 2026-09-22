@@ -144,6 +144,16 @@ export function useAdminGroceryLists() {
   const [loading, setLoading] = useState(true);
   /** True while the shop's server is refusing because we are off its network. */
   const [offNetwork, setOffNetwork] = useState(false);
+  /**
+   * Why the last load failed, for anything that is not the network gate.
+   *
+   * Without this the page simply showed no orders, which is what a quiet
+   * afternoon looks like too - and that is how a 403 went undiagnosed for an
+   * hour.
+   */
+  const [loadError, setLoadError] = useState("");
+  /** The server's own wording for the network refusal, address included. */
+  const [offNetworkDetail, setOffNetworkDetail] = useState("");
   const [savingListId, setSavingListId] = useState("");
   const [priceDrafts, setPriceDrafts] = useState<PriceDrafts>({});
   // Optional per-unit rate the shopkeeper types; auto-fills the line price.
@@ -181,6 +191,7 @@ export function useAdminGroceryLists() {
 
       const response = await getAdminGroceryLists();
       setOffNetwork(false);
+      setLoadError("");
       const items = (response ?? { items: [] }).items;
 
       if (seededOnce.current) {
@@ -199,10 +210,12 @@ export function useAdminGroceryLists() {
       // it instead of an error that repeats every fifteen seconds.
       if (error instanceof Error && error.message.includes(OFF_NETWORK_CODE)) {
         setOffNetwork(true);
+        setOffNetworkDetail(error.message.split(": ").slice(1).join(": "));
         setLists([]);
         return;
       }
-      throw error;
+      setLoadError(error instanceof Error ? error.message : "Could not load orders");
+      setLists([]);
     } finally {
       if (!silent) setLoading(false);
     }
@@ -643,6 +656,8 @@ export function useAdminGroceryLists() {
 
   return {
     offNetwork,
+    offNetworkDetail,
+    loadError,
     search,
     setSearch,
     amountReceived,

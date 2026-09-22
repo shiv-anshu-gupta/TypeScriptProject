@@ -4,9 +4,15 @@
  *
  * @remarks
  * Mounted at `/admin` in `server/src/server.ts`, so the paths below read
- * `/admin/grocery-lists...`. The router is guarded end to end by
- * `requireAdmin`, so every route answers 401 to a caller with no Clerk
- * session and 403 to a signed-in customer. No route here is public.
+ * `/admin/grocery-lists...`. Each route states the permission it needs, and
+ * they are not all the same: the shop's staff may read, price, set
+ * availability and chat, while status, mark-paid, adding and editing items
+ * stay with the shopkeeper. Every route answers 401 to a caller with no Clerk
+ * session and 403 to a customer. No route here is public.
+ *
+ * A staff member's responses also have the customer's phone and email removed
+ * on the way out - see `utils/listForRole.ts`, applied inside
+ * {@link getAllGroceryLists} so a new route cannot forget it.
  *
  * Seven of the ten routes answer with the WHOLE list collection rather than
  * the record that changed: the admin panel treats each mutation as a full

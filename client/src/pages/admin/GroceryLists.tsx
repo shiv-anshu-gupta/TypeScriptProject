@@ -70,6 +70,8 @@ const listStackClass = "space-y-4";
 function AdminGroceryLists() {
   const {
     offNetwork,
+    offNetworkDetail,
+    loadError,
     search,
     setSearch,
     amountReceived,
@@ -193,6 +195,20 @@ function AdminGroceryLists() {
               <p className="text-sm text-muted-foreground">
                 दुकान के Wi-Fi से जुड़िए — फिर यह पन्ना अपने-आप खुल जाएगा।
               </p>
+              {offNetworkDetail ? (
+                <p className="pt-1 text-xs text-muted-foreground">
+                  {offNetworkDetail}
+                </p>
+              ) : null}
+            </div>
+          ) : loadError ? (
+            // Anything else the server refused. Shown rather than swallowed:
+            // an empty page looks the same as a quiet afternoon.
+            <div className="mx-auto max-w-md space-y-2 py-10 text-center">
+              <p className="text-base font-medium text-foreground">
+                Orders could not be loaded
+              </p>
+              <p className="text-sm text-muted-foreground">{loadError}</p>
             </div>
           ) : loading ? (
             <p className={emptyStateClass}>Loading lists…</p>

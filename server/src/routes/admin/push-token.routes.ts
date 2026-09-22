@@ -6,7 +6,7 @@
  * Mounted at `/admin` in `server/src/server.ts`, so the single path is
  * `/admin/push-token`, reached with `POST` and `DELETE`.
  *
- * Every route here requires an admin (`requireAdmin` is applied router-wide).
+ * Every route here asks for `push:manage`, which only an admin holds.
  * Tokens are stored on `users.webPushTokens` — a separate array from the
  * customers' Expo `users.pushTokens` — and are read by `notifyAdmins`.
  *
@@ -16,7 +16,8 @@
  * @packageDocumentation
  */
 import { Router, type Request, type Response } from "express";
-import { getDbUserFromReq, requireAdmin } from "../../middleware/auth";
+import { getDbUserFromReq } from "../../middleware/auth";
+import { requirePermission } from "../../middleware/requirePermission";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { ok } from "../../utils/envelope";
 import { requireText } from "../../utils/helpers";
@@ -24,7 +25,11 @@ import { User } from "../../models/User";
 
 export const adminPushTokenRouter = Router();
 
-adminPushTokenRouter.use(requireAdmin);
+// No router-wide gate. `router.use(...)` runs for every request that enters the
+// router - including paths that belong to a DIFFERENT router mounted on the
+// same "/admin" prefix - so a blanket guard here refused the shop's staff on
+// routes this file knows nothing about. Each route below states its own
+// permission instead.
 
 /**
  * `POST /admin/push-token` — records an FCM web-push registration token for
@@ -48,6 +53,7 @@ adminPushTokenRouter.use(requireAdmin);
 // Register this admin browser to receive FCM web-push alerts for new orders.
 adminPushTokenRouter.post(
   "/push-token",
+  requirePermission("push:manage"),
   asyncHandler(async (req: Request, res: Response) => {
     const dbUser = await getDbUserFromReq(req);
     const token = String(req.body.token || "").trim();
@@ -84,6 +90,7 @@ adminPushTokenRouter.post(
  */
 adminPushTokenRouter.delete(
   "/push-token",
+  requirePermission("push:manage"),
   asyncHandler(async (req: Request, res: Response) => {
     const dbUser = await getDbUserFromReq(req);
     const token = String(req.body.token || "").trim();

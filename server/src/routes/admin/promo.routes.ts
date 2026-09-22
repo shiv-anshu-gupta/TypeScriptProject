@@ -5,7 +5,7 @@
  * Mounted at `/admin` in `server/src/server.ts`, giving `/admin/promos` and
  * `/admin/promos/:promoId`.
  *
- * Every route here requires an admin (`requireAdmin` is applied router-wide).
+ * Every route here asks for `promos:manage`, which only an admin holds.
  * The customer-facing check lives in `routes/customer/promo.routes.ts` and is
  * read-only.
  *
@@ -20,7 +20,7 @@
  * @packageDocumentation
  */
 import { Router, type Request, type Response } from "express";
-import { requireAdmin } from "../../middleware/auth";
+import { requirePermission } from "../../middleware/requirePermission";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { Promo } from "../../models/Promo";
 import { Types } from "mongoose";
@@ -68,7 +68,11 @@ function mapPromo(item: PromoDbItem) {
 
 export const adminPromoRouter = Router();
 
-adminPromoRouter.use(requireAdmin);
+// No router-wide gate. `router.use(...)` runs for every request that enters the
+// router - including paths that belong to a DIFFERENT router mounted on the
+// same "/admin" prefix - so a blanket guard here refused the shop's staff on
+// routes this file knows nothing about. Each route below states its own
+// permission instead.
 
 /**
  * Validates a promo create or update body and returns the six fields to
@@ -181,6 +185,7 @@ async function getAllPromos() {
  */
 adminPromoRouter.get(
   "/promos",
+  requirePermission("promos:manage"),
 
   asyncHandler(async (req: Request, res: Response) => {
     res.json(
@@ -213,6 +218,7 @@ adminPromoRouter.get(
  */
 adminPromoRouter.post(
   "/promos",
+  requirePermission("promos:manage"),
 
   asyncHandler(async (req: Request, res: Response) => {
     const payload = parsePromoPayload(req);
@@ -260,6 +266,7 @@ adminPromoRouter.post(
  */
 adminPromoRouter.patch(
   "/promos/:promoId",
+  requirePermission("promos:manage"),
 
   asyncHandler(async (req: Request, res: Response) => {
     const promoId = String(req.params.promoId || "").trim();
@@ -316,6 +323,7 @@ adminPromoRouter.patch(
  */
 adminPromoRouter.delete(
   "/promos/:promoId",
+  requirePermission("promos:manage"),
 
   asyncHandler(async (req: Request, res: Response) => {
     const promoId = String(req.params.promoId || "").trim();

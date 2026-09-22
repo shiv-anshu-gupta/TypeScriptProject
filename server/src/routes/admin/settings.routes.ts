@@ -3,7 +3,7 @@
  *
  * @remarks
  * Mounted at `/admin` in `server/src/server.ts`, so the paths below are
- * `/admin/settings/banners*`. `requireAdmin` is applied to the whole router,
+ * `/admin/settings/banners*`. Each route asks for `settings:manage`,
  * so every route needs a signed-in user whose `users` record has
  * `role: "admin"`; a signed-in customer gets 403, not 404.
  *
@@ -21,7 +21,8 @@
  *
  * @packageDocumentation
  */
-import { getDbUserFromReq, requireAdmin } from "../../middleware/auth";
+import { getDbUserFromReq } from "../../middleware/auth";
+import { requirePermission } from "../../middleware/requirePermission";
 import multer from "multer";
 import { isValidObjectId } from "mongoose";
 import {
@@ -354,7 +355,11 @@ function readDate(raw: unknown, label: string): Date | null {
 
 export const adminSettingsRouter = Router();
 
-adminSettingsRouter.use(requireAdmin);
+// No router-wide gate. `router.use(...)` runs for every request that enters the
+// router - including paths that belong to a DIFFERENT router mounted on the
+// same "/admin" prefix - so a blanket guard here refused the shop's staff on
+// routes this file knows nothing about. Each route below states its own
+// permission instead.
 
 /**
  * `GET /admin/settings/banners` — returns every banner in carousel order,
@@ -374,6 +379,7 @@ adminSettingsRouter.use(requireAdmin);
  */
 adminSettingsRouter.get(
   "/settings/banners",
+  requirePermission("settings:manage"),
   asyncHandler(async (_req: Request, res: Response) => {
     res.json(ok({ items: await listBanners(), limit: HOME_BANNER_LIMIT }));
   }),
@@ -419,6 +425,7 @@ adminSettingsRouter.get(
 // Upload one or more images; each becomes a banner at the end of the list.
 adminSettingsRouter.post(
   "/settings/banners",
+  requirePermission("settings:manage"),
   acceptImages,
   asyncHandler(async (req: Request, res: Response) => {
     const dbUser = await getDbUserFromReq(req);
@@ -481,6 +488,7 @@ adminSettingsRouter.post(
 // New carousel order: the full list of banner ids, first to last.
 adminSettingsRouter.put(
   "/settings/banners/order",
+  requirePermission("settings:manage"),
   asyncHandler(async (req: Request, res: Response) => {
     const ids: unknown = req.body?.ids;
     if (!Array.isArray(ids) || !ids.every((id) => typeof id === "string" && isValidObjectId(id))) {
@@ -547,6 +555,7 @@ adminSettingsRouter.put(
 // sent are changed.
 adminSettingsRouter.patch(
   "/settings/banners/:bannerId",
+  requirePermission("settings:manage"),
   asyncHandler(async (req: Request, res: Response) => {
     const { bannerId } = req.params;
     if (!isValidObjectId(bannerId)) throw new AppError(404, "Banner not found");
@@ -598,6 +607,7 @@ adminSettingsRouter.patch(
  */
 adminSettingsRouter.delete(
   "/settings/banners/:bannerId",
+  requirePermission("settings:manage"),
   asyncHandler(async (req: Request, res: Response) => {
     const { bannerId } = req.params;
     if (!isValidObjectId(bannerId)) throw new AppError(404, "Banner not found");

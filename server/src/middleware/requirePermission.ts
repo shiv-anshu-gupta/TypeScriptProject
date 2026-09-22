@@ -39,8 +39,26 @@ import { getDbUserFromReq } from "./auth";
  * screen ("join the shop's Wi-Fi") instead of a generic error. Matching on
  * prose would break the moment the wording is translated.
  */
-export const OFF_NETWORK_MESSAGE =
-  "OFF_SHOP_NETWORK: Staff can open lists only on the shop's own internet connection.";
+export const OFF_NETWORK_CODE = "OFF_SHOP_NETWORK";
+
+/**
+ * The refusal, naming the address the server actually saw.
+ *
+ * @remarks
+ * The address is in the message on purpose. Without it, "you are not on the
+ * shop's network" is unfalsifiable from the outside: the shopkeeper cannot
+ * tell a staff member working from home apart from a gate reading the wrong
+ * header, which is exactly the confusion this cost once already. It is the
+ * caller's own address, so telling them is no disclosure.
+ *
+ * @param ip - The address as read, or `""` when none could be read.
+ * @returns The message, beginning with {@link OFF_NETWORK_CODE} so the panel
+ * can match on the marker rather than the prose.
+ */
+export function offNetworkMessage(ip: string): string {
+  const seen = ip ? `We see you on ${ip}.` : "We could not read your address.";
+  return `${OFF_NETWORK_CODE}: Staff can open lists only on the shop's own internet connection. ${seen}`;
+}
 
 /**
  * How long the shop's registered networks are held in memory.
@@ -131,7 +149,7 @@ export function requirePermission(permission: Permission) {
           // Recorded before the throw: a staff member working from outside the
           // shop is exactly what the shopkeeper wants to know about.
           void recordOffNetworkDenial(req, ip);
-          throw new AppError(403, OFF_NETWORK_MESSAGE);
+          throw new AppError(403, offNetworkMessage(ip));
         }
         void touchNetwork(ip);
       }
