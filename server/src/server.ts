@@ -54,6 +54,9 @@ import { customerCheckoutWithPointsRouter } from "./routes/customer/checkout-wit
 import { adminOrderRouter } from "./routes/admin/orders.routes";
 import { adminSettingsRouter } from "./routes/admin/settings.routes";
 import { adminDashboardRouter } from "./routes/admin/dashboard.routes";
+import { adminStaffRouter } from "./routes/admin/staff.routes";
+import { adminShopNetworkRouter } from "./routes/admin/shop-network.routes";
+import { adminAuditRouter } from "./routes/admin/audit.routes";
 import { customerHomeRouter } from "./routes/customer/home.routes";
 import { customerGroceryListRouter } from "./routes/customer/grocery-list.routes";
 import { customerProfileRouter } from "./routes/customer/profile.routes";
@@ -81,6 +84,45 @@ async function mainEntryFunction() {
   await connectDB();
 
   const app = express();
+
+  // The platform terminates TLS and forwards the request, so Express must be
+  // told it is behind a proxy or `req.protocol` and `req.ip` describe the
+  // proxy rather than the caller. The shop-network gate does NOT rely on this:
+  // utils/clientIp.ts reads the headers itself, from the right, precisely
+  // because `trust proxy` believes whatever the leftmost hop claimed.
+  app.set("trust proxy", true);
+
+  // Headers every response carries. None of these existed before, and the
+  // panel is a page that shows a shop's orders to whoever is signed in.
+  app.use((_req, res, next) => {
+    // The API answers JSON to an app and to a separate origin; nothing here is
+    // ever a page to frame, style or script.
+    res.setHeader(
+      "Content-Security-Policy",
+      "default-src 'none'; frame-ancestors 'none'",
+    );
+    // Belt and braces for the browsers that predate frame-ancestors.
+    res.setHeader("X-Frame-Options", "DENY");
+    // Stop a JSON response being sniffed into something executable.
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    // Do not leak the admin URL a request came from to any third party.
+    res.setHeader("Referrer-Policy", "no-referrer");
+    // No camera, microphone or location is ever needed from this origin.
+    res.setHeader(
+      "Permissions-Policy",
+      "camera=(), microphone=(), geolocation=(), payment=()",
+    );
+    // Two years, subdomains included: the API is HTTPS-only in production.
+    res.setHeader(
+      "Strict-Transport-Security",
+      "max-age=63072000; includeSubDomains",
+    );
+    next();
+  });
+
+  // Express advertises itself by default; there is no reason to tell a prober
+  // which framework to look up exploits for.
+  app.disable("x-powered-by");
 
   const corsOrigins = (process.env.CORS_ORIGINS || "http://localhost:3000")
     .split(",")
@@ -174,6 +216,9 @@ async function mainEntryFunction() {
   app.use("/admin", adminOrderRouter);
   app.use("/admin", adminSettingsRouter);
   app.use("/admin", adminDashboardRouter);
+  app.use("/admin", adminStaffRouter);
+  app.use("/admin", adminShopNetworkRouter);
+  app.use("/admin", adminAuditRouter);
 
   app.use(notFound);
   app.use(errorHandler);
