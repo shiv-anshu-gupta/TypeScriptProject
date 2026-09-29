@@ -192,6 +192,13 @@ export const en = {
     onlyLeft: "Only {{count}} left",
     inStock: "In stock",
     outOfStock: "Out of stock",
+    // The photo disclaimer, shown from the (i) on a card. FMCG packaging
+    // changes every few months - new design, festival pack, new weight - so
+    // this is needed even for the shop's own photographs.
+    imageNoteTitle: "About this photo",
+    imageNote:
+      "Product photos are for illustration only. The actual packaging, colour, size or weight may differ.",
+    imageNoteLabel: "About this photo",
     soldPerNote:
       "Sold per {{pack}}. Price will be confirmed by the shop after they review your order.",
     quantity: "Quantity",

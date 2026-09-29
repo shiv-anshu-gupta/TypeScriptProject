@@ -5,7 +5,7 @@
  */
 
 import { memo, useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Alert, Pressable, Text, View } from "react-native";
 import { Image } from "expo-image";
 import { Feather } from "@expo/vector-icons";
 import { useClerk } from "@clerk/clerk-expo";
@@ -123,6 +123,33 @@ function ProductCardView({ product, onPress }: ProductCardProps) {
           // never show the previous product's photo.
           recyclingKey={product.id}
         />
+
+        {/* Photo disclaimer. Top-LEFT: the heart owns top-right and the "+"
+            owns bottom-right, and a fourth corner is the only place left that
+            never covers the product itself.
+
+            An Alert rather than a toast: this is a statement the customer may
+            want to read twice, and a toast slides away on its own. Touches do
+            not bubble in React Native, so tapping it cannot also open the
+            product. */}
+        <Pressable
+          onPress={() =>
+            Alert.alert(t("product.imageNoteTitle"), t("product.imageNote"))
+          }
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={t("product.imageNoteLabel")}
+          className="absolute left-2 top-2 h-7 w-7 items-center justify-center rounded-full bg-card/95 active:opacity-80"
+          style={{
+            elevation: 3,
+            shadowColor: "#000",
+            shadowOpacity: 0.2,
+            shadowRadius: 3,
+            shadowOffset: { width: 0, height: 1 },
+          }}
+        >
+          <Feather name="info" size={14} color="#6b7280" />
+        </Pressable>
 
         {/* Wishlist heart — same action as the one on the details screen.
             Top-right so it never collides with the "+" at bottom-right. */}

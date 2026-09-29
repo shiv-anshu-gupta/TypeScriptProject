@@ -190,6 +190,10 @@ export const hi: Translations = {
     onlyLeft: "सिर्फ़ {{count}} बचे",
     inStock: "उपलब्ध है",
     outOfStock: "स्टॉक में नहीं",
+    imageNoteTitle: "इस तस्वीर के बारे में",
+    imageNote:
+      "सामान की तस्वीरें केवल उदाहरण के लिए हैं। असली पैकेजिंग, रंग, आकार या वज़न अलग हो सकता है।",
+    imageNoteLabel: "तस्वीर के बारे में",
     soldPerNote:
       "प्रति {{pack}} बिकता है। ऑर्डर देखने के बाद दुकान दाम की पुष्टि करेगी।",
     quantity: "मात्रा",
