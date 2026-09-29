@@ -7,6 +7,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   ScrollView,
   Text,
@@ -153,13 +154,36 @@ export function ProductDetailsScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 120 }}
       >
-        <View className="aspect-square w-full bg-muted">
+        <View className="relative aspect-square w-full bg-muted">
           <Image
             source={{ uri: selectedImage || gallery[0] }}
             style={{ width: "100%", height: "100%" }}
             contentFit="cover"
             transition={200}
           />
+
+          {/* The same photo disclaimer as the card, in the same corner, so a
+              customer who learned what it means on the grid does not have to
+              learn it again here. This screen shows the picture far larger,
+              which is exactly where a difference in packaging gets noticed. */}
+          <Pressable
+            onPress={() =>
+              Alert.alert(t("product.imageNoteTitle"), t("product.imageNote"))
+            }
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={t("product.imageNoteLabel")}
+            className="absolute left-3 top-3 h-8 w-8 items-center justify-center rounded-full bg-card/95 active:opacity-80"
+            style={{
+              elevation: 3,
+              shadowColor: "#000",
+              shadowOpacity: 0.2,
+              shadowRadius: 3,
+              shadowOffset: { width: 0, height: 1 },
+            }}
+          >
+            <Feather name="info" size={16} color="#6b7280" />
+          </Pressable>
         </View>
 
         {gallery.length > 1 ? (
