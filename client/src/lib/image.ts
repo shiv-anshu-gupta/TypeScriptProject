@@ -110,6 +110,13 @@ export async function compressImage(
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return file;
+    // White first. The canvas starts fully transparent and the encoder below
+    // is JPEG, which has no alpha - so a PNG with a transparent background
+    // (which is what every background-removal tool produces) would arrive as
+    // a product floating on BLACK. Filling white makes that upload land as
+    // the pack shot it was meant to be.
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, width, height);
     ctx.drawImage(bitmap, 0, 0, width, height);
     bitmap.close?.();
 
