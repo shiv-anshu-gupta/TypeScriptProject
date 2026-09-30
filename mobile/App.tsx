@@ -29,6 +29,7 @@ import { useCustomerAccountStore } from "@/features/customer/account/store";
 import { useDraftListStore } from "@/features/customer/draft-list/store";
 import { usePushNotifications } from "@/features/customer/push/use-push-notifications";
 import { RootNavigator } from "@/navigation/RootNavigator";
+import { AppErrorBoundary } from "@/components/AppErrorBoundary";
 import { Toaster } from "@/components/Toaster";
 import { GroceryListSheet } from "@/components/GroceryListSheet";
 import { QuantitySheetHost } from "@/components/QuantitySheet";
@@ -122,7 +123,7 @@ function Bootstrap() {
  * picker are rendered here directly, which is why neither can navigate and
  * both take a callback instead.
  */
-export default function App() {
+function AppContent() {
   const [isSplashVisible, setIsSplashVisible] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(0);
   // Language gate: apply the saved language, or show the picker on first launch.
@@ -205,5 +206,23 @@ export default function App() {
         </View>
       ) : null}
     </GestureHandlerRootView>
+  );
+}
+
+/**
+ * The real export: the whole app inside the one error boundary.
+ *
+ * @remarks
+ * The boundary sits OUTSIDE every provider and both pre-app screens (splash,
+ * language picker), so a render crash anywhere — a screen, a provider, the
+ * navigator — lands on its bilingual recovery screen instead of unmounting
+ * the app to a white screen. The sheets keep their own closer guard
+ * (`SheetContentGuard`), which catches first for anything inside a sheet.
+ */
+export default function App() {
+  return (
+    <AppErrorBoundary>
+      <AppContent />
+    </AppErrorBoundary>
   );
 }
