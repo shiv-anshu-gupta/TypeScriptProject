@@ -11,6 +11,7 @@ import {
   Pressable,
   ScrollView,
   Text,
+  useWindowDimensions,
   View,
 } from "react-native";
 import { Image } from "expo-image";
@@ -24,6 +25,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useAuth } from "@clerk/clerk-expo";
 import { Feather } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import type { RootStackParamList } from "@/navigation/types";
 import { useCustomerProductDetailsStore } from "@/features/customer/products/details/store";
@@ -76,6 +78,26 @@ type DetailsRoute = RouteProp<RootStackParamList, "ProductDetails">;
  */
 export function ProductDetailsScreen() {
   const { t } = useTranslation();
+
+  /**
+   * Wide enough to put the picture and the facts side by side.
+   *
+   * 600dp is the usual tablet/landscape threshold. Below it the split gives
+   * each column about 170dp on a phone, which breaks a product name across
+   * four lines - which is why the phone apps of every large store stack this
+   * page even though their websites do not.
+   */
+  /**
+   * How much of the bottom of the screen the system already owns.
+   *
+   * Android's three-button navigation bar is 48dp; a gesture bar is smaller;
+   * an older phone has neither. The sticky bar used a hard-coded 32dp, which
+   * is a guess that is wrong on the most common of those three - and the
+   * "add to list" button ended up behind the navigation buttons.
+   */
+  const insets = useSafeAreaInsets();
+  const { width: screenWidth } = useWindowDimensions();
+  const wide = screenWidth >= 600;
   const navigation = useNavigation<Nav>();
   const route = useRoute<DetailsRoute>();
   const { productId } = route.params;
@@ -152,9 +174,27 @@ export function ProductDetailsScreen() {
     <View className="flex-1 bg-background">
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 120 }}
+        // Clears the sticky bar: its own height plus whatever the system
+        // takes below it, so the last row of content is never trapped
+        // underneath.
+        contentContainerStyle={{ paddingBottom: 120 + insets.bottom }}
       >
-        <View className="relative aspect-square w-full bg-white">
+        {/* Wide: picture left, the facts that identify the product right -
+            the layout a desktop store uses. Phone: stacked, but with a
+            shorter picture so the name and the pack size are on screen
+            without scrolling, which is the complaint the side-by-side
+            layout was meant to answer in the first place. */}
+        <View
+          className={wide ? "flex-row items-start gap-4 px-4 pt-4" : undefined}
+        >
+          <View className={wide ? "w-2/5" : "w-full"}>
+        <View
+          className={
+            wide
+              ? "relative aspect-square w-full bg-white"
+              : "relative aspect-[4/3] w-full bg-white"
+          }
+        >
           <Image
             source={{ uri: selectedImage || gallery[0] }}
             style={{ width: "100%", height: "100%" }}
@@ -215,8 +255,9 @@ export function ProductDetailsScreen() {
             ))}
           </ScrollView>
         ) : null}
+          </View>
 
-        <View className="gap-4 px-4 pt-4">
+        <View className={wide ? "flex-1 gap-4" : "gap-4 px-4 pt-4"}>
           <View className="flex-row flex-wrap items-center gap-2">
             <Badge>{product.category?.name}</Badge>
             {product.stock > 0 ? (
@@ -250,7 +291,10 @@ export function ProductDetailsScreen() {
               })}
             </Text>
           </View>
+        </View>
+        </View>
 
+        <View className="gap-4 px-4 pt-4">
           {/* Quantity picker — inline on the details page */}
           {product.stock > 0 ? (
             <View className="gap-2">
@@ -375,7 +419,12 @@ export function ProductDetailsScreen() {
       </ScrollView>
 
       {/* Sticky action bar */}
-      <View className="absolute bottom-0 left-0 right-0 flex-row items-center gap-3 border-t border-border bg-background px-4 pb-8 pt-3">
+      <View
+        className="absolute bottom-0 left-0 right-0 flex-row items-center gap-3 border-t border-border bg-background px-4 pt-3"
+        // Never less than 12: a phone with no system bar still needs the
+        // button to sit off the very edge of the glass.
+        style={{ paddingBottom: Math.max(insets.bottom, 12) }}
+      >
         <Pressable
           onPress={() =>
             toggleWishlist(
