@@ -83,11 +83,11 @@ export function WishlistScreen() {
           }
           className="flex-row items-center gap-3 rounded-2xl border border-border bg-card p-3"
         >
-          <View className="h-20 w-16 overflow-hidden rounded-lg bg-muted">
+          <View className="h-20 w-16 overflow-hidden rounded-lg bg-white">
             <Image
               source={{ uri: item.image }}
               style={{ width: "100%", height: "100%" }}
-              contentFit="cover"
+              contentFit="contain"
             />
           </View>
           <View className="flex-1">

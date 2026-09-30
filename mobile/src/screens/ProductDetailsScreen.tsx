@@ -154,11 +154,15 @@ export function ProductDetailsScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 120 }}
       >
-        <View className="relative aspect-square w-full bg-muted">
+        <View className="relative aspect-square w-full bg-white">
           <Image
             source={{ uri: selectedImage || gallery[0] }}
             style={{ width: "100%", height: "100%" }}
-            contentFit="cover"
+            // contain, not cover: a product must be shown whole. `cover`
+            // fills the box and crops whatever does not fit, which beheads a
+            // tall bottle and trims the sides off a wide packet. The box is
+            // white so a pack shot on white leaves no visible seam.
+            contentFit="contain"
             transition={200}
           />
 
@@ -198,14 +202,14 @@ export function ProductDetailsScreen() {
                 onPress={() => setSelectedImage(uri)}
                 className={
                   selectedImage === uri
-                    ? "h-16 w-16 overflow-hidden rounded-lg border-2 border-primary"
-                    : "h-16 w-16 overflow-hidden rounded-lg border border-border"
+                    ? "h-16 w-16 overflow-hidden rounded-lg border-2 border-primary bg-white"
+                    : "h-16 w-16 overflow-hidden rounded-lg border border-border bg-white"
                 }
               >
                 <Image
                   source={{ uri }}
                   style={{ width: "100%", height: "100%" }}
-                  contentFit="cover"
+                  contentFit="contain"
                 />
               </Pressable>
             ))}
@@ -344,11 +348,11 @@ export function ProductDetailsScreen() {
                     }
                     className="w-36"
                   >
-                    <View className="aspect-[4/5] w-full overflow-hidden rounded-xl bg-muted">
+                    <View className="aspect-[4/5] w-full overflow-hidden rounded-xl bg-white">
                       <Image
                         source={{ uri: getCoverImage(related) }}
                         style={{ width: "100%", height: "100%" }}
-                        contentFit="cover"
+                        contentFit="contain"
                       />
                     </View>
                     <Text

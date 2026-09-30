@@ -104,11 +104,15 @@ function ProductCardView({ product, onPress }: ProductCardProps) {
       // ScrollView and the Shop FlatList cells.
       className="w-full overflow-hidden rounded-2xl border border-border bg-card"
     >
-      <View className="relative aspect-[4/5] w-full bg-muted">
+      <View className="relative aspect-[4/5] w-full bg-white">
         <Image
           source={{ uri: product.image }}
           style={{ width: "100%", height: "100%" }}
-          contentFit="cover"
+          // contain, not cover: a product must be shown whole. `cover`
+          // fills the box and crops whatever does not fit, which beheads a
+          // tall bottle and trims the sides off a wide packet. The box is
+          // white so a pack shot on white leaves no visible seam.
+          contentFit="contain"
           // Deliberately no `transition`. On Android, a cross-fade that is
           // still running when the source changes leaves the picture BLANK -
           // expo/expo#35664, fixed in expo-image 56.0.11, and SDK 54 pins
