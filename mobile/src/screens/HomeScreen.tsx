@@ -4,7 +4,7 @@
  * @packageDocumentation
  */
 
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -64,7 +64,12 @@ export function HomeScreen() {
   const { t } = useTranslation();
   const navigation = useNavigation<Nav>();
   const insets = useSafeAreaInsets();
-  const { data, loading, loadHome } = useCustomerHomeStore((state) => state);
+  // One narrow selector per value — subscribing to the whole store would
+  // re-render this screen on ANY store change (see ShopScreen for the same
+  // pattern).
+  const data = useCustomerHomeStore((state) => state.data);
+  const loading = useCustomerHomeStore((state) => state.loading);
+  const loadHome = useCustomerHomeStore((state) => state.loadHome);
   const displayName = useCustomerDisplayName();
 
   useEffect(() => {
@@ -83,6 +88,36 @@ export function HomeScreen() {
       // blanking the screen, and retries a first load that failed.
       void loadHome({ refresh: true });
     }, [isSignedIn, loadLists, loadHome]),
+  );
+
+  // One object per product, kept until the products change — a fresh object
+  // literal per render would make the memoised ProductCard useless. Same
+  // pattern as ShopScreen.
+  const cards = useMemo(
+    () =>
+      data.recentProducts.map((item) => ({
+        id: item._id,
+        title: item.title,
+        brand: item.brand,
+        image: item.image,
+        unit: item.unit,
+        unitValue: item.unitValue,
+      })),
+    [data.recentProducts],
+  );
+
+  const openProduct = useCallback(
+    (productId: string) => navigation.navigate("ProductDetails", { productId }),
+    [navigation],
+  );
+
+  const renderCard = useCallback(
+    ({ item }: { item: (typeof cards)[number] }) => (
+      <View style={{ width: "48%", marginBottom: 16 }}>
+        <ProductCard product={item} onPress={openProduct} />
+      </View>
+    ),
+    [openProduct],
   );
 
   if (loading) {
@@ -220,8 +255,8 @@ export function HomeScreen() {
   return (
     <FlatList
       className="flex-1 bg-background"
-      data={data.recentProducts}
-      keyExtractor={(item) => item._id}
+      data={cards}
+      keyExtractor={(item) => item.id}
       numColumns={2}
       columnWrapperStyle={{
         justifyContent: "space-between",
@@ -232,23 +267,7 @@ export function HomeScreen() {
       keyboardShouldPersistTaps="handled"
       keyboardDismissMode="on-drag"
       ListHeaderComponent={listHeader}
-      renderItem={({ item }) => (
-        <View style={{ width: "48%", marginBottom: 16 }}>
-          <ProductCard
-            product={{
-              id: item._id,
-              title: item.title,
-              brand: item.brand,
-              image: item.image,
-              unit: item.unit,
-              unitValue: item.unitValue,
-            }}
-            onPress={() =>
-              navigation.navigate("ProductDetails", { productId: item._id })
-            }
-          />
-        </View>
-      )}
+      renderItem={renderCard}
     />
   );
 }
