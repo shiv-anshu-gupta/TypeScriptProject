@@ -223,12 +223,13 @@ export function GroceryListEditor({
               // Same reasoning as the item field above: the rule between the
               // two columns is a border here, so there is no 1px strip
               // between them for a finger to get caught on.
-              // text-center is gone on purpose, and it is the only thing that
-              // differed between this field and the item field beside it -
-              // which takes a drag and passes it to the scroll, while this one
-              // swallows the first two or three. Left-aligned like its
-              // neighbour until that is ruled in or out.
-              className="h-full border-l border-[#c9d9ea]/50 px-2 text-sm text-[#26303a]"
+              // Centred, which is how a quantity reads best in a narrow
+              // column. It was briefly left-aligned while the scrolling bug
+              // was being narrowed down, because it was the only thing that
+              // differed from the item field; the culprit turned out to be
+              // the delete button's hitSlop reaching into this column, so
+              // the alignment comes back.
+              className="h-full border-l border-[#c9d9ea]/50 px-2 text-center text-sm text-[#26303a]"
             />
 
             <View className="w-8 items-center">
