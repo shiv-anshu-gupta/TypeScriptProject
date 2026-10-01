@@ -223,14 +223,24 @@ export function GroceryListEditor({
               // Same reasoning as the item field above: the rule between the
               // two columns is a border here, so there is no 1px strip
               // between them for a finger to get caught on.
-              className="h-full border-l border-[#c9d9ea]/50 px-2 text-center text-sm text-[#26303a]"
+              // text-center is gone on purpose, and it is the only thing that
+              // differed between this field and the item field beside it -
+              // which takes a drag and passes it to the scroll, while this one
+              // swallows the first two or three. Left-aligned like its
+              // neighbour until that is ruled in or out.
+              className="h-full border-l border-[#c9d9ea]/50 px-2 text-sm text-[#26303a]"
             />
 
             <View className="w-8 items-center">
               {filled ? (
                 <Pressable
                   onPress={() => removeRow(row.id)}
-                  hitSlop={10}
+                  // Was 10 on every side, which pushed this button's touch
+                  // area 10dp into the quantity field next to it and 10dp
+                  // into the rows above and below. Vertical only now: the
+                  // button stays easy to hit without reaching sideways into
+                  // the field a finger is trying to scroll from.
+                  hitSlop={{ top: 8, bottom: 8, left: 0, right: 8 }}
                   accessibilityRole="button"
                   accessibilityLabel={t("home.removeItem")}
                 >
