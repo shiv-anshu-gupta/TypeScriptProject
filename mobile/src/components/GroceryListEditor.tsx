@@ -177,8 +177,6 @@ export function GroceryListEditor({
                 {index + 1}
               </Text>
             </Pressable>
-            <View className="ml-2 h-full w-px bg-[#d9a89b]/60" />
-
             <TextInput
               ref={(input) => {
                 nameRefs.current.set(row.id, input);
@@ -196,10 +194,15 @@ export function GroceryListEditor({
               placeholderTextColor="#b8a89a"
               maxLength={60}
               style={{ flex: 2.5 }}
-              className="h-full px-3 text-sm text-[#26303a]"
+              // The red margin rule is this field's own left border, not a
+              // 1px <View> beside it. A bare View between two inputs is a
+              // seam: a finger landing on it leaves Android to decide which
+              // of the three the touch belongs to, and the first drags are
+              // spent on that decision instead of scrolling. As a border
+              // there is nothing between the fields to land on, and the row
+              // looks exactly the same.
+              className="ml-2 h-full border-l border-[#d9a89b]/60 px-3 text-sm text-[#26303a]"
             />
-
-            <View className="h-full w-px bg-[#c9d9ea]/50" />
 
             <TextInput
               ref={(input) => {
@@ -217,7 +220,10 @@ export function GroceryListEditor({
               // A quantity is "2 kg" / "1 packet" — never 20 characters.
               maxLength={12}
               style={{ flex: 1.5 }}
-              className="h-full px-2 text-center text-sm text-[#26303a]"
+              // Same reasoning as the item field above: the rule between the
+              // two columns is a border here, so there is no 1px strip
+              // between them for a finger to get caught on.
+              className="h-full border-l border-[#c9d9ea]/50 px-2 text-center text-sm text-[#26303a]"
             />
 
             <View className="w-8 items-center">

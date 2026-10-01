@@ -28,6 +28,16 @@ import {
   type SheetScrollViewRef,
 } from "@/components/ui/Sheet";
 
+/**
+ * The shortest the paper is ever allowed to be.
+ *
+ * Filling the viewport alone gives about fifteen lines on a common phone,
+ * which is a page the customer reaches the end of while still writing. Thirty
+ * is a page they scroll rather than finish. `ensureRows` only ever grows the
+ * list, so this is a floor, never a truncation of what they have written.
+ */
+const MIN_PAPER_ROWS = 30;
+
 const SCROLL_PAD_TOP = 12; // space above the paper inside the scroll area
 const FOCUS_MARGIN = 20; // keep the line being typed in this far from the edges
 
@@ -191,9 +201,12 @@ export function GroceryListSheet() {
             // tallest the page gets.
             if (!keyboardOpen.current) {
               ensureRows(
-                Math.ceil(
-                  (viewport - SCROLL_PAD_TOP - PAPER_HEADER_HEIGHT) /
-                    ROW_HEIGHT,
+                Math.max(
+                  MIN_PAPER_ROWS,
+                  Math.ceil(
+                    (viewport - SCROLL_PAD_TOP - PAPER_HEADER_HEIGHT) /
+                      ROW_HEIGHT,
+                  ),
                 ),
               );
             }
