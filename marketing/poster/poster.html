@@ -94,23 +94,26 @@ h1 em{font-style:normal;color:#dde8e7}
 .foot b{color:#fff;font-weight:800}
 
 /* the list paper, small, as proof this is about a grocery list */
-/* Sits in the middle of the sheet, between the promise and the QR. It was
-   pinned to the top-right corner, where it covered the end of the headline
-   and left the centre of the poster empty. */
-.proof{
-  margin:11mm 0 0;width:74mm;transform:rotate(-4deg);
-  border-radius:4mm;overflow:hidden;background:var(--paper);
-  box-shadow:0 5mm 14mm rgba(0,0,0,.4);opacity:.97;
+/* The four scenes. Illustrations are unDraw's, repainted into this shop's
+   palette by recolour.cjs - their licence allows commercial use and
+   modification with no attribution.
+
+   Each sits on a light card because the sheet is dark and these drawings
+   carry their own near-black line work, which would vanish on it. */
+.journey{display:flex;gap:3.5mm;width:100%;margin:9mm 0 0}
+.scene{
+  flex:1;background:#fff;border-radius:4.5mm;padding:3.5mm 2.5mm 4mm;
+  display:flex;flex-direction:column;align-items:center;gap:2mm;
+  box-shadow:0 3mm 9mm rgba(0,0,0,.3);
 }
-.proof .ph{display:flex;align-items:center;height:7mm;background:var(--paperhead);
-  border-bottom:.8mm solid var(--rule);font-size:2.6mm;font-weight:800;color:var(--ocean)}
-.proof .pr{display:flex;align-items:center;height:8.4mm;border-bottom:.5mm solid var(--rule);background:#fff}
-.proof .pr:nth-child(odd){background:var(--paperrow)}
-.proof .n{width:6mm;text-align:center;font-size:2.6mm;color:#a89b78}
-.proof .it{flex:2.4;padding:0 2.4mm;margin-left:1.4mm;border-left:.5mm solid rgba(217,168,155,.6);
-  font-family:"Kalam",cursive;font-weight:700;font-size:4mm;color:var(--penink)}
-.proof .qt{flex:1.4;text-align:center;border-left:.5mm solid rgba(201,217,234,.5);
-  font-family:"Kalam",cursive;font-weight:700;font-size:3.6mm;color:var(--penink)}
+.scene .art{width:100%;height:26mm;display:flex;align-items:center;justify-content:center}
+.scene .art img{max-width:100%;max-height:100%;display:block}
+.scene .step{
+  width:6.5mm;height:6.5mm;border-radius:999px;background:var(--terracotta);color:#fff;
+  display:grid;place-items:center;font-family:"Baloo 2",sans-serif;font-weight:800;font-size:3.8mm;
+}
+.scene .t{font-family:"Baloo 2",sans-serif;font-weight:800;font-size:4.6mm;color:var(--ocean);text-align:center;line-height:1.15}
+.scene .d{font-size:3.2mm;color:var(--mutedfg);font-weight:600;text-align:center;line-height:1.3}
 </style>
 </head>
 <body>
@@ -135,12 +138,32 @@ h1 em{font-style:normal;color:#dde8e7}
     हम दाम लगाकर भेजेंगे — आकर ले जाइए।
   </p>
 
-  <!-- the ruled list, peeking in from the side -->
-  <div class="proof">
-    <div class="ph"><span class="n">#</span><span class="it" style="font-family:Mukta">आइटम</span><span class="qt" style="font-family:Mukta">मात्रा</span></div>
-    <div class="pr"><span class="n">1</span><span class="it">आटा</span><span class="qt">5 किलो</span></div>
-    <div class="pr"><span class="n">2</span><span class="it">चीनी</span><span class="qt">2 किलो</span></div>
-    <div class="pr"><span class="n">3</span><span class="it">चाय</span><span class="qt">250 ग्राम</span></div>
+  <!-- write · price · pack · collect -->
+  <div class="journey">
+    <div class="scene">
+      <div class="art"><img src="art/chore-list_ylw0.svg" alt="सूची लिखिए"></div>
+      <div class="step">1</div>
+      <div class="t">सूची लिखिए</div>
+      <div class="d">घर बैठे, फ़ोन पर</div>
+    </div>
+    <div class="scene">
+      <div class="art"><img src="art/receipt_oemh.svg" alt="दाम आ जाएँगे"></div>
+      <div class="step">2</div>
+      <div class="t">दाम आ जाएँगे</div>
+      <div class="d">दुकान से, आपके फ़ोन पर</div>
+    </div>
+    <div class="scene">
+      <div class="art"><img src="art/groceries_4via.svg" alt="दुकान पैक करेगी"></div>
+      <div class="step">3</div>
+      <div class="t">दुकान पैक करेगी</div>
+      <div class="d">सब तैयार रखा जाएगा</div>
+    </div>
+    <div class="scene">
+      <div class="art"><img src="art/happy-customer_4h84.svg" alt="आकर ले जाइए"></div>
+      <div class="step">4</div>
+      <div class="t">आकर ले जाइए</div>
+      <div class="d">पैसे दुकान पर दीजिए</div>
+    </div>
   </div>
 
   <div class="scan">
