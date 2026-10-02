@@ -71,11 +71,11 @@ const SCALE = 3.125; // -> 2480 x 3509, which is A4 at 300 DPI
   // The four illustrations load as <img>; an SVG that failed to load is an
   // invisible hole, not an error, so count them before printing.
   const art = await page.evaluate(() =>
-    [...document.querySelectorAll(".hero img")].map((i) => i.naturalWidth > 0));
+    [...document.querySelectorAll(".sheet img")].map((i) => i.naturalWidth > 0));
   if (!art.length || art.some((ok) => !ok)) {
-    throw new Error(`hero art: ${art.filter(Boolean).length} of ${art.length} loaded`);
+    throw new Error(`art: ${art.filter(Boolean).length} of ${art.length} images loaded`);
   }
-  console.log("art: hero loaded");
+  console.log(`art: all ${art.length} images loaded`);
 
   // A poster whose whole job is to be scanned must not go out without a code.
   const qrOk = await page.evaluate(() => !!document.querySelector("#qr svg"));
