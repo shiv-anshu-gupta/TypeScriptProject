@@ -253,7 +253,7 @@ export function ShopScreen() {
 
   const renderCard = useCallback(
     ({ item }: { item: (typeof cards)[number] }) => (
-      <View style={{ width: "48.5%", marginBottom: 12 }}>
+      <View style={{ width: "48.5%", marginBottom: 10 }}>
         <ProductCard product={item} onPress={openProduct} />
       </View>
     ),
@@ -394,9 +394,9 @@ export function ShopScreen() {
               // The grid is two columns of fixed-shape cards: a screenful is
               // about 6, so render a screenful and a bit at first and keep a
               // few screens either side rather than the default ten.
-              initialNumToRender={8}
+              initialNumToRender={12}
               windowSize={7}
-              maxToRenderPerBatch={8}
+              maxToRenderPerBatch={10}
             />
           )}
         </View>

@@ -104,7 +104,10 @@ function ProductCardView({ product, onPress }: ProductCardProps) {
       // ScrollView and the Shop FlatList cells.
       className="w-full overflow-hidden rounded-2xl border border-border bg-card"
     >
-      <View className="relative aspect-[4/5] w-full bg-white">
+      {/* 4:3, not 4:5. A taller box fitted four cards on a screen; this
+          fits six, and `contain` below means nothing is cropped to do it -
+          the product just sits in a wider frame. */}
+      <View className="relative aspect-[4/3] w-full bg-white">
         <Image
           source={{ uri: product.image }}
           style={{ width: "100%", height: "100%" }}
@@ -203,15 +206,21 @@ function ProductCardView({ product, onPress }: ProductCardProps) {
         </Pressable>
       </View>
 
-      <View className="gap-1 p-3">
-        <Text className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+      {/* Tightened to match: same three lines, less air around them. The
+          title still wraps to two, because a product name that is cut off
+          is worse than a card that is 6dp taller. */}
+      <View className="gap-0.5 px-2.5 pb-2.5 pt-2">
+        <Text className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
           {product.brand}
         </Text>
-        <Text numberOfLines={2} className="text-sm font-medium text-foreground">
+        <Text
+          numberOfLines={2}
+          className="text-[13px] font-medium leading-[17px] text-foreground"
+        >
           {product.title}
         </Text>
         {packLabel ? (
-          <Text className="mt-1 text-xs text-muted-foreground">
+          <Text className="text-[11px] text-muted-foreground">
             {t("shop.perPack", { pack: packLabel })}
           </Text>
         ) : null}
