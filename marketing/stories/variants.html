@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<title>sKirana — banner variants</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Mukta:wght@400;600;700;800&family=Kalam:wght@400;700&display=block">
+<style>
+/* ───────────────────────────────────────────────────────────────
+   Six takes on the same job: make someone install the app.
+
+   Open plain  → six 1080x1920 frames stacked, which render.cjs clips.
+   Open ?grid=1 → all six shrunk onto one screen, to choose from.
+   ─────────────────────────────────────────────────────────────── */
+:root{
+  --sand:#F0F4EC; --ink:#1f2a2e; --ocean:#3c5a64; --sandtint:#efe7d8;
+  --accent:#dde8e7; --border:#e6dcc9; --mutedfg:#6f6857;
+  --terracotta:#c0492f; --sage:#4f7a4d;
+  --paper:#fdf8ea; --paperrow:#fdfbf7; --paperhead:#f5f0e8;
+  --rule:#c9d9ea; --margin:#d9a89b; --pencil:#8b7a5e; --faint:#b8a89a;
+  --penink:#26303a;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#3a3a3a;font-family:"Mukta","Nirmala UI",sans-serif}
+
+.frame{position:relative;width:1080px;height:1920px;overflow:hidden;background:var(--sand)}
+.pad{position:absolute;inset:250px 70px 320px;display:flex;flex-direction:column}
+
+/* the chooser */
+body.grid{display:flex;flex-wrap:wrap;gap:30px;padding:30px;align-items:flex-start}
+body.grid .shelf{width:324px}
+body.grid .frame{zoom:.3;border-radius:40px;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+body.grid .tag{color:#fff;font-weight:700;font-size:15px;margin-top:10px}
+body.grid .tag span{display:block;color:#bdbdbd;font-weight:400;font-size:13px;margin-top:2px}
+body:not(.grid) .tag{display:none}
+body:not(.grid) .shelf{margin:0}
+
+/* ── shared pieces ──────────────────────────────────────────── */
+/* No letter-spacing here: Devanagari matras detach from their letter and
+   "पहले" reads as "प ह ले". Only the Latin wordmark gets tracking. */
+.kicker{font-weight:800;font-size:30px}
+.kicker.latin{letter-spacing:.16em;text-transform:uppercase}
+h1{font-family:"Baloo 2","Nirmala UI",sans-serif;font-weight:800;line-height:1.04;letter-spacing:-.015em}
+.cta{display:inline-flex;align-items:center;gap:18px;border-radius:999px;
+  padding:28px 54px;font-family:"Baloo 2",sans-serif;font-weight:800;font-size:44px}
+.cta svg{width:40px;height:40px;flex:none}
+
+.phone{border-radius:44px;background:#fff;padding:13px;border:3px solid rgba(0,0,0,.08);
+  box-shadow:0 40px 80px rgba(0,0,0,.32), 0 8px 20px rgba(0,0,0,.14)}
+.phone .screen{border-radius:33px;overflow:hidden;background:var(--sand)}
+.appbar{background:var(--ocean);color:#fff;padding:18px 20px;font-weight:700;font-size:22px;text-align:left}
+.paper{background:var(--paper);margin:16px;border-radius:8px;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.12)}
+.paper .ph{display:flex;align-items:center;height:40px;background:var(--paperhead);
+  border-bottom:3px solid var(--rule);font-size:15px;font-weight:800;color:var(--ocean)}
+.paper .pr{display:flex;align-items:center;height:50px;border-bottom:2px solid var(--rule);background:#fff}
+.paper .pr:nth-child(odd){background:var(--paperrow)}
+.paper .n{width:40px;text-align:center;font-size:16px;color:#a89b78}
+.paper .it{flex:2.5;padding:0 14px;margin-left:8px;border-left:2px solid rgba(217,168,155,.6);
+  font-size:23px;color:var(--penink);font-family:"Kalam",cursive;font-weight:700}
+.paper .qt{flex:1.5;padding:0 8px;text-align:center;border-left:2px solid rgba(201,217,234,.5);
+  font-size:21px;color:var(--penink);font-family:"Kalam",cursive;font-weight:700}
+.paper .blank{color:var(--faint);font-family:"Mukta",sans-serif;font-weight:400;font-size:18px}
+.sendbtn{margin:0 16px 16px;background:var(--ocean);color:#fff;border-radius:14px;
+  text-align:center;padding:17px;font-weight:800;font-size:22px}
+
+/* ══ A · DARK ═══════════════════════════════════════════════ */
+.A{background:#1f2a2e}
+.A::before{content:"";position:absolute;inset:0;
+  background:radial-gradient(760px 620px at 76% 20%, rgba(60,90,100,.75), transparent 62%)}
+.A .pad{align-items:center;text-align:center;justify-content:center}
+.A .kicker{color:#c0492f}
+.A h1{font-size:112px;color:#fff;margin-top:22px}
+.A h1 em{font-style:normal;color:#dde8e7}
+.A .sub{color:#b9c6c4;font-size:38px;font-weight:600;margin-top:26px;line-height:1.4}
+.A .phone{width:400px;margin:54px 0 0;transform:rotate(-5deg)}
+.A .cta{background:#c0492f;color:#fff;margin-top:58px;box-shadow:0 18px 40px rgba(192,73,47,.45)}
+
+/* ══ B · DIAGONAL ═══════════════════════════════════════════ */
+.B{background:var(--sand)}
+.B .wedge{position:absolute;inset:0 0 auto 0;height:1080px;background:var(--terracotta);
+  clip-path:polygon(0 0,100% 0,100% 78%,0 100%)}
+.B .pad{justify-content:flex-start;align-items:flex-start;text-align:left}
+.B .kicker{color:#f6d9d1}
+.B h1{font-size:104px;color:#fff;margin-top:20px}
+.B .phone{width:430px;align-self:center;margin-top:66px;transform:rotate(4deg)}
+.B .foot{margin-top:auto;display:flex;flex-direction:column;align-items:flex-start;gap:20px}
+.B .sub{font-size:38px;font-weight:700;color:var(--ocean);line-height:1.35}
+.B .cta{background:var(--ocean);color:#fff}
+
+/* ══ C · THE PAPER ══════════════════════════════════════════ */
+.C{background:var(--paper)}
+.C .lines{position:absolute;inset:0;
+  background:repeating-linear-gradient(to bottom,transparent 0 83px,rgba(201,217,234,.85) 83px 86px)}
+.C .redline{position:absolute;top:0;bottom:0;left:150px;width:4px;background:rgba(217,168,155,.85)}
+.C .pad{left:200px;justify-content:center}
+.C .hand{font-family:"Kalam",cursive;font-weight:700;color:var(--penink);font-size:70px;line-height:1.23}
+.C .hand .tick{color:var(--sage)}
+.C h1{font-family:"Baloo 2",sans-serif;font-size:96px;color:var(--ocean);margin:52px 0 0}
+.C .sub{font-size:36px;color:var(--mutedfg);font-weight:600;margin-top:24px;line-height:1.4}
+.C .cta{background:var(--terracotta);color:#fff;margin-top:62px;align-self:flex-start}
+
+/* ══ D · THE PRICE ══════════════════════════════════════════ */
+.D{background:var(--ocean)}
+.D .pad{align-items:center;text-align:center;justify-content:center}
+.D .kicker{color:#9fb6b4}
+.D .big{font-family:"Baloo 2",sans-serif;font-weight:800;font-size:260px;color:#fff;line-height:.95;margin-top:8px}
+.D .strike{font-size:42px;color:#9fb6b4;font-weight:700;margin-top:10px}
+.D h1{font-size:72px;color:#dde8e7;margin-top:46px}
+.D .card{background:#fff;border-radius:28px;padding:30px 36px;margin-top:44px;width:100%;
+  box-shadow:0 26px 60px rgba(0,0,0,.3)}
+.D .line{display:flex;justify-content:space-between;font-size:32px;padding:13px 0;
+  border-bottom:2px dashed var(--border);color:var(--ink);font-weight:600}
+.D .line:last-child{border:0;font-weight:800;color:var(--ocean);font-size:38px}
+.D .cta{background:var(--terracotta);color:#fff;margin-top:52px}
+
+/* ══ E · BEFORE / AFTER ═════════════════════════════════════ */
+.E{background:var(--sand);display:flex;flex-direction:column}
+.E .half{flex:1;position:relative;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:26px;padding:0 80px;text-align:center}
+.E .top{background:#e7e2d6}
+.E .top .label{color:#9a8f7c}
+.E .top .what{font-family:"Baloo 2",sans-serif;font-weight:800;font-size:88px;color:#6f6857;line-height:1.1}
+.E .queue{display:flex;gap:16px;margin-top:6px}
+.E .queue i{display:block;width:62px;height:150px;border-radius:31px 31px 10px 10px;background:#c9c0ad}
+.E .bot{background:var(--ocean)}
+.E .bot .label{color:#9fb6b4}
+.E .bot .what{font-family:"Baloo 2",sans-serif;font-weight:800;font-size:82px;color:#fff;line-height:1.1}
+.E .label{font-weight:800;font-size:30px}
+.E .bot .phone{width:300px;border-radius:34px;padding:9px}
+.E .bot .phone .screen{border-radius:26px}
+.E .bot .cta{background:var(--terracotta);color:#fff;font-size:38px;padding:22px 44px}
+.E .vs{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:3;
+  width:116px;height:116px;border-radius:999px;background:var(--terracotta);color:#fff;
+  display:grid;place-items:center;font-family:"Baloo 2",sans-serif;font-weight:800;font-size:40px;
+  box-shadow:0 14px 34px rgba(0,0,0,.3)}
+
+/* ══ F · THE SHELF ══════════════════════════════════════════ */
+.F{background:var(--sandtint)}
+.F .tiles{position:absolute;inset:0;display:grid;grid-template-columns:repeat(4,1fr);
+  grid-auto-rows:270px;gap:22px;padding:22px;opacity:.5}
+.F .tiles div{border-radius:26px;background:#fff;display:grid;place-items:center;
+  font-family:"Kalam",cursive;font-weight:700;font-size:40px;color:#b9ab93}
+.F .scrim{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(240,244,236,.2),rgba(240,244,236,.96) 46%)}
+.F .pad{justify-content:flex-end;align-items:center;text-align:center}
+.F .kicker{color:var(--terracotta)}
+.F h1{font-size:106px;color:var(--ocean);margin-top:18px}
+.F .sub{font-size:38px;color:var(--mutedfg);font-weight:600;margin-top:24px;line-height:1.4}
+.F .cta{background:var(--ocean);color:#fff;margin-top:52px}
+</style>
+</head>
+<body>
+
+<!-- ══════════ A · DARK ══════════ -->
+<div class="shelf">
+<section class="frame A">
+  <div class="pad">
+    <div class="kicker latin">sKirana</div>
+    <h1>लिस्ट भेजो।<br><em>दाम आ जाएँगे।</em></h1>
+    <p class="sub">आपकी अपनी दुकान से — आपके अपने दाम।</p>
+    <div class="phone">
+      <div class="screen">
+        <div class="appbar">मेरी सूची</div>
+        <div class="paper">
+          <div class="ph"><span class="n">#</span><span class="it" style="font-family:Mukta">आइटम</span><span class="qt" style="font-family:Mukta">मात्रा</span></div>
+          <div class="pr"><span class="n">1</span><span class="it">आटा</span><span class="qt">5 किलो</span></div>
+          <div class="pr"><span class="n">2</span><span class="it">चीनी</span><span class="qt">2 किलो</span></div>
+          <div class="pr"><span class="n">3</span><span class="it blank">लिखिए…</span><span class="qt"></span></div>
+        </div>
+        <div class="sendbtn">सूची भेजें</div>
+      </div>
+    </div>
+    <div class="cta"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 20h16"/></svg>अभी install करें</div>
+  </div>
+</section>
+<div class="tag">A · गहरा<span>सबसे ज़्यादा ध्यान खींचता है</span></div>
+</div>
+
+<!-- ══════════ B · DIAGONAL ══════════ -->
+<div class="shelf">
+<section class="frame B">
+  <div class="wedge"></div>
+  <div class="pad">
+    <div class="kicker latin">sKirana</div>
+    <h1>लाइन में<br>क्यों खड़े हों?</h1>
+    <div class="phone">
+      <div class="screen">
+        <div class="appbar">दाम आ गए</div>
+        <div class="paper">
+          <div class="ph"><span class="n">#</span><span class="it" style="font-family:Mukta">आइटम</span><span class="qt" style="font-family:Mukta">दाम</span></div>
+          <div class="pr"><span class="n">1</span><span class="it">आटा</span><span class="qt" style="font-family:Mukta;font-weight:800;color:#3c5a64">₹240</span></div>
+          <div class="pr"><span class="n">2</span><span class="it">चीनी</span><span class="qt" style="font-family:Mukta;font-weight:800;color:#3c5a64">₹92</span></div>
+          <div class="pr"><span class="n">3</span><span class="it">चाय</span><span class="qt" style="font-family:Mukta;font-weight:800;color:#3c5a64">₹135</span></div>
+        </div>
+        <div class="sendbtn" style="background:#4f7a4d">कुल ₹467 · तैयार है</div>
+      </div>
+    </div>
+    <div class="foot">
+      <p class="sub">सूची भेजिए, दाम देखिए,<br>फिर आराम से ले जाइए।</p>
+      <div class="cta"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 20h16"/></svg>मुफ़्त install</div>
+    </div>
+  </div>
+</section>
+<div class="tag">B · तिरछा<span>चटख रंग, सवाल से शुरू</span></div>
+</div>
+
+<!-- ══════════ C · THE PAPER ══════════ -->
+<div class="shelf">
+<section class="frame C">
+  <div class="lines"></div><div class="redline"></div>
+  <div class="pad">
+    <div class="hand">आटा — 5 किलो<br>चीनी — 2 किलो<br>चाय — 250 ग्राम<br><span class="tick">✓ भेज दी</span></div>
+    <h1>काग़ज़ वाली लिस्ट,<br>अब फ़ोन से</h1>
+    <p class="sub">वही तरीक़ा जो आप सालों से जानते हैं —<br>बस लाइन में खड़े हुए बिना।</p>
+    <div class="cta"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 20h16"/></svg>मुफ़्त install</div>
+  </div>
+</section>
+<div class="tag">C · काग़ज़<span>सबसे अपनापन, कम तड़क-भड़क</span></div>
+</div>
+
+<!-- ══════════ D · THE PRICE ══════════ -->
+<div class="shelf">
+<section class="frame D">
+  <div class="pad">
+    <div class="kicker">दाम पहले, सामान बाद में</div>
+    <div class="big">₹467</div>
+    <div class="strike">सामान उठाने से पहले ही पता</div>
+    <h1>कोई चौंकाने<br>वाला बिल नहीं</h1>
+    <div class="card">
+      <div class="line"><span>आटा · 5 किलो</span><span>₹240</span></div>
+      <div class="line"><span>चीनी · 2 किलो</span><span>₹92</span></div>
+      <div class="line"><span>ताज़ा चाय · 250 ग्राम</span><span>₹135</span></div>
+      <div class="line"><span>कुल</span><span>₹467</span></div>
+    </div>
+    <div class="cta"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 20h16"/></svg>मुफ़्त install</div>
+  </div>
+</section>
+<div class="tag">D · दाम<span>एक बड़ा अंक, साफ़ फ़ायदा</span></div>
+</div>
+
+<!-- ══════════ E · BEFORE / AFTER ══════════ -->
+<div class="shelf">
+<section class="frame E">
+  <div class="half top">
+    <div class="label">पहले</div>
+    <div class="queue"><i></i><i></i><i></i><i></i></div>
+    <div class="what">दुकान पर<br>लाइन</div>
+  </div>
+  <div class="vs">अब</div>
+  <div class="half bot">
+    <div class="phone">
+      <div class="screen">
+        <div class="appbar" style="font-size:17px;padding:13px 15px">दाम आ गए</div>
+        <div class="paper" style="margin:11px">
+          <div class="pr" style="height:38px"><span class="n" style="width:28px;font-size:12px">1</span><span class="it" style="font-size:17px;padding:0 10px;margin-left:5px">आटा</span><span class="qt" style="font-size:16px;font-family:Mukta;font-weight:800;color:#3c5a64">₹240</span></div>
+          <div class="pr" style="height:38px"><span class="n" style="width:28px;font-size:12px">2</span><span class="it" style="font-size:17px;padding:0 10px;margin-left:5px">चीनी</span><span class="qt" style="font-size:16px;font-family:Mukta;font-weight:800;color:#3c5a64">₹92</span></div>
+          <div class="pr" style="height:38px"><span class="n" style="width:28px;font-size:12px">3</span><span class="it" style="font-size:17px;padding:0 10px;margin-left:5px">चाय</span><span class="qt" style="font-size:16px;font-family:Mukta;font-weight:800;color:#3c5a64">₹135</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="what">सूची भेजी,<br>सामान तैयार</div>
+    <div class="cta"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 20h16"/></svg>मुफ़्त install</div>
+  </div>
+</section>
+<div class="tag">E · पहले / अब<span>तुलना — सबसे तेज़ समझ आता है</span></div>
+</div>
+
+<!-- ══════════ F · THE SHELF ══════════ -->
+<div class="shelf">
+<section class="frame F">
+  <div class="tiles">
+    <div>आटा</div><div>चीनी</div><div>चाय</div><div>तेल</div>
+    <div>दाल</div><div>साबुन</div><div>नमक</div><div>बिस्किट</div>
+    <div>मसाले</div><div>चावल</div><div>घी</div><div>पापड़</div>
+    <div>शैम्पू</div><div>बेसन</div><div>मुनक्का</div><div>बादाम</div>
+    <div>नूडल्स</div><div>गुड़</div><div>सरसों</div><div>पोहा</div>
+    <div>सूजी</div><div>इलायची</div><div>टूथपेस्ट</div><div>अगरबत्ती</div>
+    <div>काजू</div><div>मैदा</div><div>सौंफ़</div><div>हल्दी</div>
+  </div>
+  <div class="scrim"></div>
+  <div class="pad">
+    <div class="kicker">पूरी दुकान</div>
+    <h1>जो चाहिए,<br>लिख भेजिए</h1>
+    <p class="sub">सूची में कुछ भी लिखिए — दुकान में है तो<br>दाम लगाकर भेज दिया जाएगा।</p>
+    <div class="cta"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 20h16"/></svg>मुफ़्त install</div>
+  </div>
+</section>
+<div class="tag">F · दुकान<span>सामान की भरमार, चुनाव का एहसास</span></div>
+</div>
+
+<script>
+  if (new URLSearchParams(location.search).has("grid")) document.body.classList.add("grid");
+</script>
+</body>
+</html>

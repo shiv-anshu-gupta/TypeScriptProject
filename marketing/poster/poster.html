@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<title>sKirana — launch poster (A4)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Mukta:wght@400;600;700;800&family=Kalam:wght@700&display=block">
+<style>
+/* ───────────────────────────────────────────────────────────────
+   One A4 launch poster. Print it, stick it by the counter.
+
+   Sized in millimetres, not pixels, so the same file is correct at
+   any DPI: render.cjs prints it to PDF at A4 and screenshots it at
+   300 DPI for WhatsApp. 210 x 297mm, with a 12mm quiet margin that
+   no printer will trim into.
+
+   TO EDIT THE SHOP'S DETAILS, change only the four lines marked
+   SHOP DETAIL below.
+   ─────────────────────────────────────────────────────────────── */
+@page { size: A4; margin: 0; }
+
+:root{
+  --sand:#F0F4EC; --ink:#1f2a2e; --ocean:#3c5a64; --sandtint:#efe7d8;
+  --accent:#dde8e7; --border:#e6dcc9; --mutedfg:#6f6857;
+  --terracotta:#c0492f;
+  --paper:#fdf8ea; --paperrow:#fdfbf7; --paperhead:#f5f0e8;
+  --rule:#c9d9ea; --penink:#26303a; --faint:#b8a89a;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{background:#666;font-family:"Mukta","Nirmala UI",sans-serif}
+
+.sheet{
+  position:relative;width:210mm;height:297mm;overflow:hidden;
+  background:var(--ink);color:#fff;
+  display:flex;flex-direction:column;align-items:center;
+  padding:18mm 14mm 12mm;
+}
+/* a soft pool of the brand colour so the dark ground is not flat */
+.sheet::before{
+  content:"";position:absolute;inset:0;
+  background:radial-gradient(150mm 120mm at 76% 22%, rgba(60,90,100,.85), transparent 64%),
+             radial-gradient(120mm 100mm at 12% 88%, rgba(192,73,47,.22), transparent 62%);
+}
+.sheet > *{position:relative}
+
+/* ── the shop, top ─────────────────────────────────────────── */
+.shop{display:flex;align-items:center;gap:4mm}
+.shop .mark{
+  width:16mm;height:16mm;border-radius:4.5mm;background:#fff;color:var(--ocean);
+  display:grid;place-items:center;font-family:"Baloo 2",sans-serif;font-weight:800;font-size:10mm;line-height:1;
+}
+/* SHOP DETAIL 1 — the shop's name, as it should read on the poster */
+.shop .name{font-family:"Baloo 2",sans-serif;font-weight:800;font-size:9mm;color:#fff}
+.shop .sub{font-size:3.6mm;color:#9fb0ae;font-weight:600;margin-top:.6mm}
+
+/* ── the announcement ──────────────────────────────────────── */
+.kicker{
+  margin-top:9mm;color:#fff;background:var(--terracotta);
+  border-radius:999px;padding:2.4mm 7mm;font-weight:800;font-size:4.6mm;
+}
+h1{
+  font-family:"Baloo 2","Nirmala UI",sans-serif;font-weight:800;
+  font-size:21mm;line-height:1.06;text-align:center;margin-top:7mm;letter-spacing:-.01em;
+}
+h1 em{font-style:normal;color:#dde8e7}
+.lede{
+  text-align:center;font-size:6.4mm;line-height:1.42;color:#c3d0ce;
+  font-weight:600;margin-top:6mm;max-width:150mm;
+}
+
+/* ── the scan block: the whole point of a printed poster ───── */
+.scan{
+  margin-top:auto;background:#fff;border-radius:7mm;color:var(--ink);
+  width:100%;padding:8mm 9mm;display:flex;align-items:center;gap:8mm;
+  box-shadow:0 6mm 16mm rgba(0,0,0,.34);
+}
+.scan .qr{width:46mm;height:46mm;flex:none}
+.scan .qr svg{width:100%;height:100%;display:block}
+.scan .words .how{font-family:"Baloo 2",sans-serif;font-weight:800;font-size:8.4mm;line-height:1.14;color:var(--ocean)}
+.scan .words .p{font-size:4.6mm;color:var(--mutedfg);font-weight:600;margin-top:2.4mm;line-height:1.4}
+.scan .words .store{
+  display:inline-flex;align-items:center;gap:2.4mm;margin-top:4.5mm;
+  background:var(--ink);color:#fff;border-radius:999px;padding:2.6mm 5.5mm;font-weight:700;font-size:4mm;
+}
+.scan .words .store svg{width:4.6mm;height:4.6mm}
+
+/* ── the shop's address line, bottom ───────────────────────── */
+.foot{
+  margin-top:7mm;width:100%;display:flex;justify-content:space-between;align-items:center;
+  border-top:.5mm solid rgba(255,255,255,.22);padding-top:5mm;
+  font-size:4.2mm;color:#9fb0ae;font-weight:600;
+}
+.foot b{color:#fff;font-weight:800}
+
+/* the list paper, small, as proof this is about a grocery list */
+/* Sits in the middle of the sheet, between the promise and the QR. It was
+   pinned to the top-right corner, where it covered the end of the headline
+   and left the centre of the poster empty. */
+.proof{
+  margin:11mm 0 0;width:74mm;transform:rotate(-4deg);
+  border-radius:4mm;overflow:hidden;background:var(--paper);
+  box-shadow:0 5mm 14mm rgba(0,0,0,.4);opacity:.97;
+}
+.proof .ph{display:flex;align-items:center;height:7mm;background:var(--paperhead);
+  border-bottom:.8mm solid var(--rule);font-size:2.6mm;font-weight:800;color:var(--ocean)}
+.proof .pr{display:flex;align-items:center;height:8.4mm;border-bottom:.5mm solid var(--rule);background:#fff}
+.proof .pr:nth-child(odd){background:var(--paperrow)}
+.proof .n{width:6mm;text-align:center;font-size:2.6mm;color:#a89b78}
+.proof .it{flex:2.4;padding:0 2.4mm;margin-left:1.4mm;border-left:.5mm solid rgba(217,168,155,.6);
+  font-family:"Kalam",cursive;font-weight:700;font-size:4mm;color:var(--penink)}
+.proof .qt{flex:1.4;text-align:center;border-left:.5mm solid rgba(201,217,234,.5);
+  font-family:"Kalam",cursive;font-weight:700;font-size:3.6mm;color:var(--penink)}
+</style>
+</head>
+<body>
+
+<section class="sheet">
+
+  <!-- SHOP DETAIL 1 + 2 — name, and the line under it -->
+  <div class="shop">
+    <div class="mark">s</div>
+    <div>
+      <div class="name">sKirana</div>
+      <div class="sub">आपके मोहल्ले की किराना दुकान</div>
+    </div>
+  </div>
+
+  <div class="kicker">नया · अभी शुरू हुआ</div>
+
+  <h1>हमारी दुकान का<br><em>अपना app</em></h1>
+
+  <p class="lede">
+    घर बैठे सामान की सूची भेज दीजिए।<br>
+    हम दाम लगाकर भेजेंगे — आकर ले जाइए।
+  </p>
+
+  <!-- the ruled list, peeking in from the side -->
+  <div class="proof">
+    <div class="ph"><span class="n">#</span><span class="it" style="font-family:Mukta">आइटम</span><span class="qt" style="font-family:Mukta">मात्रा</span></div>
+    <div class="pr"><span class="n">1</span><span class="it">आटा</span><span class="qt">5 किलो</span></div>
+    <div class="pr"><span class="n">2</span><span class="it">चीनी</span><span class="qt">2 किलो</span></div>
+    <div class="pr"><span class="n">3</span><span class="it">चाय</span><span class="qt">250 ग्राम</span></div>
+  </div>
+
+  <div class="scan">
+    <div class="qr" id="qr"></div>
+    <div class="words">
+      <div class="how">कैमरा खोलिए<br>और scan कीजिए</div>
+      <div class="p">app अपने-आप खुल जाएगा।<br>install बिलकुल मुफ़्त है।</div>
+      <div class="store">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 20h16"/></svg>
+        Google Play
+      </div>
+    </div>
+  </div>
+
+  <!-- SHOP DETAIL 3 + 4 — address and phone -->
+  <div class="foot">
+    <div><b>sKirana</b> · [दुकान का पता यहाँ]</div>
+    <div>[फ़ोन नंबर]</div>
+  </div>
+
+</section>
+
+<script>
+  // The QR is generated from the real Play Store URL for com.skirana.app and
+  // written to qr.svg by render.cjs, so the poster never carries a stale or
+  // hand-drawn code.
+  fetch("qr.svg").then((r) => r.text()).then((svg) => {
+    document.getElementById("qr").innerHTML = svg;
+  });
+</script>
+</body>
+</html>
