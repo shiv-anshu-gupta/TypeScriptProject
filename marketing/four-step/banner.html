@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<title>sKirana — four-step banner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Mukta:wght@400;600;700;800&family=Kalam:wght@700&display=block">
+<style>
+/* ───────────────────────────────────────────────────────────────
+   The four-step launch banner, 1080x1080.
+
+   Built from the layout of an AI-generated reference, but not from its
+   content: that image spelled the Hindi as "इलो दाल मने यादी", which is
+   not words. Every line here is typed, so it reads. The QR is generated
+   from the real Play Store URL. There is no App Store badge - there is
+   no iOS build - and no address or phone, which the shop did not want
+   on it.
+   ─────────────────────────────────────────────────────────────── */
+:root{
+  --navy:#101f3d; --navy2:#17295090; --gold:#e3b23c; --goldd:#b98a1f;
+  --cream:#f6efdc; --ink:#1f2a2e; --ocean:#3c5a64; --terracotta:#c0492f;
+  --paper:#fdf8ea; --paperrow:#fdfbf7; --rule:#c9d9ea; --penink:#26303a;
+  --accent:#dde8e7; --sage:#4f7a4d;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{background:#333;font-family:"Mukta","Nirmala UI",sans-serif}
+
+.banner{position:relative;width:1080px;height:1080px;overflow:hidden;background:var(--navy);
+  background-image:radial-gradient(760px 620px at 50% 0%, #1b3160, transparent 70%);}
+
+/* ── the produce border ─────────────────────────────────────── */
+.edge{position:absolute;inset:0;z-index:1}
+.edge svg{position:absolute;filter:drop-shadow(0 6px 10px rgba(0,0,0,.45))}
+
+/* ── the card the content sits on ───────────────────────────── */
+.card{position:absolute;inset:172px 96px 112px;z-index:3;
+  background:var(--cream);border:5px solid var(--gold);border-radius:16px;
+  box-shadow:0 26px 60px rgba(0,0,0,.5);padding:16px;display:flex;flex-direction:column}
+
+/* ── title above the card ───────────────────────────────────── */
+.head{position:absolute;left:0;right:0;top:26px;z-index:4;text-align:center}
+.head h1{font-family:"Baloo 2",sans-serif;font-weight:800;font-size:44px;color:#fff;
+  letter-spacing:.01em;text-shadow:0 3px 10px rgba(0,0,0,.5)}
+.head .shop{display:inline-flex;align-items:center;gap:14px;margin-top:10px}
+.head .shop .logo{width:46px;height:46px;border-radius:13px;background:#fff;color:var(--ocean);
+  display:grid;place-items:center;font-family:"Baloo 2",sans-serif;font-weight:800;font-size:28px;line-height:1}
+.head .shop .nm{font-family:"Baloo 2",sans-serif;font-weight:800;font-size:31px;color:var(--gold)}
+
+/* ── the gold promise bar ───────────────────────────────────── */
+.promise{background:linear-gradient(180deg,var(--gold),var(--goldd));border-radius:10px;
+  padding:9px 18px;text-align:center}
+.promise b{font-family:"Baloo 2",sans-serif;font-weight:800;font-size:28px;color:#2a1d02;display:block;line-height:1.2}
+.promise span{font-size:19px;font-weight:700;color:#4a3708}
+
+/* ── the four panels ────────────────────────────────────────── */
+.grid{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:12px;margin-top:12px}
+.panel{background:#fff;border:3px solid var(--navy);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+.panel .ph{background:var(--navy);color:#fff;font-family:"Baloo 2",sans-serif;font-weight:800;
+  font-size:23px;padding:7px 12px}
+.panel .body{flex:1;display:flex;align-items:center;justify-content:center;gap:10px;padding:10px;
+  background:linear-gradient(170deg,#eaf1fb,#dce7f6)}
+
+/* the app screen used inside the panels */
+.mini{width:170px;border-radius:17px;background:#0c1416;padding:5px 4px 8px;flex:none;
+  box-shadow:0 8px 18px rgba(0,0,0,.35)}
+.mini .scr{border-radius:13px;overflow:hidden;background:var(--paper)}
+.mini .bar{background:var(--ocean);color:#fff;font-weight:700;font-size:10px;padding:6px 8px}
+.mini .pr{display:flex;align-items:center;height:27px;border-bottom:1px solid var(--rule);background:#fff}
+.mini .pr:nth-child(odd){background:var(--paperrow)}
+.mini .it{flex:1.7;padding:0 7px;font-family:"Kalam",cursive;font-weight:700;font-size:15px;color:var(--penink)}
+.mini .qt{flex:1;text-align:right;padding-right:8px;font-weight:800;font-size:13px;color:var(--ocean)}
+.mini .tot{display:flex;justify-content:space-between;padding:7px 8px;background:var(--accent);
+  font-weight:800;font-size:13px;color:var(--ocean)}
+
+.side{display:flex;flex-direction:column;align-items:center;gap:6px}
+.arrow{font-size:52px;color:var(--sage);font-weight:800;line-height:1}
+.shopicon{width:96px;height:96px;border-radius:14px;background:#fff;border:3px solid var(--gold);
+  display:grid;place-items:center;box-shadow:0 6px 14px rgba(0,0,0,.25)}
+.shopicon svg{width:60px;height:60px}
+.cap{font-size:18px;font-weight:700;color:#24364f;text-align:center;line-height:1.25}
+.panel .art{height:172px}
+.panel .art img{height:100%;display:block}
+
+/* ── download strip ─────────────────────────────────────────── */
+.get{position:absolute;left:96px;right:96px;bottom:22px;z-index:4;height:78px;
+  background:linear-gradient(180deg,#f7fbff,#dfe9f7);border:4px solid var(--navy);border-radius:999px;
+  display:flex;align-items:center;gap:16px;padding:0 20px;box-shadow:0 12px 26px rgba(0,0,0,.45)}
+.get .logo{width:52px;height:52px;border-radius:15px;background:var(--ocean);color:#fff;
+  display:grid;place-items:center;font-family:"Baloo 2",sans-serif;font-weight:800;font-size:31px;line-height:1;flex:none}
+.get .nm{font-family:"Baloo 2",sans-serif;font-weight:800;font-size:27px;color:var(--navy);line-height:1}
+.get .dl{font-family:"Baloo 2",sans-serif;font-weight:800;font-size:31px;color:var(--navy);margin-left:6px}
+.get .qr{width:62px;height:62px;background:#fff;border-radius:8px;padding:3px;flex:none;margin-left:auto}
+.get .qr svg{width:100%;height:100%;display:block}
+.get .play{display:inline-flex;align-items:center;gap:9px;background:var(--navy);color:#fff;
+  border-radius:999px;padding:10px 18px;font-weight:800;font-size:19px;flex:none}
+.get .play svg{width:20px;height:20px}
+</style>
+</head>
+<body>
+
+<section class="banner">
+
+  <!-- ── produce around the edge ─────────────────────────────── -->
+  <div class="edge">
+    <!-- top left: leaves + tomato -->
+    <svg width="130" height="120" style="left:6px;top:8px" viewBox="0 0 130 120">
+      <path d="M22 70C0 44 8 18 30 8c14 22 12 46-8 62z" fill="#4f7a4d"/>
+      <path d="M34 72c6-34 30-46 52-42-8 27-26 44-52 42z" fill="#5f8f56"/>
+      <circle cx="86" cy="84" r="28" fill="#d1452f"/><path d="M86 58c-7-7-16-8-21-5 3 7 12 10 21 8z" fill="#4f7a4d"/>
+      <circle cx="40" cy="96" r="20" fill="#e08a3c"/>
+    </svg>
+    <!-- top right: packets -->
+    <svg width="140" height="130" style="right:4px;top:6px" viewBox="0 0 140 130">
+      <rect x="10" y="20" width="56" height="74" rx="5" fill="#efe7d8"/><rect x="10" y="20" width="56" height="13" rx="5" fill="#3c5a64"/>
+      <rect x="74" y="8" width="46" height="86" rx="5" fill="#c9893c"/><rect x="80" y="36" width="34" height="24" rx="3" fill="#f2e3cb"/>
+      <rect x="40" y="100" width="70" height="24" rx="4" fill="#4f7a4d"/>
+    </svg>
+    <!-- left: veg stack -->
+    <svg width="110" height="200" style="left:2px;top:300px" viewBox="0 0 110 200">
+      <ellipse cx="46" cy="40" rx="34" ry="30" fill="#c08f74"/>
+      <path d="M46 10c-3-10 0-16 0-16s3 6 0 16z" fill="#8c6a52"/>
+      <circle cx="58" cy="108" r="30" fill="#bd3b27"/><path d="M58 84c-6-6-14-7-19-5 3 6 11 9 19 7z" fill="#43693f"/>
+      <path d="M26 150c24 6 44 32 40 58-26 6-52-14-58-38z" fill="#e08a3c"/>
+    </svg>
+    <!-- right: bottle + carton -->
+    <svg width="120" height="210" style="right:2px;top:320px" viewBox="0 0 120 210">
+      <path d="M30 20h26v22l16 26v88H14V68l16-26z" fill="#c9893c"/><rect x="34" y="4" width="18" height="18" rx="3" fill="#8f5f28"/>
+      <path d="M72 70h40v96H72z" fill="#fff"/><path d="M72 70l20-16 20 16z" fill="#e6dcc9"/>
+      <rect x="80" y="104" width="24" height="26" rx="3" fill="#3c5a64"/>
+      <circle cx="40" cy="186" r="22" fill="#4f7a4d"/>
+    </svg>
+    <!-- bottom left -->
+    <svg width="150" height="110" style="left:6px;bottom:4px" viewBox="0 0 150 110">
+      <circle cx="34" cy="62" r="30" fill="#d1452f"/><path d="M34 36c-7-7-16-8-21-5 3 7 12 10 21 8z" fill="#4f7a4d"/>
+      <ellipse cx="92" cy="74" rx="32" ry="28" fill="#5f8f56"/>
+      <path d="M128 40c16 4 28 22 26 40-18 4-36-10-40-26z" fill="#e08a3c"/>
+    </svg>
+    <!-- bottom right -->
+    <svg width="150" height="110" style="right:6px;bottom:4px" viewBox="0 0 150 110">
+      <rect x="12" y="30" width="54" height="68" rx="5" fill="#efe7d8"/><rect x="12" y="30" width="54" height="12" rx="5" fill="#c0492f"/>
+      <circle cx="104" cy="66" r="30" fill="#bd3b27"/><path d="M104 42c-6-6-14-7-19-5 3 6 11 9 19 7z" fill="#43693f"/>
+      <ellipse cx="60" cy="98" rx="26" ry="14" fill="#c08f74"/>
+    </svg>
+  </div>
+
+  <!-- ── title ───────────────────────────────────────────────── -->
+  <div class="head">
+    <h1>हमारी दुकान का अपना app</h1>
+    <div class="shop">
+      <div class="logo">s</div>
+      <div class="nm">sKirana</div>
+    </div>
+  </div>
+
+  <!-- ── the card ────────────────────────────────────────────── -->
+  <div class="card">
+
+    <div class="promise">
+      <b>फ़ोन से सूची, दुकान से सामान</b>
+      <span>कोई होम डिलीवरी नहीं — आकर ले जाइए</span>
+    </div>
+
+    <div class="grid">
+
+      <div class="panel">
+        <div class="ph">1 · सूची लिखिए</div>
+        <div class="body">
+          <div class="mini"><div class="scr">
+            <div class="bar">मेरी सूची</div>
+            <div class="pr"><span class="it">आटा</span><span class="qt">5 किलो</span></div>
+            <div class="pr"><span class="it">चीनी</span><span class="qt">2 किलो</span></div>
+            <div class="pr"><span class="it">चाय</span><span class="qt">250 ग्रा</span></div>
+            <div class="pr"><span class="it" style="color:#b8a89a;font-family:Mukta;font-size:10px">लिखिए…</span><span class="qt"></span></div>
+          </div></div>
+          <div class="cap">हिंदी में,<br>जैसे काग़ज़ पर</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="ph">2 · दुकान को भेजिए</div>
+        <div class="body">
+          <div class="mini" style="width:142px"><div class="scr">
+            <div class="bar">भेज दी</div>
+            <div class="pr"><span class="it">आटा</span><span class="qt">5 किलो</span></div>
+            <div class="pr"><span class="it">चीनी</span><span class="qt">2 किलो</span></div>
+            <div class="pr"><span class="it">चाय</span><span class="qt">250 ग्रा</span></div>
+          </div></div>
+          <div class="side">
+            <div class="arrow">➜</div>
+            <div class="shopicon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#3c5a64" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 9l1.5-5h15L21 9"/><path d="M4 9v11h16V9"/><path d="M9 20v-6h6v6"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="ph">3 · दाम आ जाएँगे</div>
+        <div class="body">
+          <div class="mini"><div class="scr">
+            <div class="bar">दाम आ गए</div>
+            <div class="pr"><span class="it">आटा</span><span class="qt">₹240</span></div>
+            <div class="pr"><span class="it">चीनी</span><span class="qt">₹92</span></div>
+            <div class="pr"><span class="it">चाय</span><span class="qt">₹135</span></div>
+            <div class="tot"><span>कुल</span><span>₹467</span></div>
+          </div></div>
+          <div class="cap">दुकानदार के<br>अपने दाम</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="ph">4 · आकर ले जाइए</div>
+        <div class="body">
+          <div class="art"><img src="../poster/art/happy-customer_4h84.svg" alt=""></div>
+          <div class="cap">पैसे दुकान पर —<br>नक़द या UPI</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── download strip ──────────────────────────────────────── -->
+  <div class="get">
+    <div class="logo">s</div>
+    <div>
+      <div class="nm">sKirana</div>
+    </div>
+    <div class="dl">अभी install कीजिए</div>
+    <div class="qr" id="qr"></div>
+    <div class="play">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 20h16"/></svg>
+      Google Play
+    </div>
+  </div>
+
+</section>
+
+<script>
+  fetch("../poster/qr.svg").then((r) => r.text()).then((svg) => {
+    document.getElementById("qr").innerHTML = svg;
+  }).catch(() => {});
+</script>
+</body>
+</html>
