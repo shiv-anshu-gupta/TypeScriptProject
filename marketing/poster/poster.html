@@ -94,26 +94,48 @@ h1 em{font-style:normal;color:#dde8e7}
 .foot b{color:#fff;font-weight:800}
 
 /* the list paper, small, as proof this is about a grocery list */
-/* The four scenes. Illustrations are unDraw's, repainted into this shop's
-   palette by recolour.cjs - their licence allows commercial use and
-   modification with no attribution.
+/* The hero: the app on the left, the shop's groceries on the right.
+   A grocery ad has to show groceries - the first draft showed only people
+   and read as an advertisement for software. The produce is drawn in
+   hero.svg rather than licensed, so nothing here can be taken down. */
+.hero{position:relative;width:100%;height:85mm;margin:6mm 0 0;display:flex;align-items:center}
+/* The produce rises well above the bag in the drawing, so the bag is
+   pushed down until it clears the line of text above it - it was sitting
+   over "आकर ले जाइए". */
+.hero .bag{position:absolute;right:-8mm;bottom:-6mm;width:108mm;z-index:1}
+.hero .bag img{width:100%;display:block;filter:drop-shadow(0 6mm 14mm rgba(0,0,0,.42))}
 
-   Each sits on a light card because the sheet is dark and these drawings
-   carry their own near-black line work, which would vanish on it. */
-.journey{display:flex;gap:3.5mm;width:100%;margin:9mm 0 0}
-.scene{
-  flex:1;background:#fff;border-radius:4.5mm;padding:3.5mm 2.5mm 4mm;
-  display:flex;flex-direction:column;align-items:center;gap:2mm;
-  box-shadow:0 3mm 9mm rgba(0,0,0,.3);
+/* the app, held up in front of it all */
+.hero .phone{
+  position:relative;z-index:2;width:62mm;border-radius:8mm;background:#10181b;padding:2.6mm 2.2mm 4mm;
+  border:.5mm solid #2f3d41;transform:rotate(-5deg);
+  box-shadow:0 10mm 24mm rgba(0,0,0,.55);
 }
-.scene .art{width:100%;height:26mm;display:flex;align-items:center;justify-content:center}
-.scene .art img{max-width:100%;max-height:100%;display:block}
-.scene .step{
-  width:6.5mm;height:6.5mm;border-radius:999px;background:var(--terracotta);color:#fff;
-  display:grid;place-items:center;font-family:"Baloo 2",sans-serif;font-weight:800;font-size:3.8mm;
+/* the earpiece slot - the one detail that stops a rounded rectangle from
+   reading as a card */
+.hero .phone::before{
+  content:"";position:absolute;left:50%;top:1.1mm;transform:translateX(-50%);
+  width:14mm;height:1.1mm;border-radius:999px;background:#2f3d41;
 }
-.scene .t{font-family:"Baloo 2",sans-serif;font-weight:800;font-size:4.6mm;color:var(--ocean);text-align:center;line-height:1.15}
-.scene .d{font-size:3.2mm;color:var(--mutedfg);font-weight:600;text-align:center;line-height:1.3}
+.hero .phone .screen{border-radius:5.4mm;overflow:hidden;background:var(--sand)}
+.appbar{background:var(--ocean);color:#fff;padding:2.6mm 3mm;font-weight:700;font-size:3mm;text-align:left}
+.paper{background:var(--paper);margin:2.4mm;border-radius:1.6mm;overflow:hidden}
+.paper .ph{display:flex;align-items:center;height:5mm;background:var(--paperhead);
+  border-bottom:.6mm solid var(--rule);font-size:2.1mm;font-weight:800;color:var(--ocean)}
+.paper .pr{display:flex;align-items:center;height:6.4mm;border-bottom:.4mm solid var(--rule);background:#fff}
+.paper .pr:nth-child(odd){background:var(--paperrow)}
+.paper .n{width:5mm;text-align:center;font-size:2.1mm;color:#a89b78}
+.paper .it{flex:2.4;padding:0 2mm;margin-left:1.2mm;border-left:.4mm solid rgba(217,168,155,.6);
+  font-family:"Kalam",cursive;font-weight:700;font-size:3.2mm;color:var(--penink)}
+.paper .qt{flex:1.4;text-align:center;border-left:.4mm solid rgba(201,217,234,.5);
+  font-family:"Mukta",sans-serif;font-weight:800;font-size:2.9mm;color:var(--ocean)}
+.total{display:flex;justify-content:space-between;padding:2.4mm 3mm;background:var(--accent);
+  font-weight:800;font-size:3mm;color:var(--ocean)}
+
+/* the four steps, as one line of words */
+.flow{display:flex;align-items:center;justify-content:center;gap:3mm;margin-top:5mm;flex-wrap:wrap}
+.flow b{font-family:"Baloo 2",sans-serif;font-weight:800;font-size:4.6mm;color:#fff}
+.flow i{font-style:normal;color:var(--terracotta);font-weight:800;font-size:5mm}
 </style>
 </head>
 <body>
@@ -138,32 +160,25 @@ h1 em{font-style:normal;color:#dde8e7}
     हम दाम लगाकर भेजेंगे — आकर ले जाइए।
   </p>
 
-  <!-- write · price · pack · collect -->
-  <div class="journey">
-    <div class="scene">
-      <div class="art"><img src="art/chore-list_ylw0.svg" alt="सूची लिखिए"></div>
-      <div class="step">1</div>
-      <div class="t">सूची लिखिए</div>
-      <div class="d">घर बैठे, फ़ोन पर</div>
+  <!-- the app, and what it fills -->
+  <div class="hero">
+    <div class="phone">
+      <div class="screen">
+        <div class="appbar">दाम आ गए</div>
+        <div class="paper">
+          <div class="ph"><span class="n">#</span><span class="it" style="font-family:Mukta">आइटम</span><span class="qt">दाम</span></div>
+          <div class="pr"><span class="n">1</span><span class="it">आटा</span><span class="qt">₹240</span></div>
+          <div class="pr"><span class="n">2</span><span class="it">चीनी</span><span class="qt">₹92</span></div>
+          <div class="pr"><span class="n">3</span><span class="it">ताज़ा चाय</span><span class="qt">₹135</span></div>
+        </div>
+        <div class="total"><span>कुल</span><span>₹467</span></div>
+      </div>
     </div>
-    <div class="scene">
-      <div class="art"><img src="art/receipt_oemh.svg" alt="दाम आ जाएँगे"></div>
-      <div class="step">2</div>
-      <div class="t">दाम आ जाएँगे</div>
-      <div class="d">दुकान से, आपके फ़ोन पर</div>
-    </div>
-    <div class="scene">
-      <div class="art"><img src="art/groceries_4via.svg" alt="दुकान पैक करेगी"></div>
-      <div class="step">3</div>
-      <div class="t">दुकान पैक करेगी</div>
-      <div class="d">सब तैयार रखा जाएगा</div>
-    </div>
-    <div class="scene">
-      <div class="art"><img src="art/happy-customer_4h84.svg" alt="आकर ले जाइए"></div>
-      <div class="step">4</div>
-      <div class="t">आकर ले जाइए</div>
-      <div class="d">पैसे दुकान पर दीजिए</div>
-    </div>
+    <div class="bag"><img src="hero.svg" alt="सामान से भरा थैला"></div>
+  </div>
+
+  <div class="flow">
+    <b>लिखिए</b><i>→</i><b>भेजिए</b><i>→</i><b>दाम</b><i>→</i><b>ले जाइए</b>
   </div>
 
   <div class="scan">

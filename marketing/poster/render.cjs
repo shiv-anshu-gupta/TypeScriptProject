@@ -71,15 +71,35 @@ const SCALE = 3.125; // -> 2480 x 3509, which is A4 at 300 DPI
   // The four illustrations load as <img>; an SVG that failed to load is an
   // invisible hole, not an error, so count them before printing.
   const art = await page.evaluate(() =>
-    [...document.querySelectorAll(".scene img")].map((i) => i.naturalWidth > 0));
-  if (art.length !== 4 || art.some((ok) => !ok)) {
-    throw new Error(`illustrations: ${art.filter(Boolean).length} of ${art.length} loaded`);
+    [...document.querySelectorAll(".hero img")].map((i) => i.naturalWidth > 0));
+  if (!art.length || art.some((ok) => !ok)) {
+    throw new Error(`hero art: ${art.filter(Boolean).length} of ${art.length} loaded`);
   }
-  console.log("art: all 4 illustrations loaded");
+  console.log("art: hero loaded");
 
   // A poster whose whole job is to be scanned must not go out without a code.
   const qrOk = await page.evaluate(() => !!document.querySelector("#qr svg"));
   if (!qrOk) throw new Error("the QR did not render into the page");
+
+  // Nothing may run off the sheet. A4 does not scroll, and the overflow is
+  // silently clipped - the address line had already been cut off once, and
+  // the only sign was that it was missing from a poster otherwise fine.
+  const fit = await page.evaluate(() => {
+    const sheet = document.querySelector(".sheet").getBoundingClientRect();
+    const last = document.querySelector(".foot").getBoundingClientRect();
+    return { sheetBottom: sheet.bottom, lastBottom: last.bottom };
+  });
+  // 2px of tolerance: millimetre lengths do not land on whole CSS pixels, so
+  // the last line sits a fraction past the border box even when it prints
+  // fine. Anything beyond that is a real clip.
+  if (fit.lastBottom > fit.sheetBottom + 2) {
+    throw new Error(
+      `content runs ${Math.round(fit.lastBottom - fit.sheetBottom)}px past the bottom of the sheet`,
+    );
+  }
+  console.log(
+    `fit: ${Math.round(fit.sheetBottom - fit.lastBottom)}px of margin below the last line`,
+  );
 
   await page.pdf({
     path: path.join(__dirname, "poster.pdf"),

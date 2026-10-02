@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 560" width="760" height="560">
+  <!-- The hero: the shop's own groceries coming out of a paper bag, with the
+       app beside them. Drawn here rather than licensed, so the palette is the
+       shop's and nothing has to be credited or taken down later. -->
+  <defs>
+    <linearGradient id="bagF" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e8d5b5"/><stop offset="1" stop-color="#d9bf97"/>
+    </linearGradient>
+    <linearGradient id="bagS" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f2e3cb"/><stop offset="1" stop-color="#e3cda8"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ── produce, stacked so it reads as a full bag ─────────────── -->
+  <g>
+    <!-- leafy greens, back left -->
+    <path d="M250 196c-26-30-18-62 6-74 16 26 14 54-6 74z" fill="#4f7a4d"/>
+    <path d="M262 198c6-38 32-52 56-48-8 30-28 49-56 48z" fill="#5f8f56"/>
+    <path d="M256 200c-2-26-20-40-40-40 6 24 20 38 40 40z" fill="#43693f"/>
+
+    <!-- oil bottle -->
+    <path d="M330 120h26v22l16 26v84h-58v-84l16-26z" fill="#c9893c"/>
+    <rect x="334" y="104" width="18" height="18" rx="3" fill="#8f5f28"/>
+    <rect x="320" y="196" width="46" height="34" rx="3" fill="#f2e3cb"/>
+    <path d="M327 206h32M327 214h24" stroke="#c9893c" stroke-width="4" stroke-linecap="round"/>
+
+    <!-- rice / flour packet -->
+    <path d="M392 150h78v102h-78z" fill="#efe7d8"/>
+    <path d="M392 150h78v16h-78z" fill="#3c5a64"/>
+    <path d="M404 182h54M404 196h40" stroke="#b9ab93" stroke-width="6" stroke-linecap="round"/>
+    <ellipse cx="431" cy="224" rx="22" ry="12" fill="#e2d4bb"/>
+
+    <!-- tomatoes -->
+    <circle cx="286" cy="236" r="34" fill="#d1452f"/>
+    <path d="M286 206c-8-8-18-9-24-6 4 8 14 12 24 10z" fill="#4f7a4d"/>
+    <circle cx="275" cy="226" r="8" fill="#e06a55" opacity=".55"/>
+    <circle cx="344" cy="258" r="26" fill="#bd3b27"/>
+    <path d="M344 236c-6-6-14-7-19-5 3 6 11 9 19 7z" fill="#43693f"/>
+
+    <!-- carrot -->
+    <path d="M470 206c22 6 40 30 36 54-24 6-48-12-54-34z" fill="#e08a3c"/>
+    <path d="M470 206c-10-14-6-26 2-32 8 8 10 20-2 32z" fill="#4f7a4d"/>
+    <path d="M478 222l10 6M488 234l10 6" stroke="#c4742c" stroke-width="4" stroke-linecap="round"/>
+
+    <!-- chillies -->
+    <path d="M226 246c20 2 34 18 32 36-18 4-34-10-38-26z" fill="#4f7a4d"/>
+    <path d="M226 246c-6-8-4-14 1-17 5 4 6 11-1 17z" fill="#3c5a3a"/>
+
+    <!-- milk carton -->
+    <path d="M488 142h44v96h-44z" fill="#ffffff"/>
+    <path d="M488 142l22-18 22 18z" fill="#e6dcc9"/>
+    <rect x="496" y="176" width="28" height="30" rx="3" fill="#3c5a64"/>
+    <path d="M488 142h44v10h-44z" fill="#dde8e7"/>
+
+    <!-- onion -->
+    <ellipse cx="398" cy="262" rx="30" ry="26" fill="#c08f74"/>
+    <path d="M398 236c-10 10-10 42 0 52M398 236c10 10 10 42 0 52" stroke="#a9775c" stroke-width="3" fill="none"/>
+    <path d="M398 236c-3-10 0-16 0-16s3 6 0 16z" fill="#8c6a52"/>
+  </g>
+
+  <!-- ── the paper bag, in front ────────────────────────────────── -->
+  <path d="M236 268h300l-18 250c-2 18-17 32-35 32H289c-18 0-33-14-35-32z" fill="url(#bagF)"/>
+  <path d="M236 268h300l-6 44H242z" fill="url(#bagS)"/>
+  <path d="M300 268v282M472 268v282" stroke="#c9ab80" stroke-width="3" opacity=".55"/>
+  <!-- the shop's mark on the bag -->
+  <rect x="330" y="372" width="112" height="112" rx="26" fill="#3c5a64"/>
+  <text x="386" y="452" text-anchor="middle" font-family="Baloo 2, Segoe UI, sans-serif"
+        font-weight="800" font-size="78" fill="#ffffff">s</text>
+</svg>
