@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>sKirana — mood board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Mukta:wght@400;600;700;800&family=Kalam:wght@400;700&display=swap">
+<style>
+  /* Every value on this page is read from the running app, not invented.
+     Colours come from mobile/tailwind.config.js and GroceryListEditor.tsx;
+     the fonts are the ones the marketing banners actually load. */
+  :root {
+    --background: #F0F4EC;
+    --foreground: #1f2a2e;
+    --card: #ffffff;
+    --primary: #3c5a64;
+    --secondary: #efe7d8;
+    --muted: #f1ebe0;
+    --muted-foreground: #6f6857;
+    --accent: #dde8e7;
+    --border: #e6dcc9;
+    --destructive: #c0492f;
+    --success: #4f7a4d;
+
+    --paper: #fdf8ea;
+    --paper-row: #fdfbf7;
+    --paper-head: #f5f0e8;
+    --rule: #c9d9ea;
+    --margin-rule: #d9a89b;
+    --ink: #26303a;
+    --pencil: #8b7a5e;
+    --faint: #b8a89a;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: "Mukta", "Nirmala UI", system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 56px 20px 96px; }
+
+  h1 {
+    font-family: "Baloo 2", "Nirmala UI", sans-serif;
+    font-weight: 800;
+    font-size: clamp(32px, 6vw, 52px);
+    line-height: 1.1;
+    margin: 0 0 12px;
+    color: var(--primary);
+  }
+  .lede { font-size: clamp(17px, 2.4vw, 21px); max-width: 60ch; color: var(--muted-foreground); margin: 0; }
+
+  h2 {
+    font-family: "Baloo 2", sans-serif; font-weight: 700;
+    font-size: 13px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--muted-foreground);
+    margin: 64px 0 18px; padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  h3 { font-size: 15px; font-weight: 700; margin: 28px 0 10px; }
+  p { max-width: 68ch; }
+  .note { font-size: 14px; color: var(--muted-foreground); max-width: 68ch; }
+
+  .grid { display: grid; gap: 14px; }
+  .sw-grid { grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)); }
+
+  .sw { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--card); }
+  .sw .chip { height: 76px; }
+  .sw .meta { padding: 9px 11px 11px; }
+  .sw .name { font-size: 13px; font-weight: 700; }
+  .sw .hex { font-size: 12px; font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; color: var(--muted-foreground); }
+  .sw .use { font-size: 12px; color: var(--muted-foreground); margin-top: 3px; }
+
+  .two { display: grid; grid-template-columns: 1fr; gap: 22px; }
+  @media (min-width: 820px) { .two { grid-template-columns: 1fr 1fr; } }
+
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 22px; }
+
+  /* The list paper, rebuilt from the real component so the feel is exact. */
+  .paper { background: var(--paper); border-radius: 6px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,.12); }
+  .paper .head { display: flex; align-items: center; height: 36px; background: var(--paper-head); border-bottom: 2px solid var(--rule); font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: #3c5a64; }
+  .paper .row { display: flex; align-items: center; height: 44px; border-bottom: 1px solid var(--rule); }
+  .paper .row:nth-child(even) { background: #fff; }
+  .paper .row:nth-child(odd) { background: var(--paper-row); }
+  .paper .n { width: 32px; text-align: center; font-size: 12px; color: #a89b78; }
+  .paper .item { flex: 2.5; padding: 0 12px; margin-left: 8px; border-left: 1px solid rgba(217,168,155,.6); color: var(--ink); font-size: 14px; }
+  .paper .qty { flex: 1.5; padding: 0 8px; text-align: center; border-left: 1px solid rgba(201,217,234,.5); color: var(--ink); font-size: 14px; }
+  .paper .x { width: 32px; }
+  .paper .ph { color: var(--faint); }
+
+  .btn { display: inline-flex; align-items: center; justify-content: center; height: 46px; padding: 0 22px; border-radius: 12px; font-weight: 700; font-size: 15px; border: 0; }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-ghost { background: var(--secondary); color: var(--foreground); }
+  .badge { display: inline-flex; align-items: center; height: 26px; padding: 0 11px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--secondary); color: var(--foreground); border: 1px solid var(--border); }
+  .badge.ok { background: var(--accent); border-color: var(--accent); }
+  .badge.bad { background: var(--destructive); color: #fff; border-color: var(--destructive); }
+  .row-of { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+
+  .type-sample { margin: 0 0 4px; }
+  .t-baloo { font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: 30px; line-height: 1.2; color: var(--primary); }
+  .t-mukta { font-family: "Mukta", sans-serif; font-weight: 700; font-size: 20px; }
+  .t-kalam { font-family: "Kalam", cursive; font-weight: 700; font-size: 22px; color: var(--pencil); }
+  .t-system { font-family: system-ui, "Segoe UI", Roboto, sans-serif; font-size: 18px; }
+  .t-label { font-size: 12px; color: var(--muted-foreground); font-family: ui-monospace, Consolas, monospace; }
+
+  .rules { display: grid; grid-template-columns: 1fr; gap: 12px; }
+  @media (min-width: 820px) { .rules { grid-template-columns: 1fr 1fr; } }
+  .rule { border-radius: 12px; padding: 16px 18px; border: 1px solid var(--border); background: var(--card); }
+  .rule.do { border-left: 4px solid var(--success); }
+  .rule.dont { border-left: 4px solid var(--destructive); }
+  .rule b { display: block; margin-bottom: 4px; font-size: 14px; }
+  .rule span { font-size: 14px; color: var(--muted-foreground); }
+
+  .photo-demo { display: flex; gap: 14px; flex-wrap: wrap; }
+  .tile { width: 132px; }
+  .tile .box { aspect-ratio: 4/5; background: #fff; border: 1px solid var(--border); border-radius: 14px; display: grid; place-items: center; color: var(--faint); font-size: 12px; text-align: center; padding: 10px; }
+  .tile .cap { font-size: 12px; color: var(--muted-foreground); margin-top: 6px; text-align: center; }
+  .tile.bad .box { background: var(--muted); }
+
+  footer { margin-top: 72px; padding-top: 18px; border-top: 1px solid var(--border); font-size: 13px; color: var(--muted-foreground); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>sKirana</h1>
+  <p class="lede">
+    काग़ज़ की एक पर्ची, मोहल्ले की दुकान पर — supermarket का app नहीं।
+    <br>A paper list at the shop down the road, not a supermarket app.
+  </p>
+
+  <!-- ─────────────────────────────────────────────────────────── -->
+  <h2>The feeling</h2>
+  <div class="two">
+    <div class="panel">
+      <h3>What it is</h3>
+      <p class="note">
+        Warm, handwritten, unhurried. The customer writes a list the way they
+        always have; the shop prices it the way it always has. The app only
+        carries the paper between them — so the paper is the hero, and the
+        software stays out of the way.
+      </p>
+    </div>
+    <div class="panel">
+      <h3>What it is not</h3>
+      <p class="note">
+        Not ten-minute delivery. No countdown timers, no flashing offers, no
+        urgency. Nothing here should feel like it is rushing the customer or
+        the shopkeeper — the whole promise is that you deal with a person you
+        already know.
+      </p>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────────── -->
+  <h2>Palette — the app</h2>
+  <p class="note">Warm sand ground, ocean-gray ink. Never pure black, never pure grey — every neutral leans warm.</p>
+  <div class="grid sw-grid" style="margin-top:16px">
+    <div class="sw"><div class="chip" style="background:#F0F4EC"></div><div class="meta"><div class="name">background</div><div class="hex">#F0F4EC</div><div class="use">warm sand ground</div></div></div>
+    <div class="sw"><div class="chip" style="background:#3c5a64"></div><div class="meta"><div class="name">primary</div><div class="hex">#3c5a64</div><div class="use">ocean gray · buttons, headings</div></div></div>
+    <div class="sw"><div class="chip" style="background:#1f2a2e"></div><div class="meta"><div class="name">foreground</div><div class="hex">#1f2a2e</div><div class="use">deep ocean ink</div></div></div>
+    <div class="sw"><div class="chip" style="background:#efe7d8"></div><div class="meta"><div class="name">secondary</div><div class="hex">#efe7d8</div><div class="use">chips, icon bubbles</div></div></div>
+    <div class="sw"><div class="chip" style="background:#dde8e7"></div><div class="meta"><div class="name">accent</div><div class="hex">#dde8e7</div><div class="use">soft ocean-sage</div></div></div>
+    <div class="sw"><div class="chip" style="background:#f1ebe0"></div><div class="meta"><div class="name">muted</div><div class="hex">#f1ebe0</div><div class="use">quiet surfaces</div></div></div>
+    <div class="sw"><div class="chip" style="background:#e6dcc9"></div><div class="meta"><div class="name">border</div><div class="hex">#e6dcc9</div><div class="use">warm border</div></div></div>
+    <div class="sw"><div class="chip" style="background:#6f6857"></div><div class="meta"><div class="name">muted-fg</div><div class="hex">#6f6857</div><div class="use">warm gray text</div></div></div>
+    <div class="sw"><div class="chip" style="background:#4f7a4d"></div><div class="meta"><div class="name">success</div><div class="hex">#4f7a4d</div><div class="use">muted sage</div></div></div>
+    <div class="sw"><div class="chip" style="background:#c0492f"></div><div class="meta"><div class="name">destructive</div><div class="hex">#c0492f</div><div class="use">terracotta, not fire-red</div></div></div>
+  </div>
+
+  <h3>Palette — the list paper</h3>
+  <p class="note">A second, separate set. The paper is not an app surface; it is a rough copy from a stationery shop, and it keeps its own colours.</p>
+  <div class="grid sw-grid" style="margin-top:14px">
+    <div class="sw"><div class="chip" style="background:#fdf8ea"></div><div class="meta"><div class="name">paper</div><div class="hex">#fdf8ea</div><div class="use">the sheet</div></div></div>
+    <div class="sw"><div class="chip" style="background:#f5f0e8"></div><div class="meta"><div class="name">paper head</div><div class="hex">#f5f0e8</div><div class="use">column titles</div></div></div>
+    <div class="sw"><div class="chip" style="background:#c9d9ea"></div><div class="meta"><div class="name">rule</div><div class="hex">#c9d9ea</div><div class="use">the blue ruled line</div></div></div>
+    <div class="sw"><div class="chip" style="background:#d9a89b"></div><div class="meta"><div class="name">margin rule</div><div class="hex">#d9a89b</div><div class="use">the red left margin</div></div></div>
+    <div class="sw"><div class="chip" style="background:#26303a"></div><div class="meta"><div class="name">ink</div><div class="hex">#26303a</div><div class="use">what the customer writes</div></div></div>
+    <div class="sw"><div class="chip" style="background:#8b7a5e"></div><div class="meta"><div class="name">pencil</div><div class="hex">#8b7a5e</div><div class="use">line numbers, notes</div></div></div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────────── -->
+  <h2>The signature element</h2>
+  <p class="note">If one thing has to survive a redesign, it is this. Rebuilt here from the real component, so it is the actual thing and not a drawing of it.</p>
+  <div class="panel" style="margin-top:16px; max-width:520px">
+    <div class="paper">
+      <div class="head"><span class="n">#</span><span class="item" style="border-left-color:rgba(217,168,155,.6)">आइटम</span><span class="qty">मात्रा</span><span class="x"></span></div>
+      <div class="row"><span class="n">1</span><span class="item">आटा</span><span class="qty">5 किलो</span><span class="x"></span></div>
+      <div class="row"><span class="n">2</span><span class="item">बोरो प्लस</span><span class="qty">19 ml</span><span class="x"></span></div>
+      <div class="row"><span class="n">3</span><span class="item">ताज़ा चाय</span><span class="qty">250 ग्राम</span><span class="x"></span></div>
+      <div class="row"><span class="n">4</span><span class="item ph">लिखिए…</span><span class="qty"></span><span class="x"></span></div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────────── -->
+  <h2>Type</h2>
+  <div class="two">
+    <div class="panel">
+      <h3>In the app</h3>
+      <p class="type-sample t-system">सूची भेजिए, दाम पाइए — Send your list</p>
+      <p class="t-label">system font (no custom font is bundled)</p>
+      <p class="note" style="margin-top:14px">
+        Deliberate: a bundled font makes the download heavier, and Android's
+        own font renders Devanagari correctly on every phone, including the
+        cheap ones this shop's customers carry.
+      </p>
+    </div>
+    <div class="panel">
+      <h3>In marketing</h3>
+      <p class="type-sample t-baloo">दुकान अब फ़ोन में</p>
+      <p class="t-label">Baloo 2 · 800 — headlines</p>
+      <p class="type-sample t-mukta" style="margin-top:14px">सूची भेजिए, दाम पाइए, आकर ले जाइए</p>
+      <p class="t-label">Mukta · 700 — body, labels</p>
+      <p class="type-sample t-kalam" style="margin-top:14px">आटा · चीनी · चायपत्ती</p>
+      <p class="t-label">Kalam · 700 — anything meant to look handwritten</p>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────────── -->
+  <h2>Pieces</h2>
+  <div class="panel">
+    <div class="row-of">
+      <button class="btn btn-primary">सूची भेजें</button>
+      <button class="btn btn-ghost">रद्द करें</button>
+      <span class="badge">किराना</span>
+      <span class="badge ok">उपलब्ध है</span>
+      <span class="badge bad">स्टॉक में नहीं</span>
+    </div>
+    <p class="note" style="margin-top:16px">
+      Corners are soft (12–16px), shadows are barely there, and borders are
+      warm rather than grey. Nothing is pure white except a product photo's
+      background.
+    </p>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────────── -->
+  <h2>Photography</h2>
+  <div class="photo-demo">
+    <div class="tile"><div class="box">the product, whole, on white</div><div class="cap">✅ your own photo</div></div>
+    <div class="tile"><div class="box" style="background:#fff">4:5, same frame every time</div><div class="cap">✅ consistent</div></div>
+    <div class="tile bad"><div class="box">cropped, grey ground, mixed sizes</div><div class="cap">❌</div></div>
+  </div>
+  <p class="note" style="margin-top:14px">
+    Photographs are taken in the shop, on white chart paper, in daylight. Not
+    stock, not scraped — partly because that is the law, and partly because a
+    customer seeing the actual packet on the actual shelf is the one thing a
+    supermarket app can never show them.
+  </p>
+
+  <!-- ─────────────────────────────────────────────────────────── -->
+  <h2>Rules worth keeping</h2>
+  <p class="note">Each of these was learnt the hard way on a real phone, not chosen from taste.</p>
+  <div class="rules" style="margin-top:16px">
+    <div class="rule do"><b>Show the product whole</b><span>contain, never cover. Cropping beheads a tall bottle and trims a wide packet — the parts that identify it.</span></div>
+    <div class="rule do"><b>White behind a product, warm everywhere else</b><span>a pack shot on white sits seamlessly in a white tile; the rest of the app stays on sand.</span></div>
+    <div class="rule do"><b>Leave room for Hindi</b><span>the same sentence runs longer in Devanagari. Any column sized to fit the English will break the Hindi.</span></div>
+    <div class="rule do"><b>Ask the phone, don't guess</b><span>bottom bars use the safe-area inset. A hard-coded 32dp sat under Android's 48dp navigation bar.</span></div>
+    <div class="rule dont"><b>No touch target that reaches past its row</b><span>a 10dp hitSlop on a 44dp row overlapped its neighbours and swallowed scrolling for days before it was found.</span></div>
+    <div class="rule dont"><b>No urgency theatre</b><span>no timers, no "only 2 left!", no blinking. The shop is not racing anyone.</span></div>
+    <div class="rule dont"><b>No pure black, no pure grey</b><span>every neutral carries warmth. Pure #000 or #888 looks like a different product.</span></div>
+    <div class="rule dont"><b>No borrowed imagery</b><span>not from Amazon, not from a stock site, not with the watermark removed.</span></div>
+  </div>
+
+  <footer>
+    Every colour, font and measurement on this page is read from the running
+    code — <code>mobile/tailwind.config.js</code>,
+    <code>GroceryListEditor.tsx</code> and the marketing banner. If the app
+    changes, this page is wrong until someone updates it.
+  </footer>
+
+</div>
+</body>
+</html>
