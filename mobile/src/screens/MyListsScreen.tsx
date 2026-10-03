@@ -50,11 +50,6 @@ import { formatPrice } from "@/lib/utils";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
-// If the shop hasn't priced a list within this many minutes, reassure the
-// customer that the shop is just busy (not ignoring them). Purely time-based —
-// computed from the list's age, no backend or shopkeeper action needed.
-const BUSY_AFTER_MIN = 30;
-
 // How many lines of a sent list show before "Show N more".
 const PREVIEW_ITEMS = 3;
 
@@ -107,8 +102,10 @@ const STATUS_GROUPS: Record<StatusTab, GroceryListStatus[]> = {
  * priced and still live — a cancelled or completed order must never ask for
  * money again.
  *
- * "The shop is busy" after a wait is computed purely from the order's age.
- * There is no backend field and no shopkeeper action behind it.
+ * Only what a customer acts on is always shown: where the order is, what
+ * is on it, the total, and how to pay. Chat is an icon; removing items and
+ * cancelling sit behind the "..." menu; the full meaning of the estimate
+ * sits behind the (i) beside "Total (estimate)".
  */
 function ListCard({ list }: { list: CustomerGroceryList }) {
   const { t } = useTranslation();
@@ -128,13 +125,6 @@ function ListCard({ list }: { list: CustomerGroceryList }) {
   const isPriced = list.totalAmount > 0;
   const isPaid = list.paymentStatus === "paid";
   const isLive = (ACTIVE_STATUSES as readonly string[]).includes(list.status);
-
-  // Still "received" (not priced) after BUSY_AFTER_MIN minutes → show the shop
-  // a friendly "we're busy, hang tight" note instead of a blank wait.
-  const waitedMinutes =
-    (Date.now() - new Date(list.createdAt).getTime()) / 60000;
-  const shopBusy =
-    list.status === "received" && waitedMinutes >= BUSY_AFTER_MIN;
 
   // Over budget after the quote? Items can be removed — but only before the
   // shop starts packing, never after payment, and never the last item.
@@ -208,18 +198,38 @@ function ListCard({ list }: { list: CustomerGroceryList }) {
   const hiddenCount = list.items.length - visibleItems.length;
   const isCancelled = list.status === "cancelled";
 
-  // One sentence under the stepper says what is happening right now, which
-  // is where "packing" and "packed" - one step - are told apart.
-  const caption = shopBusy
-    ? t("lists.busy")
-    : list.status === "priced" && isPaid
-      ? t("lists.caption.pricedPaid")
-      : t(`lists.caption.${list.status}`);
+  // Removing items is an occasional act, so its buttons only appear after
+  // "Remove items" is chosen from the card's menu.
+  const [editing, setEditing] = useState(false);
+  const showRemove = editing && canRemoveItems;
+
+  // The rarely-used actions live behind one "..." button.
+  const menuActions = [
+    canRemoveItems
+      ? { text: t("lists.removeItems"), onPress: () => setEditing(true) }
+      : null,
+    canCancel
+      ? { text: t("lists.cancelOrder"), style: "destructive" as const, onPress: confirmCancel }
+      : null,
+  ].filter((action): action is NonNullable<typeof action> => action !== null);
+
+  const openMenu = () => {
+    Alert.alert(`#${list.code}`, undefined, [
+      ...menuActions,
+      { text: t("common.cancel"), style: "cancel" },
+    ]);
+  };
+
+  // The full explanation of the total sits behind the (i), like the photo
+  // note on product cards. The word "estimate" itself stays on the total.
+  const explainTotal = () => {
+    Alert.alert(t("lists.estimateInfoTitle"), t("lists.estimateInfo"));
+  };
 
   return (
     <View className="overflow-hidden rounded-2xl border border-border bg-card">
-      {/* Header: which order, when, and - once priced - how much */}
-      <View className="flex-row items-start justify-between gap-3 px-4 pb-3 pt-4">
+      {/* Header: which order and when; chat and the menu on the right */}
+      <View className="flex-row items-start gap-2 px-4 pb-3 pt-4">
         <View className="flex-1">
           <View className="flex-row flex-wrap items-center gap-2">
             <Text className="text-base font-bold text-foreground">
@@ -232,51 +242,58 @@ function ListCard({ list }: { list: CustomerGroceryList }) {
                 </Text>
               </View>
             ) : null}
+            {isPaid ? (
+              <View className="flex-row items-center gap-1 rounded-full bg-success/10 px-2 py-0.5">
+                <Feather name="check" size={10} color="#4f7a4d" />
+                <Text className="text-[10px] font-semibold text-success">
+                  {t("lists.paidShort")}
+                </Text>
+              </View>
+            ) : null}
           </View>
           <Text className="mt-0.5 text-xs text-muted-foreground">
             {formatShortDate(list.createdAt, t("lists.monthsShort"))} ·{" "}
             {t("lists.itemsCount", { count: list.totalItems })}
           </Text>
         </View>
-        {isPriced && !isCancelled ? (
-          <View className="items-end">
-            <Text className="text-lg font-bold text-foreground">
-              {formatPrice(list.totalAmount)}
-            </Text>
-            <Text
-              className={
-                isPaid
-                  ? "text-[10px] font-semibold text-success"
-                  : "text-[10px] text-muted-foreground"
-              }
-            >
-              {isPaid ? t("lists.paidShort") : t("lists.estimateShort")}
-            </Text>
-          </View>
+        <Pressable
+          onPress={() => setChatOpen(true)}
+          accessibilityRole="button"
+          accessibilityLabel={t("lists.messageShop")}
+          hitSlop={6}
+          className="h-9 w-9 items-center justify-center rounded-full bg-secondary"
+        >
+          <Feather name="message-circle" size={16} color="#3c5a64" />
+        </Pressable>
+        {menuActions.length ? (
+          <Pressable
+            onPress={openMenu}
+            accessibilityRole="button"
+            accessibilityLabel={t("lists.moreActions")}
+            hitSlop={6}
+            className="h-9 w-9 items-center justify-center rounded-full bg-secondary"
+          >
+            <Feather name="more-horizontal" size={16} color="#3c5a64" />
+          </Pressable>
         ) : null}
       </View>
 
-      {/* Status: the stepper, or a plain banner when cancelled */}
-      <View className="gap-2 px-4">
+      {/* Status */}
+      <View className="px-4">
         {isCancelled ? (
-          <View className="flex-row items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-3">
-            <Feather name="x-circle" size={16} color="#c0492f" />
+          <View className="flex-row items-center gap-2 rounded-xl bg-destructive/10 px-3 py-2.5">
+            <Feather name="x-circle" size={15} color="#c0492f" />
             <Text className="text-sm font-semibold text-destructive">
               {t("lists.caption.cancelled")}
             </Text>
           </View>
         ) : (
-          <>
-            <OrderStepper status={list.status} />
-            <Text className="text-xs leading-5 text-muted-foreground">
-              {caption}
-            </Text>
-          </>
+          <OrderStepper status={list.status} />
         )}
       </View>
 
-      {/* Items - price column only once the shop has priced it */}
-      <View className="mx-4 mt-3 border-t border-border">
+      {/* Items */}
+      <View className="mt-2 px-4">
         {visibleItems.map((item, index) => (
           <View
             key={`${list._id}-${index}`}
@@ -296,132 +313,101 @@ function ListCard({ list }: { list: CustomerGroceryList }) {
               ) : null}
             </Text>
             {item.available === false ? (
-              <Text className="text-xs font-semibold text-destructive">
+              <Text className="text-xs font-medium text-destructive">
                 {t("lists.notAvailable")}
               </Text>
             ) : isPriced ? (
-              <View className="items-end">
-                <Text className="text-sm font-semibold text-foreground">
-                  {formatPrice(item.price)}
-                </Text>
-                {item.rate ? (
-                  <Text className="text-[10px] text-muted-foreground">
-                    @{formatPrice(item.rate)}
-                  </Text>
-                ) : null}
-              </View>
+              <Text className="text-sm font-medium text-foreground">
+                {formatPrice(item.price)}
+              </Text>
             ) : null}
-            {canRemoveItems ? (
+            {showRemove ? (
               <Pressable
                 onPress={() => confirmRemove(index, item.name)}
                 hitSlop={8}
                 accessibilityRole="button"
                 accessibilityLabel={`${t("common.delete")} ${item.name}`}
-                className="h-7 w-7 items-center justify-center rounded-full border border-destructive/30"
               >
-                <Feather name="trash-2" size={13} color="#c0492f" />
+                <Feather name="trash-2" size={16} color="#c0492f" />
               </Pressable>
             ) : null}
           </View>
         ))}
-        {list.items.length > PREVIEW_ITEMS ? (
-          <Pressable
-            onPress={() => setExpanded((value) => !value)}
-            accessibilityRole="button"
-            className="flex-row items-center justify-center gap-1 py-2.5"
-          >
-            <Text className="text-xs font-semibold text-primary">
-              {expanded
-                ? t("lists.showLess")
-                : t("lists.showMore", { count: hiddenCount })}
-            </Text>
-            <Feather
-              name={expanded ? "chevron-up" : "chevron-down"}
-              size={14}
-              color="#3c5a64"
-            />
-          </Pressable>
+        {list.items.length > PREVIEW_ITEMS || showRemove ? (
+          <View className="flex-row items-center justify-between py-2">
+            {list.items.length > PREVIEW_ITEMS ? (
+              <Pressable
+                onPress={() => setExpanded((value) => !value)}
+                accessibilityRole="button"
+                hitSlop={6}
+                className="flex-row items-center gap-1"
+              >
+                <Text className="text-xs font-semibold text-primary">
+                  {expanded
+                    ? t("lists.showLess")
+                    : t("lists.showMore", { count: hiddenCount })}
+                </Text>
+                <Feather
+                  name={expanded ? "chevron-up" : "chevron-down"}
+                  size={14}
+                  color="#3c5a64"
+                />
+              </Pressable>
+            ) : (
+              <View />
+            )}
+            {showRemove ? (
+              <Pressable onPress={() => setEditing(false)} hitSlop={6}>
+                <Text className="text-xs font-semibold text-primary">
+                  {t("lists.doneEditing")}
+                </Text>
+              </Pressable>
+            ) : null}
+          </View>
         ) : null}
       </View>
 
-      {/* Total, with the estimate note right under it */}
+      {/* Total: once, with the word "estimate" on it and the rest behind (i) */}
       {isPriced && !isCancelled ? (
-        <View className="mx-4 mt-3 gap-1 rounded-xl bg-secondary px-4 py-3">
-          <View className="flex-row items-center justify-between">
+        <View className="flex-row items-center justify-between px-4 pt-3">
+          <Pressable
+            onPress={explainTotal}
+            accessibilityRole="button"
+            accessibilityHint={t("lists.estimateInfoTitle")}
+            hitSlop={8}
+            className="flex-row items-center gap-1.5"
+          >
             <Text className="text-sm font-semibold text-foreground">
-              {t("lists.total")}
+              {t("lists.totalEstimate")}
             </Text>
-            <Text className="text-lg font-bold text-foreground">
-              {formatPrice(list.totalAmount)}
-            </Text>
-          </View>
-          <Text className="text-[11px] leading-4 text-muted-foreground">
-            {t("lists.estimate")}
+            <Feather name="info" size={14} color="#6f6857" />
+          </Pressable>
+          <Text className="text-lg font-bold text-foreground">
+            {formatPrice(list.totalAmount)}
           </Text>
         </View>
       ) : null}
 
-      {/* Actions */}
-      <View className="gap-2 px-4 pb-4 pt-3">
-        {/* Payment - only once priced, and only while the order is still
-            live: a cancelled or finished order must never ask for money. */}
-        {isPriced && isLive ? (
-          isPaid ? (
-            <View className="flex-row items-center justify-center gap-2 rounded-xl bg-success/10 py-2.5">
-              <Feather name="check-circle" size={15} color="#4f7a4d" />
-              <Text className="text-sm font-semibold text-success">
-                {t("lists.paymentReceived")}
-              </Text>
-            </View>
-          ) : (
-            <View className="gap-2">
-              <Button
-                label={t("lists.payUpi", {
-                  amount: formatPrice(list.totalAmount),
-                })}
-                loading={busy}
-                onPress={() => void payViaUpi(list)}
-              />
-              <Button
-                label={t("lists.payAtShop")}
-                variant="outline"
-                loading={busy}
-                onPress={() => void payAtShop(list._id)}
-              />
-              <Text className="text-center text-[11px] text-muted-foreground">
-                {t("lists.payNote")}
-              </Text>
-            </View>
-          )
-        ) : null}
-
-        {/* Talk to the shop, and - until packing starts - cancel */}
-        <View className="flex-row items-center justify-between pt-1">
-          <Pressable
-            onPress={() => setChatOpen(true)}
-            accessibilityRole="button"
-            className="flex-row items-center gap-1.5 rounded-full border border-border bg-secondary px-3.5 py-2"
-          >
-            <Feather name="message-circle" size={14} color="#3c5a64" />
-            <Text className="text-xs font-semibold text-foreground">
-              {t("lists.messageShop")}
-            </Text>
-          </Pressable>
-          {canCancel ? (
-            <Pressable
-              onPress={confirmCancel}
-              disabled={cancelling}
-              accessibilityRole="button"
-              hitSlop={6}
-              className="px-2 py-2"
-            >
-              <Text className="text-xs font-semibold text-destructive">
-                {cancelling ? "…" : t("lists.cancelOrder")}
-              </Text>
-            </Pressable>
-          ) : null}
+      {/* Payment - only once priced, unpaid, and still live */}
+      {isPriced && isLive && !isPaid ? (
+        <View className="flex-row gap-2 px-4 pt-3">
+          <Button
+            label={t("lists.payUpiShort")}
+            loading={busy}
+            onPress={() => void payViaUpi(list)}
+            className="flex-1"
+          />
+          <Button
+            label={t("lists.payAtShopShort")}
+            variant="outline"
+            loading={busy}
+            onPress={() => void payAtShop(list._id)}
+            className="flex-1"
+          />
         </View>
-      </View>
+      ) : null}
+
+      <View className="h-4" />
 
       <ChatSheet
         open={chatOpen}

@@ -76,8 +76,8 @@ function Chevron() {
 function Marker({ state, number }: { state: StepState; number: number }) {
   if (state === "complete") {
     return (
-      <View className="h-8 w-8 items-center justify-center rounded-full bg-primary">
-        <Feather name="check" size={16} color="#ffffff" />
+      <View className="h-7 w-7 items-center justify-center rounded-full bg-primary">
+        <Feather name="check" size={14} color="#ffffff" />
       </View>
     );
   }
@@ -86,8 +86,8 @@ function Marker({ state, number }: { state: StepState; number: number }) {
     <View
       className={
         current
-          ? "h-8 w-8 items-center justify-center rounded-full border-2 border-primary bg-card"
-          : "h-8 w-8 items-center justify-center rounded-full border-2 border-border bg-card"
+          ? "h-7 w-7 items-center justify-center rounded-full border-2 border-primary bg-card"
+          : "h-7 w-7 items-center justify-center rounded-full border-2 border-border bg-card"
       }
     >
       <Text
@@ -128,7 +128,7 @@ export function OrderStepper({ status }: { status: GroceryListStatus }) {
         return (
           <View
             key={step}
-            className="relative flex-1 items-center gap-1.5 px-1 pb-3 pt-3"
+            className="relative flex-1 items-center gap-1.5 px-1 pb-2.5 pt-2.5"
             accessible
             accessibilityLabel={t("lists.stepA11y", {
               number: index + 1,
@@ -138,16 +138,6 @@ export function OrderStepper({ status }: { status: GroceryListStatus }) {
             })}
           >
             <Marker state={state} number={index + 1} />
-            <Text
-              className={
-                current
-                  ? "text-[10px] font-semibold uppercase text-primary"
-                  : "text-[10px] font-medium uppercase text-muted-foreground"
-              }
-              numberOfLines={1}
-            >
-              {stateLabel}
-            </Text>
             <Text
               className={
                 state === "upcoming"
