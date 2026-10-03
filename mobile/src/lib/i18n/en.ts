@@ -189,7 +189,6 @@ export const en = {
     signInToSave: "Sign in to save",
     wishlistFailed: "Could not update. Please try again.",
     notLoaded: "This product could not be loaded.",
-    onlyLeft: "Only {{count}} left",
     inStock: "In stock",
     outOfStock: "Out of stock",
     // The photo disclaimer, shown from the (i) on a card. FMCG packaging

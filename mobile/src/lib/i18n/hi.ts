@@ -187,7 +187,6 @@ export const hi: Translations = {
     signInToSave: "सेव करने के लिए साइन इन करें",
     wishlistFailed: "अपडेट नहीं हो सका। कृपया फिर कोशिश करें।",
     notLoaded: "यह सामान लोड नहीं हो सका।",
-    onlyLeft: "सिर्फ़ {{count}} बचे",
     inStock: "उपलब्ध है",
     outOfStock: "स्टॉक में नहीं",
     imageNoteTitle: "इस तस्वीर के बारे में",

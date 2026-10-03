@@ -261,10 +261,11 @@ export function ProductDetailsScreen() {
           <View className="flex-row flex-wrap items-center gap-2">
             <Badge>{product.category?.name}</Badge>
             {product.stock > 0 ? (
+              // In stock or not, never a count. `stock` is whatever the shop
+              // last typed and is not reduced by orders, so "only 3 left"
+              // would be a scarcity claim nobody can stand behind.
               <Badge className="border-primary/30 bg-secondary">
-                {product.stock <= 5
-                  ? t("product.onlyLeft", { count: product.stock })
-                  : t("product.inStock")}
+                {t("product.inStock")}
               </Badge>
             ) : (
               <Badge className="border-0 bg-destructive">
