@@ -45,6 +45,7 @@ import { Badge } from "@/components/ui/Badge";
 import { toast } from "@/lib/toast";
 import { GroceryList } from "@/components/GroceryList";
 import { ChatSheet } from "@/components/ChatSheet";
+import { OrderStepper } from "@/components/OrderStepper";
 import { formatPrice } from "@/lib/utils";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -53,6 +54,23 @@ type Nav = NativeStackNavigationProp<RootStackParamList>;
 // customer that the shop is just busy (not ignoring them). Purely time-based —
 // computed from the list's age, no backend or shopkeeper action needed.
 const BUSY_AFTER_MIN = 30;
+
+// How many lines of a sent list show before "Show N more".
+const PREVIEW_ITEMS = 3;
+
+/**
+ * "3 Oct" from an ISO date, with month names from the current language.
+ *
+ * @remarks
+ * Built by hand rather than with `Intl`, whose locale data varies between
+ * Android builds; `months` is the translated, comma-separated list.
+ */
+function formatShortDate(iso: string, months: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  const names = months.split(",");
+  return `${date.getDate()} ${names[date.getMonth()] ?? ""}`.trim();
+}
 
 // Status tabs so cancelled / completed lists don't clutter the active ones.
 const STATUS_TABS = ["active", "completed", "cancelled"] as const;
@@ -64,93 +82,6 @@ const STATUS_GROUPS: Record<StatusTab, GroceryListStatus[]> = {
   completed: ["completed"],
   cancelled: ["cancelled"],
 };
-
-// The customer-facing journey. "Priced" is its own visible step so the
-// customer sees the quote arrive — its label carries the total. Labels are
-// translated at render via lists.timeline.<key>.
-const TIMELINE_KEYS: GroceryListStatus[] = [
-  "received",
-  "priced",
-  "packing",
-  "packed",
-  "ready",
-];
-
-const STEP_INDEX: Record<GroceryListStatus, number> = {
-  received: 0,
-  priced: 1,
-  packing: 2,
-  packed: 3,
-  ready: 4,
-  completed: 4,
-  cancelled: -1,
-};
-
-/**
- * The order's progress as a ticked checklist, or a single badge when it was
- * cancelled.
- *
- * @remarks
- * Labels are looked up dynamically by status, which is why these translation
- * keys go three levels deep. The "Priced" row carries the quoted total, so the
- * customer sees the quote arrive on the timeline itself.
- */
-function StatusTimeline({ list }: { list: CustomerGroceryList }) {
-  const { t } = useTranslation();
-  const status = list.status;
-  const current = STEP_INDEX[status] ?? 0;
-
-  if (status === "cancelled") {
-    return (
-      <Badge className="border-0 bg-destructive">
-        <Text className="text-xs font-medium text-destructive-foreground">
-          {t("lists.cancelled")}
-        </Text>
-      </Badge>
-    );
-  }
-
-  return (
-    <View className="gap-2">
-      {TIMELINE_KEYS.map((key, index) => {
-        const done = index <= current;
-        const base = t(`lists.timeline.${key}`);
-        // The "Priced" step shows the quoted total right on the timeline.
-        const label =
-          key === "priced" && list.totalAmount > 0
-            ? `${base} — ${formatPrice(list.totalAmount)}`
-            : base;
-
-        return (
-          <View key={key} className="flex-row items-center gap-3">
-            <View
-              className={
-                done
-                  ? "h-6 w-6 items-center justify-center rounded-full bg-primary"
-                  : "h-6 w-6 items-center justify-center rounded-full border border-border bg-muted"
-              }
-            >
-              {done ? (
-                <Feather name="check" size={13} color="#ffffff" />
-              ) : (
-                <View className="h-1.5 w-1.5 rounded-full bg-muted-foreground" />
-              )}
-            </View>
-            <Text
-              className={
-                done
-                  ? "text-sm font-medium text-foreground"
-                  : "text-sm text-muted-foreground"
-              }
-            >
-              {label}
-            </Text>
-          </View>
-        );
-      })}
-    </View>
-  );
-}
 
 /**
  * One sent order: its items, the total once priced, its progress, a way to
@@ -271,32 +202,85 @@ function ListCard({ list }: { list: CustomerGroceryList }) {
     }
   }, [isFocused, list._id, list.seenByCustomer, markSeen]);
 
+  // Long lists stay short until asked: the first few lines, then a toggle.
+  const [expanded, setExpanded] = useState(false);
+  const visibleItems = expanded ? list.items : list.items.slice(0, PREVIEW_ITEMS);
+  const hiddenCount = list.items.length - visibleItems.length;
+  const isCancelled = list.status === "cancelled";
+
+  // One sentence under the stepper says what is happening right now, which
+  // is where "packing" and "packed" - one step - are told apart.
+  const caption = shopBusy
+    ? t("lists.busy")
+    : list.status === "priced" && isPaid
+      ? t("lists.caption.pricedPaid")
+      : t(`lists.caption.${list.status}`);
+
   return (
-    <View className="gap-4 rounded-2xl border border-border bg-card p-4">
-      <View className="flex-row items-start justify-between">
-        <View>
-          <Text className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            {t("lists.listNo", { code: list.code })}
-          </Text>
+    <View className="overflow-hidden rounded-2xl border border-border bg-card">
+      {/* Header: which order, when, and - once priced - how much */}
+      <View className="flex-row items-start justify-between gap-3 px-4 pb-3 pt-4">
+        <View className="flex-1">
+          <View className="flex-row flex-wrap items-center gap-2">
+            <Text className="text-base font-bold text-foreground">
+              #{list.code}
+            </Text>
+            {!list.seenByCustomer ? (
+              <View className="rounded-full bg-primary px-2 py-0.5">
+                <Text className="text-[10px] font-semibold text-primary-foreground">
+                  {t("lists.newUpdate")}
+                </Text>
+              </View>
+            ) : null}
+          </View>
           <Text className="mt-0.5 text-xs text-muted-foreground">
+            {formatShortDate(list.createdAt, t("lists.monthsShort"))} ·{" "}
             {t("lists.itemsCount", { count: list.totalItems })}
           </Text>
         </View>
-        {!list.seenByCustomer ? (
-          <Badge className="border-0 bg-primary">
-            <Text className="text-xs font-medium text-primary-foreground">
-              {t("lists.newUpdate")}
+        {isPriced && !isCancelled ? (
+          <View className="items-end">
+            <Text className="text-lg font-bold text-foreground">
+              {formatPrice(list.totalAmount)}
             </Text>
-          </Badge>
+            <Text
+              className={
+                isPaid
+                  ? "text-[10px] font-semibold text-success"
+                  : "text-[10px] text-muted-foreground"
+              }
+            >
+              {isPaid ? t("lists.paidShort") : t("lists.estimateShort")}
+            </Text>
+          </View>
         ) : null}
       </View>
 
-      {/* Items — price column only once the shop has priced it */}
-      <View className="gap-1.5">
-        {list.items.map((item, index) => (
+      {/* Status: the stepper, or a plain banner when cancelled */}
+      <View className="gap-2 px-4">
+        {isCancelled ? (
+          <View className="flex-row items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-3">
+            <Feather name="x-circle" size={16} color="#c0492f" />
+            <Text className="text-sm font-semibold text-destructive">
+              {t("lists.caption.cancelled")}
+            </Text>
+          </View>
+        ) : (
+          <>
+            <OrderStepper status={list.status} />
+            <Text className="text-xs leading-5 text-muted-foreground">
+              {caption}
+            </Text>
+          </>
+        )}
+      </View>
+
+      {/* Items - price column only once the shop has priced it */}
+      <View className="mx-4 mt-3 border-t border-border">
+        {visibleItems.map((item, index) => (
           <View
             key={`${list._id}-${index}`}
-            className="flex-row items-center justify-between"
+            className="flex-row items-center gap-3 border-b border-border/60 py-2.5"
           >
             <Text
               className={
@@ -304,13 +288,11 @@ function ListCard({ list }: { list: CustomerGroceryList }) {
                   ? "flex-1 text-sm text-muted-foreground line-through"
                   : "flex-1 text-sm text-foreground"
               }
+              numberOfLines={2}
             >
-              {index + 1}. {item.name}
+              {item.name}
               {item.quantity ? (
-                <Text className="text-muted-foreground">
-                  {" "}
-                  · {item.quantity}
-                </Text>
+                <Text className="text-muted-foreground"> · {item.quantity}</Text>
               ) : null}
             </Text>
             {item.available === false ? (
@@ -318,117 +300,128 @@ function ListCard({ list }: { list: CustomerGroceryList }) {
                 {t("lists.notAvailable")}
               </Text>
             ) : isPriced ? (
-              <View className="flex-row items-center gap-1.5">
+              <View className="items-end">
+                <Text className="text-sm font-semibold text-foreground">
+                  {formatPrice(item.price)}
+                </Text>
                 {item.rate ? (
-                  <Text className="text-[11px] text-muted-foreground">
+                  <Text className="text-[10px] text-muted-foreground">
                     @{formatPrice(item.rate)}
                   </Text>
                 ) : null}
-                <Text className="text-sm font-medium text-foreground">
-                  {formatPrice(item.price)}
-                </Text>
               </View>
             ) : null}
             {canRemoveItems ? (
               <Pressable
                 onPress={() => confirmRemove(index, item.name)}
                 hitSlop={8}
-                className="ml-3 rounded-md border border-destructive/40 px-2 py-0.5"
+                accessibilityRole="button"
+                accessibilityLabel={`${t("common.delete")} ${item.name}`}
+                className="h-7 w-7 items-center justify-center rounded-full border border-destructive/30"
               >
-                <Text className="text-xs font-semibold text-destructive">
-                  {t("common.delete")}
-                </Text>
+                <Feather name="trash-2" size={13} color="#c0492f" />
               </Pressable>
             ) : null}
           </View>
         ))}
+        {list.items.length > PREVIEW_ITEMS ? (
+          <Pressable
+            onPress={() => setExpanded((value) => !value)}
+            accessibilityRole="button"
+            className="flex-row items-center justify-center gap-1 py-2.5"
+          >
+            <Text className="text-xs font-semibold text-primary">
+              {expanded
+                ? t("lists.showLess")
+                : t("lists.showMore", { count: hiddenCount })}
+            </Text>
+            <Feather
+              name={expanded ? "chevron-up" : "chevron-down"}
+              size={14}
+              color="#3c5a64"
+            />
+          </Pressable>
+        ) : null}
       </View>
 
-      {isPriced ? (
-        <View className="gap-1.5">
-          <View className="flex-row items-center justify-between rounded-xl bg-secondary px-4 py-3">
-            <Text className="text-base font-semibold text-foreground">
+      {/* Total, with the estimate note right under it */}
+      {isPriced && !isCancelled ? (
+        <View className="mx-4 mt-3 gap-1 rounded-xl bg-secondary px-4 py-3">
+          <View className="flex-row items-center justify-between">
+            <Text className="text-sm font-semibold text-foreground">
               {t("lists.total")}
             </Text>
-            <Text className="text-xl font-bold text-foreground">
+            <Text className="text-lg font-bold text-foreground">
               {formatPrice(list.totalAmount)}
             </Text>
           </View>
-          {/* Passive legal note — an estimate; final bill is at the counter */}
-          <Text className="text-center text-[11px] text-muted-foreground">
+          <Text className="text-[11px] leading-4 text-muted-foreground">
             {t("lists.estimate")}
           </Text>
         </View>
-      ) : (
-        <View
-          className={
-            shopBusy
-              ? "rounded-xl border border-primary/30 bg-secondary p-3"
-              : "rounded-xl border border-border bg-secondary p-3"
-          }
-        >
-          <Text className="text-xs leading-5 text-muted-foreground">
-            {shopBusy ? t("lists.busy") : t("lists.waiting")}
-          </Text>
+      ) : null}
+
+      {/* Actions */}
+      <View className="gap-2 px-4 pb-4 pt-3">
+        {/* Payment - only once priced, and only while the order is still
+            live: a cancelled or finished order must never ask for money. */}
+        {isPriced && isLive ? (
+          isPaid ? (
+            <View className="flex-row items-center justify-center gap-2 rounded-xl bg-success/10 py-2.5">
+              <Feather name="check-circle" size={15} color="#4f7a4d" />
+              <Text className="text-sm font-semibold text-success">
+                {t("lists.paymentReceived")}
+              </Text>
+            </View>
+          ) : (
+            <View className="gap-2">
+              <Button
+                label={t("lists.payUpi", {
+                  amount: formatPrice(list.totalAmount),
+                })}
+                loading={busy}
+                onPress={() => void payViaUpi(list)}
+              />
+              <Button
+                label={t("lists.payAtShop")}
+                variant="outline"
+                loading={busy}
+                onPress={() => void payAtShop(list._id)}
+              />
+              <Text className="text-center text-[11px] text-muted-foreground">
+                {t("lists.payNote")}
+              </Text>
+            </View>
+          )
+        ) : null}
+
+        {/* Talk to the shop, and - until packing starts - cancel */}
+        <View className="flex-row items-center justify-between pt-1">
+          <Pressable
+            onPress={() => setChatOpen(true)}
+            accessibilityRole="button"
+            className="flex-row items-center gap-1.5 rounded-full border border-border bg-secondary px-3.5 py-2"
+          >
+            <Feather name="message-circle" size={14} color="#3c5a64" />
+            <Text className="text-xs font-semibold text-foreground">
+              {t("lists.messageShop")}
+            </Text>
+          </Pressable>
+          {canCancel ? (
+            <Pressable
+              onPress={confirmCancel}
+              disabled={cancelling}
+              accessibilityRole="button"
+              hitSlop={6}
+              className="px-2 py-2"
+            >
+              <Text className="text-xs font-semibold text-destructive">
+                {cancelling ? "…" : t("lists.cancelOrder")}
+              </Text>
+            </Pressable>
+          ) : null}
         </View>
-      )}
-
-      <StatusTimeline list={list} />
-
-      {/* Talk to the shop about this order (quantities, packing, price…) */}
-      <Pressable
-        onPress={() => setChatOpen(true)}
-        className="flex-row items-center justify-center gap-2 rounded-xl border border-border bg-secondary py-3"
-      >
-        <Feather name="message-circle" size={16} color="#3c5a64" />
-        <Text className="text-sm font-semibold text-foreground">
-          {t("lists.messageShop")}
-        </Text>
-      </Pressable>
-
-      {/* Payment — only once priced, and only while the order is still live:
-          a cancelled or finished order must never ask for money again. */}
-      {isPriced && isLive ? (
-        isPaid ? (
-          <Badge className="border-0 bg-success">
-            <Text className="text-xs font-medium text-primary-foreground">
-              {t("lists.paymentReceived")}
-            </Text>
-          </Badge>
-        ) : (
-          <View className="gap-2">
-            <Button
-              label={t("lists.payUpi", {
-                amount: formatPrice(list.totalAmount),
-              })}
-              loading={busy}
-              onPress={() => void payViaUpi(list)}
-            />
-            <Button
-              label={t("lists.payAtShop")}
-              variant="outline"
-              loading={busy}
-              onPress={() => void payAtShop(list._id)}
-            />
-            <Text className="text-center text-[11px] text-muted-foreground">
-              {t("lists.payNote")}
-            </Text>
-          </View>
-        )
-      ) : null}
-
-      {canCancel ? (
-        <Pressable
-          onPress={confirmCancel}
-          disabled={cancelling}
-          accessibilityRole="button"
-          className="items-center py-1"
-        >
-          <Text className="text-sm font-medium text-destructive">
-            {cancelling ? "…" : t("lists.cancelOrder")}
-          </Text>
-        </Pressable>
-      ) : null}
+      </View>
 
       <ChatSheet
         open={chatOpen}
