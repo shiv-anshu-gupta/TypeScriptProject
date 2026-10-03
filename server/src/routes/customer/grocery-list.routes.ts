@@ -58,7 +58,6 @@ import { notifyAdmins } from "../../utils/webPush";
 import { sendTelegram, escapeTelegram } from "../../utils/telegram";
 import { consume } from "../../services/rateLimit";
 
-
 /**
  * Shapes one `grocerylists` document for the wire. Every list endpoint in this
  * file answers with this shape.
@@ -594,8 +593,8 @@ customerGroceryListRouter.patch(
  *
  * Guards run in this order: valid index, not already paid, status is
  * `received` or `priced`, index within range, more than one item left. A list
- * can never be emptied this way; removing the last item is refused, and
- * cancelling an order entirely is the shop's job.
+ * can never be emptied this way; removing the last item is refused. To drop
+ * the whole order the customer uses `PATCH .../cancel` instead.
  *
  * `totalAmount` is recomputed as the sum of the remaining `price` values, so
  * on a list the shop has not priced yet it stays at 0.
@@ -668,6 +667,91 @@ customerGroceryListRouter.patch(
     );
 
     await foundList.save();
+
+    res.json(ok(mapGroceryList(foundList)));
+  }),
+);
+
+/**
+ * Statuses in which the customer may still cancel: the shop has not started
+ * picking anything off the shelf.
+ */
+export const CUSTOMER_CANCELLABLE = ["received", "priced"] as const;
+
+/**
+ * `PATCH /customer/grocery-lists/:listId/cancel` — the customer withdraws an
+ * order before the shop starts packing it.
+ *
+ * @remarks
+ * Auth: signed-in customer. Path parameter `listId`. No body.
+ *
+ * Allowed while the list is `received` or `priced`. Once the shop is packing,
+ * the bag is half made and the customer is asked to message or call the shop
+ * instead, which can still cancel from its side.
+ *
+ * A list already paid by UPI can be cancelled too - being unable to cancel
+ * after paying is exactly the trap the consumer rules are written against.
+ * The shop is then told, in the Telegram message itself, that the money must
+ * go back; the published terms promise a refund to the same UPI id within
+ * three working days, or in cash at the counter.
+ *
+ * Idempotent: cancelling an already-cancelled list returns it unchanged.
+ *
+ * Side effects: one write to `grocerylists`; a web push to the shop's
+ * browsers and a Telegram message.
+ *
+ * @throws AppError 400 `"List id is required"` when the path segment is blank.
+ * @throws AppError 400 `"The shop has already started packing this order.
+ * Please message or call the shop to cancel."` once packing has begun.
+ * @throws AppError 404 `"List not found"` when no such list belongs to the
+ * caller.
+ */
+customerGroceryListRouter.patch(
+  "/grocery-lists/:listId/cancel",
+  asyncHandler(async (req: Request, res: Response) => {
+    const dbUser = await getDbUserFromReq(req);
+    const listId = String(req.params.listId || "").trim();
+
+    requireText(listId, "List id is required");
+
+    const list = await GroceryList.findOne({ _id: listId, user: dbUser._id });
+    const foundList = requireFound(list, "List not found", 404);
+
+    if (foundList.status === "cancelled") {
+      res.json(ok(mapGroceryList(foundList)));
+      return;
+    }
+
+    if (!(CUSTOMER_CANCELLABLE as readonly string[]).includes(foundList.status)) {
+      throw new AppError(
+        400,
+        "The shop has already started packing this order. Please message or call the shop to cancel.",
+      );
+    }
+
+    foundList.status = "cancelled";
+    await foundList.save();
+
+    const code = String(foundList._id).slice(-8).toUpperCase();
+    const who = dbUser.name || dbUser.email || "A customer";
+    const paid = foundList.paymentStatus === "paid";
+
+    await notifyAdmins(
+      `Order cancelled · #${code}`,
+      paid
+        ? `${who} cancelled a PAID order. Refund Rs ${foundList.totalAmount}.`
+        : `${who} cancelled the order.`,
+      { listId: String(foundList._id), type: "list_cancelled" },
+    );
+    await sendTelegram(
+      `❌ <b>Order cancelled by customer</b> · #${code}\n` +
+        `From: ${escapeTelegram(who)}\n` +
+        (paid
+          ? `⚠️ <b>This order was PAID (Rs ${foundList.totalAmount}).</b> ` +
+            `Please refund it to the customer's UPI within 3 working days, ` +
+            `or in cash if they come to the shop.`
+          : `Not paid - nothing to refund. Please don't pack it.`),
+    );
 
     res.json(ok(mapGroceryList(foundList)));
   }),

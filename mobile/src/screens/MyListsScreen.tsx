@@ -191,7 +191,7 @@ function ListCard({ list }: { list: CustomerGroceryList }) {
   const busy = useCustomerGroceryListStore(
     (state) => state.payingListId === list._id,
   );
-  const { markSeen, payAtShop, payViaUpi, removeItem } =
+  const { markSeen, payAtShop, payViaUpi, removeItem, cancelList } =
     useCustomerGroceryListStore.getState();
 
   const isPriced = list.totalAmount > 0;
@@ -211,6 +211,32 @@ function ListCard({ list }: { list: CustomerGroceryList }) {
     (list.status === "received" || list.status === "priced") &&
     !isPaid &&
     list.items.length > 1;
+
+  // The customer can withdraw the whole order until the shop starts packing.
+  // Paid ones too - being unable to cancel after paying is the trap the
+  // consumer rules exist for - and the dialog says the money comes back.
+  const canCancel = list.status === "received" || list.status === "priced";
+  const [cancelling, setCancelling] = useState(false);
+  const confirmCancel = () => {
+    if (cancelling) return;
+    Alert.alert(
+      t("lists.cancelTitle"),
+      isPaid
+        ? t("lists.cancelBodyPaid", { amount: formatPrice(list.totalAmount) })
+        : t("lists.cancelBody"),
+      [
+        { text: t("lists.cancelKeep"), style: "cancel" },
+        {
+          text: t("lists.cancelConfirm"),
+          style: "destructive",
+          onPress: () => {
+            setCancelling(true);
+            void cancelList(list._id).finally(() => setCancelling(false));
+          },
+        },
+      ],
+    );
+  };
 
   // Removing goes by position, and every removal shifts the positions after
   // it. So only one removal may be in flight, and the position is re-read from
@@ -389,6 +415,19 @@ function ListCard({ list }: { list: CustomerGroceryList }) {
             </Text>
           </View>
         )
+      ) : null}
+
+      {canCancel ? (
+        <Pressable
+          onPress={confirmCancel}
+          disabled={cancelling}
+          accessibilityRole="button"
+          className="items-center py-1"
+        >
+          <Text className="text-sm font-medium text-destructive">
+            {cancelling ? "…" : t("lists.cancelOrder")}
+          </Text>
+        </Pressable>
       ) : null}
 
       <ChatSheet

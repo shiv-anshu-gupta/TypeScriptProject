@@ -14,6 +14,7 @@ import {
   getCustomerGroceryLists,
   markGroceryListSeen,
   payGroceryListAtShop,
+  cancelGroceryList,
   removeGroceryListItem,
   submitGroceryList,
 } from "./api";
@@ -63,6 +64,7 @@ type CustomerGroceryListStore = {
   markSeen: (listId: string) => Promise<void>;
   removeItem: (listId: string, index: number) => Promise<void>;
   payAtShop: (listId: string) => Promise<void>;
+  cancelList: (listId: string) => Promise<void>;
   payViaUpi: (list: CustomerGroceryList) => Promise<void>;
   clear: () => void;
 };
@@ -246,6 +248,28 @@ export const useCustomerGroceryListStore = create<CustomerGroceryListStore>(
      *
      * Toasts both outcomes and never throws.
      */
+    /**
+     * Withdraws an order before packing starts, and swaps the list for the
+     * server's cancelled copy.
+     *
+     * @remarks
+     * Toasts both outcomes and never throws. A refusal shows the server's own
+     * sentence, which says to contact the shop once packing has begun.
+     */
+    cancelList: async (listId) => {
+      try {
+        const updated = await cancelGroceryList(listId);
+        if (!updated?._id) throw new Error(i18n.t("lists.cancelFailed"));
+        set((state) => ({
+          items: state.items.map((item) => (item._id === listId ? updated : item)),
+        }));
+        toast.success(i18n.t("lists.cancelledToast"));
+      } catch (error) {
+        const message = error instanceof Error && error.message ? error.message : "";
+        toast.error(message || i18n.t("lists.cancelFailed"));
+      }
+    },
+
     payAtShop: async (listId) => {
       try {
         set({ payingListId: listId });

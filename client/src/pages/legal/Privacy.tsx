@@ -257,8 +257,9 @@ export default function PrivacyPage() {
           </span>{" "}
           prepared for you by the shop. Prices may vary based on quantity and
           wholesale terms. Your final bill is issued at the shop counter when you
-          collect and pay. Packaged items are never billed above their printed
-          MRP.
+          collect and pay. We do not charge more than the printed MRP for a
+          packaged item; if you ever find that we have, tell us at the counter
+          and we will correct it.
         </p>
       </Section>
 
@@ -274,6 +275,34 @@ export default function PrivacyPage() {
         <p>
           Items are subject to stock. The shop may adjust or cancel an order if
           something is unavailable, and will let you know.
+        </p>
+      </Section>
+
+      <Section title="If you have paid by UPI">
+        <p>
+          If the final bill is lower than what you paid, we return the
+          difference. If it would be higher, we tell you before you pay any
+          more, and you can remove items or cancel instead.
+        </p>
+      </Section>
+
+      <Section title="Cancelling an order">
+        <p>
+          You can cancel an order yourself in the app (Lists → your order →
+          Cancel this order) until the shop starts packing it. After that,
+          message or call the shop and we will cancel it for you. There is
+          never a cancellation charge.
+        </p>
+      </Section>
+
+      <Section title="Refunds">
+        <p>
+          If you paid for an order that is cancelled - by you or by us - or for
+          an item we could not supply, we refund it to the same UPI account
+          within 3 working days, or in cash at the counter if you prefer. If an
+          item you collected is damaged, spoiled, past its date, or not what
+          you ordered, bring it back with your order number within 2 days and
+          we will replace it or refund it.
         </p>
       </Section>
 

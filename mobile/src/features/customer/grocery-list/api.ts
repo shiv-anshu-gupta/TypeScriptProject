@@ -205,3 +205,20 @@ export async function sendGroceryListMessage(listId: string, text: string) {
     { text },
   );
 }
+
+/**
+ * `PATCH /customer/grocery-lists/:id/cancel` — withdraws the order.
+ *
+ * @remarks
+ * Only before the shop starts packing (`received` or `priced`); after that
+ * the server refuses with a sentence asking the customer to contact the shop.
+ * A paid order can be cancelled, and the shop is told to refund it.
+ *
+ * @returns The updated list, now `cancelled`.
+ * @throws Error With the server's reason when it refuses.
+ */
+export async function cancelGroceryList(listId: string) {
+  return apiPatch<CustomerGroceryList>(
+    `/customer/grocery-lists/${listId}/cancel`,
+  );
+}
