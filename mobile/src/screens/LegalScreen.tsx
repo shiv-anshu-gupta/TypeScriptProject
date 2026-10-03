@@ -12,6 +12,14 @@
 import { ScrollView, Text } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import {
+  GRIEVANCE_DESIGNATION,
+  GRIEVANCE_OFFICER,
+  SELLER_ADDRESS,
+  SELLER_NAME,
+  SELLER_PHONE,
+} from "@/lib/shop";
+
 // EDIT THESE for the real shop before publishing:
 const SHOP_NAME = "sKirana";
 const CONTACT_EMAIL = "shivanshu2019gupta@gmail.com";
@@ -72,6 +80,26 @@ export function LegalScreen() {
       <Text className="mt-1 text-xs text-muted-foreground">
         {SHOP_NAME} · Last updated {LAST_UPDATED}
       </Text>
+
+      {/* Seller and complaints first: the law wants them easy to find,
+          and this is where Account -> Shop details & complaints lands. */}
+      <H>Seller</H>
+      <P>
+        {SHOP_NAME} is the app of{" "}
+        <Text className="font-semibold text-foreground">{SELLER_NAME}</Text>,{" "}
+        {SELLER_ADDRESS}.
+        {SELLER_PHONE ? ` Customer care: ${SELLER_PHONE}.` : ""}
+      </P>
+
+      <H>Complaints</H>
+      <P>
+        {GRIEVANCE_OFFICER
+          ? `Grievance officer: ${GRIEVANCE_OFFICER}, ${GRIEVANCE_DESIGNATION}, ${SELLER_NAME}. `
+          : ""}
+        {SELLER_PHONE ? `Call ${SELLER_PHONE}, or tell us in the shop. ` : "Tell us in the shop. "}
+        We acknowledge every complaint within 48 hours and resolve it within
+        one month. You can also contact the National Consumer Helpline on 1915.
+      </P>
 
       {/* ---------------- PRIVACY POLICY ---------------- */}
       <H>Privacy Policy</H>
@@ -194,6 +222,12 @@ export function LegalScreen() {
         collect and pay. We do not charge more than the printed MRP for a
         packaged item; if you ever find that we have, tell us at the counter and
         we will correct it.
+      </P>
+
+      <H>Prices and GST</H>
+      <P>
+        Prices include GST where it applies. Your GST bill is given at the
+        counter.
       </P>
 
       <H>Payment & pickup</H>

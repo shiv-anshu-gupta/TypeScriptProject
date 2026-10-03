@@ -287,6 +287,7 @@ export const hi: Translations = {
     rate: "ऐप रेट करें",
     rateSub: "हमें बताएं कैसा लगा",
     terms: "नियम और शर्तें",
+    shopInfo: "दुकान की जानकारी और शिकायत",
     savedProductsSub: "आपकी पसंद",
     settings: "सेटिंग्स",
     privacyTerms: "प्राइवेसी और शर्तें",

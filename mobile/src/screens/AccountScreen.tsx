@@ -492,6 +492,11 @@ export function AccountScreen() {
           onPress={openStoreListing}
         />
         <MenuRow
+          icon={<Feather name="info" size={18} color={INK} />}
+          title={t("account.shopInfo")}
+          onPress={() => navigation.navigate("Legal")}
+        />
+        <MenuRow
           icon={<Feather name="file-text" size={18} color={INK} />}
           title={t("account.terms")}
           onPress={() => navigation.navigate("Legal")}

@@ -292,6 +292,7 @@ export const en = {
     rate: "Rate the app",
     rateSub: "Tell us how it feels",
     terms: "Terms & conditions",
+    shopInfo: "Shop details & complaints",
     savedProductsSub: "Your wishlist",
     settings: "Settings",
     privacyTerms: "Privacy & Terms",

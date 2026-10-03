@@ -26,6 +26,15 @@
  * @packageDocumentation
  */
 
+import {
+  GRIEVANCE_DESIGNATION,
+  GRIEVANCE_OFFICER,
+  SELLER_ADDRESS,
+  SELLER_NAME,
+  SELLER_PHONE,
+} from "@/lib/shop";
+
+
 // Public, no-login Privacy Policy + Terms page. This gives you the public URL
 // (e.g. https://your-domain/privacy) that Google Play Console requires, and
 // mirrors the in-app policy text.
@@ -102,6 +111,29 @@ export default function PrivacyPage() {
       <p className="mt-1 text-xs text-neutral-500">
         {SHOP_NAME} · Last updated {LAST_UPDATED}
       </p>
+
+      <Section title="Seller">
+        <p>
+          {SHOP_NAME} is the app of{" "}
+          <span className="font-semibold text-neutral-900">{SELLER_NAME}</span>,{" "}
+          {SELLER_ADDRESS}.
+          {SELLER_PHONE ? ` Customer care: ${SELLER_PHONE}.` : ""}
+        </p>
+      </Section>
+
+      <Section title="Complaints">
+        <p>
+          {GRIEVANCE_OFFICER
+            ? `Grievance officer: ${GRIEVANCE_OFFICER}, ${GRIEVANCE_DESIGNATION}, ${SELLER_NAME}. `
+            : ""}
+          {SELLER_PHONE
+            ? `Call ${SELLER_PHONE}, or tell us in the shop. `
+            : "Tell us in the shop. "}
+          We acknowledge every complaint within 48 hours and resolve it within
+          one month. You can also contact the National Consumer Helpline on
+          1915.
+        </p>
+      </Section>
 
       <h2 className="mt-8 text-xl font-semibold text-neutral-900">
         Privacy Policy
@@ -260,6 +292,13 @@ export default function PrivacyPage() {
           collect and pay. We do not charge more than the printed MRP for a
           packaged item; if you ever find that we have, tell us at the counter
           and we will correct it.
+        </p>
+      </Section>
+
+      <Section title="Prices and GST">
+        <p>
+          Prices include GST where it applies. Your GST bill is given at the
+          counter.
         </p>
       </Section>
 
