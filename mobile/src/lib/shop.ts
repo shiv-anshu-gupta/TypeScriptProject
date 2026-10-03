@@ -26,11 +26,11 @@ export const SELLER_NAME = "Suneel Kirana Store";
 /** Where the shop is. */
 export const SELLER_ADDRESS = "Main Market, Birsinghpur";
 
-/** Customer-care mobile number. Empty until the shop gives one. */
-export const SELLER_PHONE = "";
+/** Customer-care mobile number. */
+export const SELLER_PHONE = "+91 74402 48190";
 
-/** The grievance officer's name. Empty until the shop names one. */
-export const GRIEVANCE_OFFICER = "";
+/** The grievance officer's name. */
+export const GRIEVANCE_OFFICER = "Shivanshu Gupta";
 
 /** The grievance officer's designation. */
-export const GRIEVANCE_DESIGNATION = "Owner";
+export const GRIEVANCE_DESIGNATION = "App Manager";
