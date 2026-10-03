@@ -294,6 +294,14 @@ export const en = {
     default: "Default",
     edit: "Edit",
     signOut: "Sign out",
+    deleteAccount: "Delete my account",
+    deleteTitle: "Delete your account?",
+    deleteBody:
+      "This permanently deletes your name, mobile number, saved addresses, and all your lists and chats. It can't be undone. An unpaid order that is still open will be withdrawn.",
+    deleteConfirm: "Delete",
+    deleteCancel: "Keep my account",
+    deleted: "Your account has been deleted.",
+    deleteFailed: "Could not delete your account. Please try again.",
   },
   update: {
     title: "A new version is ready ✨",

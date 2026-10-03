@@ -8,7 +8,7 @@
  * @packageDocumentation
  */
 
-import { apiGet, apiPatch } from "@/lib/api";
+import { apiDelete, apiGet, apiPatch } from "@/lib/api";
 
 /**
  * The customer's own details as the SHOP sees them on their orders.
@@ -63,4 +63,18 @@ export async function updateCustomerProfile(body: UpdateCustomerProfileBody) {
     "/customer/profile",
     body,
   );
+}
+
+/**
+ * `DELETE /customer/profile` - deletes the account and everything tied to it:
+ * profile, addresses, every list and chat, and the sign-in itself.
+ *
+ * @remarks
+ * Refused, with a sentence to show, for a shop account or while a paid order
+ * is still waiting to be collected. Ask before calling; the server does not.
+ *
+ * @throws Error With the server's reason when it refuses.
+ */
+export async function deleteCustomerAccount() {
+  return apiDelete<{ deleted: boolean }>("/customer/profile");
 }

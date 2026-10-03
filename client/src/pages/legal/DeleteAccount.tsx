@@ -7,9 +7,10 @@
  * routes are the only unguarded ones in the admin web app. The URL is required
  * by app-store policy under data safety, and the privacy page links to it.
  *
- * The page only explains the process. Deletion is handled by hand, by email or
- * in person — there is no form, no button and no endpoint behind it, so
- * nothing here calls the API.
+ * The page only explains the process and calls no API. The fast path is in
+ * the mobile app (Account → Delete my account → `DELETE /customer/profile`),
+ * which deletes at once; email and in-person requests are handled by hand for
+ * anyone who no longer has the app.
  *
  * It is still served through the SPA: `client/vercel.json` rewrites unmatched
  * paths to `/app.html`, so React boots before this static prose renders.
@@ -37,7 +38,7 @@
  */
 const SHOP_NAME = "sKirana";
 const CONTACT_EMAIL = "shivanshu2019gupta@gmail.com";
-const LAST_UPDATED = "August 2026";
+const LAST_UPDATED = "October 2026";
 
 /**
  * A titled block of policy prose.
@@ -98,7 +99,22 @@ export default function DeleteAccountPage() {
         time. This page explains how to request it and what happens.
       </p>
 
-      <Section title="How to request deletion">
+      <Section title="Delete it yourself, in the app">
+        <p>
+          Open the {SHOP_NAME} app, go to <b>Account</b>, and tap{" "}
+          <b>Delete my account</b> at the bottom. Confirm, and your account and
+          everything on this page is deleted straight away.
+        </p>
+        <p>
+          If you have an order you have already paid for but not yet collected,
+          the app will ask you to collect it or take a refund from the shop
+          first, so the record of your payment is not lost. An unpaid open
+          order is simply withdrawn.
+        </p>
+      </Section>
+
+      <Section title="Or ask us">
+        <p>If you no longer have the app:</p>
         <p>1. From the email address you signed in with, email us at{" "}
           <a className="underline" href={`mailto:${CONTACT_EMAIL}`}>
             {CONTACT_EMAIL}
@@ -120,6 +136,8 @@ export default function DeleteAccountPage() {
         <p>• Your name, email, and phone number</p>
         <p>• Any saved addresses</p>
         <p>• All your grocery lists and their history</p>
+        <p>• All your chat messages with the shop</p>
+        <p>• Your sign-in, so the account cannot be used again</p>
       </Section>
 
       <Section title="Delete only some data (keep your account)">
@@ -147,8 +165,9 @@ export default function DeleteAccountPage() {
 
       <Section title="How long it takes">
         <p>
-          We delete your account within <b>7 days</b> of a verified request, and
-          purge it from backups within <b>30 days</b>.
+          From the app: <b>straight away</b>. By email or at the shop: within{" "}
+          <b>7 days</b> of a verified request. Either way it is purged from
+          backups within <b>30 days</b>.
         </p>
       </Section>
 

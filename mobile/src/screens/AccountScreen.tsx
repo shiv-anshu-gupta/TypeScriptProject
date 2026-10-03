@@ -5,7 +5,7 @@
  */
 
 import { useCallback, useState, type ReactNode } from "react";
-import { Linking, Pressable, ScrollView, Text, View } from "react-native";
+import { Alert, Linking, Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -15,7 +15,10 @@ import { useTranslation } from "react-i18next";
 
 import type { RootStackParamList } from "@/navigation/types";
 import { useCustomerGroceryListStore } from "@/features/customer/grocery-list/store";
-import { updateCustomerProfile } from "@/features/customer/account/api";
+import {
+  deleteCustomerAccount,
+  updateCustomerProfile,
+} from "@/features/customer/account/api";
 import { useCustomerAccountStore } from "@/features/customer/account/store";
 import { useCustomerDisplayName } from "@/features/customer/account/use-display-name";
 import { releasePushToken } from "@/features/customer/push/registry";
@@ -248,6 +251,44 @@ export function AccountScreen() {
     await signOut();
   };
 
+  // Deleting is two taps on purpose: the row, then a destructive button in
+  // a dialog that says exactly what goes. The server deletes the sign-in at
+  // Clerk too, so signing out afterwards only clears this device - it may
+  // fail against a session that no longer exists, and that is fine.
+  const [deleting, setDeleting] = useState(false);
+  const confirmDelete = () => {
+    Alert.alert(t("account.deleteTitle"), t("account.deleteBody"), [
+      { text: t("account.deleteCancel"), style: "cancel" },
+      {
+        text: t("account.deleteConfirm"),
+        style: "destructive",
+        onPress: () => void deleteAccount(),
+      },
+    ]);
+  };
+  const deleteAccount = async () => {
+    try {
+      setDeleting(true);
+      await deleteCustomerAccount();
+    } catch (error) {
+      setDeleting(false);
+      // The server's own sentence says why - a paid order waiting, say -
+      // and an Alert keeps it on screen long enough to read.
+      Alert.alert(
+        t("account.deleteTitle"),
+        error instanceof Error && error.message ? error.message : t("account.deleteFailed"),
+      );
+      return;
+    }
+    try {
+      await signOut();
+    } catch {
+      // the session died with the account
+    }
+    setDeleting(false);
+    toast.success(t("account.deleted"));
+  };
+
   const saveProfile = async (values: { name: string; phone?: string }) => {
     try {
       setSaving(true);
@@ -465,6 +506,18 @@ export function AccountScreen() {
       >
         <Text className="text-base font-semibold text-destructive">
           {t("account.signOut")}
+        </Text>
+      </Pressable>
+
+      {/* Delete account - required by Google Play, kept quiet on purpose */}
+      <Pressable
+        onPress={confirmDelete}
+        disabled={deleting}
+        accessibilityRole="button"
+        className="items-center py-2"
+      >
+        <Text className="text-sm font-medium text-muted-foreground underline">
+          {deleting ? "…" : t("account.deleteAccount")}
         </Text>
       </Pressable>
 

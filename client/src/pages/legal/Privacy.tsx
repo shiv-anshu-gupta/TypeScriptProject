@@ -196,10 +196,12 @@ export default function PrivacyPage() {
 
       <Section title="How long we keep it">
         <p>
-          Your account, lists and messages are kept while your account is
-          active, so you can see your past orders. Photos of lists are never
-          kept. When you ask us to delete your account, we delete it within 7
-          days and remove it from backups within 30 days.
+          Your account and lists are kept while your account is active, so
+          you can see your past orders. Chat messages delete themselves after
+          30 days. Photos of lists are never kept. You can delete your account
+          yourself in the app (Account → Delete my account) and it is deleted
+          straight away; if you ask us by email instead, we delete it within 7
+          days. Either way it is gone from backups within 30 days.
         </p>
       </Section>
 

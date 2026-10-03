@@ -3,7 +3,8 @@
  *
  * @remarks
  * Mounted at `/customer` in `server/src/server.ts`, so the paths are
- * `GET /customer/profile` and `PATCH /customer/profile`.
+ * `GET /customer/profile`, `PATCH /customer/profile` and
+ * `DELETE /customer/profile`.
  *
  * Every route here requires a signed-in customer (`requireAuth` is applied
  * router-wide). A customer can only ever read and write their own record;
@@ -22,6 +23,7 @@ import { AppError } from "../../utils/AppError";
 import { cleanField } from "../../utils/sanitizeItem";
 import { normalizeMobile } from "../../utils/phone";
 import { GroceryList } from "../../models/GroceryList";
+import { deleteCustomerAccount } from "../../services/deleteAccount";
 
 // A customer's own details: the name and mobile the SHOP sees on their orders.
 // Both are editable from the app's Account screen.
@@ -148,5 +150,30 @@ customerProfileRouter.patch(
     );
 
     res.json(ok(mapProfile(dbUser)));
+  }),
+);
+
+/**
+ * `DELETE /customer/profile` — deletes the caller's account and everything
+ * tied to it.
+ *
+ * @remarks
+ * Auth: signed-in customer. No body. The app asks for confirmation before
+ * calling this; the server does not ask again.
+ *
+ * See `services/deleteAccount.ts` for exactly what is removed and the two
+ * cases that are refused.
+ *
+ * @throws AppError 409 for a shop account, or while a paid order waits to be
+ * collected.
+ * @throws AppError 502 when the data is gone but the sign-in could not be
+ * closed.
+ */
+customerProfileRouter.delete(
+  "/profile",
+  asyncHandler(async (req: Request, res: Response) => {
+    const dbUser = await getDbUserFromReq(req);
+    await deleteCustomerAccount(dbUser);
+    res.json(ok({ deleted: true }));
   }),
 );
