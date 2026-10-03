@@ -6,6 +6,7 @@
 
 import { useState } from "react";
 import { ActivityIndicator, Alert, Linking, Pressable } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
 import { Feather } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
@@ -16,6 +17,33 @@ import {
 } from "@/features/customer/draft-list/store";
 import { readListPhotos } from "@/features/customer/grocery-list/api";
 import { toast } from "@/lib/toast";
+
+/**
+ * Set once the customer has read, and agreed to, where the photo goes.
+ *
+ * @remarks
+ * Google Play's User Data policy wants this said in the app, at the moment
+ * it matters, before the data leaves - a line in the privacy policy is not
+ * enough. Bump the version if what happens to the photo ever changes, so
+ * everyone is asked again.
+ */
+const PHOTO_CONSENT_KEY = "sk.photoConsent.v1";
+
+async function hasPhotoConsent(): Promise<boolean> {
+  try {
+    return (await AsyncStorage.getItem(PHOTO_CONSENT_KEY)) === "yes";
+  } catch {
+    return false; // can't tell, so ask - asking twice costs nothing
+  }
+}
+
+async function rememberPhotoConsent(): Promise<void> {
+  try {
+    await AsyncStorage.setItem(PHOTO_CONSENT_KEY, "yes");
+  } catch {
+    // not remembered; they will simply be asked again next time
+  }
+}
 
 /**
  * A camera button beside Send that offers Camera or Gallery, then writes what
@@ -133,8 +161,7 @@ export function ScanListPhoto() {
     }
   };
 
-  const start = () => {
-    if (reading) return;
+  const chooseSource = () => {
     Alert.alert(t("photos.addTitle"), undefined, [
       { text: t("photos.camera"), onPress: () => void read(fromCamera) },
       { text: t("photos.gallery"), onPress: () => void read(fromGallery) },
@@ -142,9 +169,30 @@ export function ScanListPhoto() {
     ]);
   };
 
+  // The first time only: say plainly that the photo goes to Google's AI,
+  // before any camera opens. "Type instead" is a real choice - the list
+  // works exactly the same without a photo.
+  const start = async () => {
+    if (reading) return;
+    if (await hasPhotoConsent()) {
+      chooseSource();
+      return;
+    }
+    Alert.alert(t("photos.consentTitle"), t("photos.consentBody"), [
+      { text: t("photos.consentDecline"), style: "cancel" },
+      {
+        text: t("photos.consentAccept"),
+        onPress: () => {
+          void rememberPhotoConsent();
+          chooseSource();
+        },
+      },
+    ]);
+  };
+
   return (
     <Pressable
-      onPress={start}
+      onPress={() => void start()}
       disabled={reading}
       hitSlop={6}
       accessibilityRole="button"

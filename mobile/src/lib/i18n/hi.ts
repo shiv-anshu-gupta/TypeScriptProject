@@ -112,6 +112,11 @@ export const hi: Translations = {
     cameraDenied: "कैमरे की अनुमति चाहिए",
     openSettings: "लिस्ट की फ़ोटो खींचने के लिए Settings में कैमरा चालू करें।",
     settings: "Settings खोलें",
+    consentTitle: "फ़ोटो लेने से पहले",
+    consentBody:
+      "आपकी लिस्ट पढ़ने के लिए फ़ोटो Google के Gemini AI को भेजी जाती है, जो उसे text में बदलता है। sKirana फ़ोटो नहीं रखता। Google उसे कुछ समय तक रख सकता है और अपनी सेवाएँ सुधारने में इस्तेमाल कर सकता है।\n\nकृपया सिर्फ़ अपनी सामान की लिस्ट की फ़ोटो लें — अपना चेहरा, कोई ID या कोई निजी चीज़ नहीं।",
+    consentAccept: "ठीक है, आगे बढ़ें",
+    consentDecline: "मैं लिखकर भेजूँगा",
   },
   lists: {
     sentToShop: "लिस्ट दुकान को भेज दी",

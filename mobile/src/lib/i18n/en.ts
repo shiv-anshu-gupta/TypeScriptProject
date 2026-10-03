@@ -113,6 +113,11 @@ export const en = {
     cameraDenied: "The camera needs your permission",
     openSettings: "Allow the camera in Settings to photograph your list.",
     settings: "Open settings",
+    consentTitle: "Before you take a photo",
+    consentBody:
+      "To read your list, the photo is sent to Google's Gemini AI, which turns it into text. sKirana does not keep the photo. Google may keep it for a limited time and use it to improve its services.\n\nPlease photograph only your grocery list - not your face, an ID, or anything personal.",
+    consentAccept: "OK, continue",
+    consentDecline: "I'll type instead",
   },
   lists: {
     sentToShop: "List sent to the shop",
