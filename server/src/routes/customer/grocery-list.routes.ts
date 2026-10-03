@@ -34,7 +34,6 @@ import {
   type Request,
   type Response,
 } from "express";
-import crypto from "crypto";
 import { getDbUserFromReq, requireAuth } from "../../middleware/auth";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { ok } from "../../utils/envelope";
@@ -55,9 +54,9 @@ import {
   MAX_NOTE_LEN,
 } from "../../utils/sanitizeItem";
 import { normalizeMobile } from "../../utils/phone";
-import { razorpay, toSubUnits } from "../../utils/razorpay";
 import { notifyAdmins } from "../../utils/webPush";
-import { sendTelegram } from "../../utils/telegram";
+import { sendTelegram, escapeTelegram } from "../../utils/telegram";
+import { consume } from "../../services/rateLimit";
 
 
 /**
@@ -282,6 +281,8 @@ customerGroceryListRouter.post(
       throw new AppError(400, "Choose at least one photo");
     }
 
+    await consume("photoRead", String(dbUser._id));
+
     const parsed = await parseGroceryListPhotos(
       files.map((file) => ({ mimeType: file.mimetype, buffer: file.buffer })),
       String(dbUser._id),
@@ -374,6 +375,10 @@ customerGroceryListRouter.post(
       throw new AppError(400, "Add at least one item");
     }
 
+    // Counted only once the send is real, so a rejected empty list does not
+    // use up the customer's day.
+    await consume("listSend", String(dbUser._id));
+
     // If the customer already has a not-yet-priced list from the SAME shopping
     // session (last touched within MERGE_WINDOW), merge the new items into it
     // instead of opening a parallel order. A new send after that window starts
@@ -433,7 +438,7 @@ customerGroceryListRouter.post(
         { listId: String(mergeTarget._id), type: "list_updated" },
       );
       await sendTelegram(
-        `🛒 <b>Order updated</b>\n${dbUser.name || dbUser.email || "A customer"} added ${items.length} more item${
+        `🛒 <b>Order updated</b>\n${escapeTelegram(dbUser.name || dbUser.email || "A customer")} added ${items.length} more item${
           items.length > 1 ? "s" : ""
         } (now ${mergeTarget.totalItems}).`,
       );
@@ -466,7 +471,7 @@ customerGroceryListRouter.post(
       { listId: String(groceryList._id), type: "new_list" },
     );
     await sendTelegram(
-      `🛒 <b>New order</b>\nFrom: ${dbUser.name || dbUser.email || "A customer"}` +
+      `🛒 <b>New order</b>\nFrom: ${escapeTelegram(dbUser.name || dbUser.email || "A customer")}` +
         `${customerPhone ? ` (📞 ${customerPhone})` : ""}\n` +
         `${items.length} item${items.length > 1 ? "s" : ""} · #${String(groceryList._id).slice(-8).toUpperCase()}`,
     );
@@ -679,11 +684,6 @@ customerGroceryListRouter.patch(
  * shopkeeper marks the list paid from the admin side, so this is a statement
  * of intent and not a payment.
  *
- * It also undoes a change of mind: a list switched to `"online"` by
- * `pay-online` can be switched back here, and the `razorpayOrderId` already
- * stored is left in place rather than cleared. That stale order id stays on
- * the document, so an old Razorpay order could still be confirmed later.
- *
  * There is no status gate, so this works on a list the shop has not priced
  * yet and on one already packed. Only an already-paid list is refused.
  *
@@ -712,171 +712,6 @@ customerGroceryListRouter.patch(
     }
 
     foundList.paymentMethod = "at_shop";
-    await foundList.save();
-
-    res.json(ok(mapGroceryList(foundList)));
-  }),
-);
-
-/**
- * `POST /customer/grocery-lists/:listId/pay-online` — opens a Razorpay order
- * for the shop's quoted total and returns what the checkout sheet needs.
- *
- * @remarks
- * Auth: signed-in customer. Path parameter `listId`. No body fields are read;
- * the amount comes from the stored `totalAmount` and can never be set by the
- * caller.
- *
- * The amount is converted from rupees to paise before it reaches Razorpay.
- * The receipt is `GroceryList_<id>`.
- *
- * `totalAmount < 1` means the shop has not priced the list yet, and is
- * refused. A list the shop later re-prices will need a new call, because the
- * previous `razorpayOrderId` is overwritten each time — the newest order id
- * is the only one `confirm-payment` will accept.
- *
- * The response body returns `RAZORPAY_KEY_ID` alongside the order. That is
- * the publishable key and is meant to reach the client.
- *
- * A Razorpay SDK failure is not an `AppError` and surfaces as a 500. The
- * server will not boot at all unless `RAZORPAY_KEY_ID` and
- * `RAZORPAY_KEY_SECRET` are both set.
- *
- * Side effects: creates an order at Razorpay, then one write to
- * `grocerylists` storing `razorpayOrderId` and `paymentMethod: "online"`. If
- * the write fails the Razorpay order is left orphaned.
- *
- * @throws AppError 400 `"List id is required"` when the path segment is blank.
- * @throws AppError 400 `"This list is already paid"` when `paymentStatus` is
- * `"paid"`.
- * @throws AppError 400 `"The shop has not priced this list yet"` when
- * `totalAmount` is below 1.
- * @throws AppError 404 `"List not found"` when no such list belongs to the
- * caller.
- */
-// Customer chooses to pay online -> create a Razorpay order
-customerGroceryListRouter.post(
-  "/grocery-lists/:listId/pay-online",
-  asyncHandler(async (req: Request, res: Response) => {
-    const dbUser = await getDbUserFromReq(req);
-    const listId = String(req.params.listId || "").trim();
-
-    requireText(listId, "List id is required");
-
-    const list = await GroceryList.findOne({ _id: listId, user: dbUser._id });
-    const foundList = requireFound(list, "List not found", 404);
-
-    if (foundList.paymentStatus === "paid") {
-      throw new AppError(400, "This list is already paid");
-    }
-
-    if (foundList.totalAmount < 1) {
-      throw new AppError(400, "The shop has not priced this list yet");
-    }
-
-    const razorpayOrder = await razorpay.orders.create({
-      amount: toSubUnits(foundList.totalAmount),
-      currency: "INR",
-      receipt: `GroceryList_${String(foundList._id)}`,
-    });
-
-    foundList.paymentMethod = "online";
-    foundList.razorpayOrderId = razorpayOrder.id;
-    await foundList.save();
-
-    res.json(
-      ok({
-        razorpay: {
-          keyId: process.env.RAZORPAY_KEY_ID,
-          orderId: razorpayOrder.id,
-          amount: razorpayOrder.amount,
-          currency: razorpayOrder.currency,
-        },
-        list: mapGroceryList(foundList),
-      }),
-    );
-  }),
-);
-
-/**
- * `POST /customer/grocery-lists/:listId/confirm-payment` — verifies the
- * Razorpay callback and marks the list paid.
- *
- * @remarks
- * Auth: signed-in customer. Path parameter `listId`. Body requires
- * `razorpay_payment_id`, `razorpay_order_id` and `razorpay_signature`, all
- * trimmed and all non-empty.
- *
- * Trust comes from the signature, not from the client's word: the handler
- * recomputes `HMAC-SHA256("<order_id>|<payment_id>")` with
- * `RAZORPAY_KEY_SECRET` and compares it with the one sent. The order id must
- * also match the `razorpayOrderId` stored on the list, so a valid signature
- * for a different order is refused.
- *
- * Idempotent: an already-paid list returns **200** with the list unchanged,
- * without re-checking the signature, so a repeated callback is harmless.
- *
- * The comparison is a plain string equality, not a constant-time compare.
- *
- * Side effects: one write to `grocerylists` setting `paymentStatus: "paid"`,
- * `paymentMethod: "online"`, `paymentId` and `paidAt`. No push and no
- * Telegram message, so the shop is not told the list was paid online and
- * finds out on its next refresh.
- *
- * @throws AppError 400 `"List id is required"` when the path segment is blank.
- * @throws AppError 400 `"razorpayPaymentId is needed"` when
- * `razorpay_payment_id` is missing.
- * @throws AppError 400 `"razorpayOrderId is needed"` when
- * `razorpay_order_id` is missing.
- * @throws AppError 400 `"razorpaySignature is needed"` when
- * `razorpay_signature` is missing.
- * @throws AppError 400 `"Order id mismatch"` when the order id is not the one
- * stored on the list.
- * @throws AppError 400 `"Invalid payment signature"` when the HMAC does not
- * match.
- * @throws AppError 404 `"List not found"` when no such list belongs to the
- * caller.
- */
-// Verify the Razorpay signature and mark the list paid
-customerGroceryListRouter.post(
-  "/grocery-lists/:listId/confirm-payment",
-  asyncHandler(async (req: Request, res: Response) => {
-    const dbUser = await getDbUserFromReq(req);
-    const listId = String(req.params.listId || "").trim();
-    const razorpayPaymentId = String(req.body.razorpay_payment_id || "").trim();
-    const razorpayOrderId = String(req.body.razorpay_order_id || "").trim();
-    const razorpaySignature = String(req.body.razorpay_signature || "").trim();
-
-    requireText(listId, "List id is required");
-    requireText(razorpayPaymentId, "razorpayPaymentId is needed");
-    requireText(razorpayOrderId, "razorpayOrderId is needed");
-    requireText(razorpaySignature, "razorpaySignature is needed");
-
-    const list = await GroceryList.findOne({ _id: listId, user: dbUser._id });
-    const foundList = requireFound(list, "List not found", 404);
-
-    if (foundList.paymentStatus === "paid") {
-      res.json(ok(mapGroceryList(foundList)));
-      return;
-    }
-
-    if (foundList.razorpayOrderId !== razorpayOrderId) {
-      throw new AppError(400, "Order id mismatch");
-    }
-
-    const signature = crypto
-      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET || "")
-      .update(`${razorpayOrderId}|${razorpayPaymentId}`)
-      .digest("hex");
-
-    if (signature !== razorpaySignature) {
-      throw new AppError(400, "Invalid payment signature");
-    }
-
-    foundList.paymentStatus = "paid";
-    foundList.paymentMethod = "online";
-    foundList.paymentId = razorpayPaymentId;
-    foundList.paidAt = new Date();
     await foundList.save();
 
     res.json(ok(mapGroceryList(foundList)));
@@ -977,6 +812,8 @@ customerGroceryListRouter.post(
     const list = await GroceryList.findOne({ _id: listId, user: dbUser._id });
     const foundList = requireFound(list, "List not found", 404);
 
+    await consume("chat", String(dbUser._id));
+
     const senderName = dbUser.name || dbUser.email || "Customer";
     const message = await Message.create({
       groceryList: foundList._id,
@@ -995,7 +832,7 @@ customerGroceryListRouter.post(
       type: "new_message",
     });
     await sendTelegram(
-      `💬 <b>New message</b> · #${code}\nFrom: ${senderName}\n${text}`,
+      `💬 <b>New message</b> · #${code}\nFrom: ${escapeTelegram(senderName)}\n${escapeTelegram(text)}`,
     );
 
     res.status(201).json(ok(mapMessage(message)));

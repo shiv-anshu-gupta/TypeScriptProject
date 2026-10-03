@@ -7,7 +7,7 @@
  * version prefix:
  *
  * - `/auth` — the account routes; signed-in callers.
- * - `/customer` — eleven routers, all sharing this one prefix. The home and
+ * - `/customer` — nine routers, all sharing this one prefix. The home and
  *   catalogue routers are public; the rest apply `requireAuth` to themselves.
  * - `/admin` — seven routers, every one guarded by `requireAdmin`.
  *
@@ -26,9 +26,13 @@
  * `notFound` and `errorHandler` close the chain after every router.
  *
  * The process exits with code 1 if `connectDB` rejects, so the server never
- * accepts traffic without a database. `utils/razorpay` also throws at import
- * time when its keys are missing, which stops the whole server rather than
- * just the payment routes.
+ * accepts traffic without a database.
+ *
+ * No card or online payment is taken. The template's Razorpay checkout routes
+ * (`checkout.routes.ts`, `checkout-with-points.routes.ts`) are still on disk
+ * but deliberately not mounted: nothing in the app or the admin calls them,
+ * and they priced from `Product` fields that no longer exist. A customer pays
+ * by UPI to the shop or at the counter, and the shop marks the list paid.
  *
  * @packageDocumentation
  */
@@ -48,9 +52,7 @@ import { customerAddressRouter } from "./routes/customer/address.routes";
 import { adminPromoRouter } from "./routes/admin/promo.routes";
 import { customerPromoRouter } from "./routes/customer/promo.routes";
 import { customerCartWishlistRouter } from "./routes/customer/cart-wishlist.routes";
-import { customerCheckoutRouter } from "./routes/customer/checkout.routes";
 import { customerOrderRouter } from "./routes/customer/orders.routes";
-import { customerCheckoutWithPointsRouter } from "./routes/customer/checkout-with-points.routes";
 import { adminOrderRouter } from "./routes/admin/orders.routes";
 import { adminSettingsRouter } from "./routes/admin/settings.routes";
 import { adminDashboardRouter } from "./routes/admin/dashboard.routes";
@@ -201,8 +203,6 @@ async function mainEntryFunction() {
   app.use("/customer", customerAddressRouter);
   app.use("/customer", customerPromoRouter);
   app.use("/customer", customerCartWishlistRouter);
-  app.use("/customer", customerCheckoutRouter);
-  app.use("/customer", customerCheckoutWithPointsRouter);
   app.use("/customer", customerOrderRouter);
   app.use("/customer", customerGroceryListRouter);
   app.use("/customer", customerProfileRouter);
