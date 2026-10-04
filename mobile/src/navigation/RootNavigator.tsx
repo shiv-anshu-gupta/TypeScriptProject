@@ -12,6 +12,7 @@ import { ProductDetailsScreen } from "@/screens/ProductDetailsScreen";
 import { WishlistScreen } from "@/screens/WishlistScreen";
 import { AuthScreen } from "@/screens/AuthScreen";
 import { LegalScreen } from "@/screens/LegalScreen";
+import { ShopInfoScreen } from "@/screens/ShopInfoScreen";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -71,6 +72,11 @@ export function RootNavigator() {
         name="Legal"
         component={LegalScreen}
         options={{ title: t("account.privacyTerms") }}
+      />
+      <Stack.Screen
+        name="ShopInfo"
+        component={ShopInfoScreen}
+        options={{ title: t("account.shopInfo") }}
       />
     </Stack.Navigator>
   );

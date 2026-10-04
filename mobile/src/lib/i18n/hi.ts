@@ -211,6 +211,17 @@ export const hi: Translations = {
       ready: "लेने के लिए आएँ",
     },
   },
+  shopInfo: {
+    seller: "विक्रेता",
+    shop: "दुकान",
+    address: "पता",
+    phone: "ग्राहक सेवा",
+    call: "कॉल करें",
+    complaints: "शिकायत",
+    officer: "शिकायत अधिकारी",
+    promise: "हर शिकायत का 48 घंटे में जवाब, और एक महीने में समाधान।",
+    helpline: "राष्ट्रीय उपभोक्ता हेल्पलाइन: {{number}}",
+  },
   shop: {
     title: "दुकान",
     newest: "नए",

@@ -213,6 +213,18 @@ export const en = {
       ready: "Come to receive",
     },
   },
+  shopInfo: {
+    seller: "Seller",
+    shop: "Shop",
+    address: "Address",
+    phone: "Customer care",
+    call: "Call",
+    complaints: "Complaints",
+    officer: "Grievance officer",
+    promise:
+      "We acknowledge every complaint within 48 hours and resolve it within one month.",
+    helpline: "National Consumer Helpline: {{number}}",
+  },
   shop: {
     title: "Shop",
     newest: "Newest",

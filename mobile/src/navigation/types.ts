@@ -48,4 +48,5 @@ export type RootStackParamList = {
   Wishlist: undefined;
   SignIn: undefined;
   Legal: undefined;
+  ShopInfo: undefined;
 };
