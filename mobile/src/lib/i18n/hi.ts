@@ -39,7 +39,7 @@ export const hi: Translations = {
   tabs: {
     writeList: "लिस्ट लिखें",
     home: "होम",
-    shop: "दुकान",
+    shop: "सामान",
     lists: "लिस्ट",
     account: "अकाउंट",
   },
@@ -213,7 +213,7 @@ export const hi: Translations = {
   },
   shopInfo: {
     seller: "विक्रेता",
-    shop: "दुकान",
+    shop: "सामान",
     address: "पता",
     phone: "ग्राहक सेवा",
     call: "कॉल करें",
@@ -223,7 +223,7 @@ export const hi: Translations = {
     helpline: "राष्ट्रीय उपभोक्ता हेल्पलाइन: {{number}}",
   },
   shop: {
-    title: "दुकान",
+    title: "सामान",
     newest: "नए",
     searchPlaceholder: "कोई भी सामान खोजें…",
     resultCount_one: "{{count}} आइटम",

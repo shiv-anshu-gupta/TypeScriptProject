@@ -40,7 +40,7 @@ export const en = {
   tabs: {
     writeList: "Write list",
     home: "Home",
-    shop: "Shop",
+    shop: "Products",
     lists: "Lists",
     account: "Account",
   },
@@ -215,7 +215,7 @@ export const en = {
   },
   shopInfo: {
     seller: "Seller",
-    shop: "Shop",
+    shop: "Products",
     address: "Address",
     phone: "Customer care",
     call: "Call",
@@ -226,7 +226,7 @@ export const en = {
     helpline: "National Consumer Helpline: {{number}}",
   },
   shop: {
-    title: "Shop",
+    title: "Products",
     newest: "Newest",
     searchPlaceholder: "Search any product…",
     resultCount_one: "{{count}} item",
