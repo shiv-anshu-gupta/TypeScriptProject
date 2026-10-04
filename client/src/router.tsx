@@ -43,7 +43,7 @@ import AdminCoupons from "./pages/admin/Promos";
 import AdminGroceryLists from "./pages/admin/GroceryLists";
 import AdminMessages from "./pages/admin/Messages";
 import AdminSettings from "./pages/admin/Settings";
-import PrivacyPage from "./pages/legal/Privacy";
+import LegalPage from "./pages/legal/LegalPage";
 import DeleteAccountPage from "./pages/legal/DeleteAccount";
 
 // This web app is the shop-owner ADMIN panel. Customers use the mobile app,
@@ -53,9 +53,11 @@ import DeleteAccountPage from "./pages/legal/DeleteAccount";
  * Every route the app can reach.
  *
  * @remarks
- * Public and unguarded: `/privacy`, `/terms` and `/delete-account`. The first
- * is the URL the Google Play Console requires, and `/terms` deliberately
- * renders the same `PrivacyPage` component. These must stay outside the guards.
+ * Public and unguarded: `/terms`, `/privacy`, `/refund` and `/delete-account`.
+ * The first three are the same `LegalPage` component showing a different
+ * document from `lib/legal/content.ts` (English, or Hindi with `?lang=hi`).
+ * `/privacy` is the URL the Google Play Console requires. These must stay
+ * outside the guards.
  *
  * `/` and `*` both redirect to `/admin`, which redirects again to
  * `/admin/grocery-lists`. In production Vercel rewrites every unmatched path to
@@ -71,14 +73,19 @@ export const router = createBrowserRouter([
     path: "/",
     element: <Navigate to="/admin" replace />,
   },
-  // Public, no-login legal pages — this is the URL Google Play Console needs.
-  {
-    path: "/privacy",
-    element: <PrivacyPage />,
-  },
+  // Public, no-login legal pages — /privacy is the URL Google Play Console
+  // needs. The text is in lib/legal/content.ts, shared with the mobile app.
   {
     path: "/terms",
-    element: <PrivacyPage />,
+    element: <LegalPage doc="terms" />,
+  },
+  {
+    path: "/privacy",
+    element: <LegalPage doc="privacy" />,
+  },
+  {
+    path: "/refund",
+    element: <LegalPage doc="refund" />,
   },
   {
     path: "/delete-account",

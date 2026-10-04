@@ -17,7 +17,8 @@
  *
  * The copy is policy text. The stated windows — deletion within 7 days,
  * backups purged within 30 — and the list of what is removed must match
- * `pages/legal/Privacy.tsx` and what the shop actually does.
+ * the Privacy Policy in `lib/legal/content.ts` (served at `/privacy`) and what
+ * the shop actually does.
  *
  * @packageDocumentation
  */
@@ -25,16 +26,17 @@
 // Public, no-login "Delete account & data" page. This is the URL Google Play
 // requires under Data safety → account deletion. Mirrors the privacy page.
 //
-// EDIT THESE for the real shop before publishing (keep in sync with Privacy):
+// EDIT THESE for the real shop before publishing (keep in sync with the
+// policies in lib/legal/content.ts):
 /**
  * Shop identity, contact address and policy date interpolated into the copy.
  *
  * @remarks
- * Duplicated from `pages/legal/Privacy.tsx` rather than shared, so a change
- * there does not reach here. Keep the two sets in sync by hand, as the note
- * above says. `LAST_UPDATED` is shown to the reader and currently differs
- * from the privacy page's date, which is expected: each page carries the date
- * its own wording last changed.
+ * The same name and address appear in the policy text in
+ * `lib/legal/content.ts`, which does not read these constants. Keep them in
+ * sync by hand, as the note above says. `LAST_UPDATED` is shown to the reader
+ * and may differ from the policies' dates, which is expected: each page
+ * carries the date its own wording last changed.
  */
 const SHOP_NAME = "sKirana";
 const CONTACT_EMAIL = "shivanshu2019gupta@gmail.com";
@@ -44,8 +46,8 @@ const LAST_UPDATED = "October 2026";
  * A titled block of policy prose.
  *
  * @remarks
- * A local copy of the identical helper in `pages/legal/Privacy.tsx`; neither
- * file imports the other, so a styling change must be made in both.
+ * Matches the section styling of `pages/legal/LegalPage.tsx`, which renders
+ * its sections from data instead; a styling change must be made in both.
  *
  * @param title - Heading text for the section.
  * @param children - Paragraphs of policy text.
@@ -82,7 +84,11 @@ function Section({
  * the wording must match what the mobile app still allows.
  *
  * Treat the 7-day and 30-day figures as commitments published to an app store,
- * and keep them identical to the privacy page.
+ * and keep them identical to the privacy policy.
+ *
+ * The links at the foot go to `/privacy` and `/refund` — the refund policy
+ * covers paid orders, which the in-app deletion asks the customer to settle
+ * first.
  */
 export default function DeleteAccountPage() {
   return (
@@ -184,7 +190,22 @@ export default function DeleteAccountPage() {
         </p>
       </Section>
 
-      <p className="mt-10 text-xs text-neutral-400">
+      <nav className="mt-10 flex flex-wrap gap-x-4 gap-y-1 border-t border-neutral-200 pt-4 text-sm">
+        <a
+          className="text-neutral-600 underline hover:text-neutral-900"
+          href="/privacy"
+        >
+          Privacy Policy
+        </a>
+        <a
+          className="text-neutral-600 underline hover:text-neutral-900"
+          href="/refund"
+        >
+          Refund Policy
+        </a>
+      </nav>
+
+      <p className="mt-6 text-xs text-neutral-400">
         © {SHOP_NAME}. All rights reserved.
       </p>
     </main>
