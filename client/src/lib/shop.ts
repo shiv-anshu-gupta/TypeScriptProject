@@ -33,3 +33,6 @@ export const GRIEVANCE_OFFICER = "Shivanshu Gupta";
 
 /** The grievance officer's designation. */
 export const GRIEVANCE_DESIGNATION = "App Manager";
+
+/** Email for privacy and deletion requests, and written complaints. */
+export const CONTACT_EMAIL = "shivanshu2019gupta@gmail.com";
