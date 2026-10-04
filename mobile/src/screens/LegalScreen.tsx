@@ -189,7 +189,9 @@ export function LegalScreen() {
         Photos of lists are never kept. You can delete your account yourself
         here in the app (Account → Delete my account) and it is deleted straight
         away; if you ask us by email instead, we delete it within 7 days. Either
-        way it is gone from backups within 30 days.
+        way it is gone from backups within 30 days. The shop keeps its record of
+        your past orders (items, prices, dates) with your name, email and phone
+        removed.
       </P>
 
       <H>Children</H>

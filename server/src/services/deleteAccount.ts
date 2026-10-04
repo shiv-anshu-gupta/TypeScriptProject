@@ -8,10 +8,16 @@
  * This is the code that keeps that promise.
  *
  * What is removed: the user record (which carries the name, email, phone,
- * saved addresses and push tokens), every grocery list, every chat message
- * on those lists from either side, the cart, the wishlist, any catalogue
- * order, and finally the sign-in itself at Clerk. Nothing is kept back
- * "anonymised" - the page says deleted, so it is deleted.
+ * saved addresses and push tokens), every chat message on their lists from
+ * either side, the cart, the wishlist, any catalogue order, and finally the
+ * sign-in itself at Clerk.
+ *
+ * What the shop keeps: each grocery list as a sales record - its code,
+ * items, prices, total, dates and payment state - with the name replaced by
+ * {@link DELETED_CUSTOMER} and the email, phone and note cleared. Nothing
+ * left on it says who the customer was, so it is no longer their personal
+ * data, and the shop's history of what it sold stays whole. The published
+ * delete-account page says exactly this.
  *
  * Two things stop a deletion, and only two:
  *
@@ -23,9 +29,9 @@
  *   that record protects the customer as much as the shop. Once it is
  *   collected or refunded, deletion goes through.
  *
- * An open order that is *not* paid does not block anything. It is withdrawn
- * with the rest, and the shop is told on Telegram so nobody packs a bag for
- * a list that no longer exists.
+ * An open order that is *not* paid does not block anything. It is marked
+ * cancelled, and the shop is told on Telegram so nobody packs a bag for a
+ * customer who has gone.
  *
  * The data goes first and the sign-in last. If Clerk then fails, the data is
  * already gone and the customer is asked to try again; a retry finds no
@@ -45,6 +51,9 @@ import { sendTelegram } from "../utils/telegram";
 
 /** Statuses after which an order is over and nothing is owed either way. */
 const FINISHED = ["completed", "cancelled"];
+
+/** What the shop sees in place of the name on a deleted customer's orders. */
+export const DELETED_CUSTOMER = "Deleted customer";
 
 /** The part of a user record this needs. */
 export type DeletableUser = {
@@ -90,7 +99,18 @@ export async function deleteCustomerAccount(user: DeletableUser): Promise<void> 
   const withdrawn = lists.filter((list) => !FINISHED.includes(list.status));
 
   await Message.deleteMany({ $or: [owner, { groceryList: { $in: listIds } }] });
-  await GroceryList.deleteMany(owner);
+
+  // Open, unpaid orders are called off; then every order loses the details
+  // that identified the customer and stays as the shop's sales record.
+  if (withdrawn.length) {
+    await GroceryList.updateMany(
+      { _id: { $in: withdrawn.map((list) => list._id) } },
+      { $set: { status: "cancelled" } },
+    );
+  }
+  await GroceryList.updateMany(owner, {
+    $set: { customerName: DELETED_CUSTOMER, customerEmail: "", customerPhone: "", note: "" },
+  });
   await Cart.deleteMany(owner);
   await Wishlist.deleteMany(owner);
   await Order.deleteMany(owner);

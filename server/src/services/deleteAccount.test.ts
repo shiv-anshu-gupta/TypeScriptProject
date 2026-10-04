@@ -47,6 +47,11 @@ function table(name: string) {
     deleteOne: async (filter: Record<string, unknown>) => {
       db[name] = (db[name] ?? []).filter((row) => !matches(row, filter));
     },
+    updateMany: async (filter: Record<string, unknown>, update: { $set: Record<string, unknown> }) => {
+      for (const row of db[name] ?? []) {
+        if (matches(row, filter)) Object.assign(row, update.$set);
+      }
+    },
   };
 }
 
@@ -72,7 +77,7 @@ vi.mock("@clerk/express", () => ({
   },
 }));
 
-import { deleteCustomerAccount } from "./deleteAccount";
+import { DELETED_CUSTOMER, deleteCustomerAccount } from "./deleteAccount";
 
 const ME = { _id: "u1", clerkUserId: "clerk_u1", role: "user" };
 const SOMEONE_ELSE = "u2";
@@ -85,7 +90,17 @@ beforeEach(() => {
 
   db.users = [{ _id: "u1" }, { _id: SOMEONE_ELSE }];
   db.lists = [
-    { _id: "list0000done", user: "u1", status: "completed", paymentStatus: "paid" },
+    {
+      _id: "list0000done",
+      user: "u1",
+      status: "completed",
+      paymentStatus: "paid",
+      totalAmount: 467,
+      customerName: "Ramesh",
+      customerEmail: "r@example.com",
+      customerPhone: "9876543210",
+      note: "near the temple",
+    },
     { _id: "theirs000001", user: SOMEONE_ELSE, status: "received", paymentStatus: "pending" },
   ];
   db.messages = [
@@ -104,12 +119,28 @@ describe("deleteCustomerAccount", () => {
     await deleteCustomerAccount(ME);
 
     expect(db.users.map((r) => r._id)).toEqual([SOMEONE_ELSE]);
-    expect(db.lists.map((r) => r._id)).toEqual(["theirs000001"]);
     expect(db.messages.map((r) => r._id)).toEqual(["m3"]);
     expect(db.carts).toEqual([]);
     expect(db.wishlists).toEqual([]);
     expect(db.orders).toEqual([]);
     expect(clerkDeleted).toEqual(["clerk_u1"]);
+  });
+
+  it("keeps my orders for the shop, with nothing left that says who I was", async () => {
+    await deleteCustomerAccount(ME);
+
+    const mine = db.lists.find((r) => r._id === "list0000done")!;
+    expect(mine).toMatchObject({
+      status: "completed",
+      paymentStatus: "paid",
+      totalAmount: 467,
+      customerName: DELETED_CUSTOMER,
+      customerEmail: "",
+      customerPhone: "",
+      note: "",
+    });
+    // someone else's list is untouched
+    expect(db.lists.find((r) => r._id === "theirs000001")).toMatchObject({ status: "received" });
   });
 
   it("deletes the shop's replies on my lists too", async () => {
@@ -134,12 +165,15 @@ describe("deleteCustomerAccount", () => {
     expect(clerkDeleted).toEqual([]);
   });
 
-  it("withdraws an unpaid open order and tells the shop not to pack it", async () => {
+  it("cancels an unpaid open order and tells the shop not to pack it", async () => {
     db.lists.push({ _id: "abcdpacking1", user: "u1", status: "packing", paymentStatus: "pending" });
 
     await deleteCustomerAccount(ME);
 
-    expect(db.lists.map((r) => r._id)).toEqual(["theirs000001"]);
+    expect(db.lists.find((r) => r._id === "abcdpacking1")).toMatchObject({
+      status: "cancelled",
+      customerName: DELETED_CUSTOMER,
+    });
     expect(telegram).toHaveLength(1);
     expect(telegram[0]).toContain("#PACKING1");
   });
