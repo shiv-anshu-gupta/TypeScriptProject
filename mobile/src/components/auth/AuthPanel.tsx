@@ -562,10 +562,19 @@ export function AuthPanel({ onDone, subtitle, grow }: AuthPanelProps) {
       <Text className="mt-6 text-center text-xs leading-5 text-muted-foreground">
         {t("auth.consentPrefix")}{" "}
         <Text
+          accessibilityRole="link"
           className="font-semibold text-foreground underline"
-          onPress={() => navigation.navigate("Legal")}
+          onPress={() => navigation.navigate("Legal", { doc: "terms" })}
         >
-          {t("auth.privacyTerms")}
+          {t("legal.terms")}
+        </Text>
+        {t("auth.consentAnd")}
+        <Text
+          accessibilityRole="link"
+          className="font-semibold text-foreground underline"
+          onPress={() => navigation.navigate("Legal", { doc: "privacy" })}
+        >
+          {t("legal.privacy")}
         </Text>
         {t("auth.consentSuffix")}
       </Text>

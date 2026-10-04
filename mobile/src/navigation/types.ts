@@ -11,6 +11,8 @@
 
 import type { NavigatorScreenParams } from "@react-navigation/native";
 
+import type { LegalDocId } from "@/lib/legal/types";
+
 /**
  * The four bottom tabs and the parameters each accepts.
  *
@@ -47,6 +49,7 @@ export type RootStackParamList = {
   ProductDetails: { productId: string };
   Wishlist: undefined;
   SignIn: undefined;
-  Legal: undefined;
+  // Which of the three policy documents to show.
+  Legal: { doc: LegalDocId };
   ShopInfo: undefined;
 };

@@ -26,6 +26,7 @@ import { ProfileAvatar } from "@/components/ProfileAvatar";
 import { ProfileEditSheet } from "@/components/ProfileEditSheet";
 import { AuthView } from "@/components/auth/AuthView";
 import { env } from "@/lib/env";
+import { LEGAL_DOC_IDS } from "@/lib/legal/types";
 import { setAppLanguage, type AppLanguage } from "@/lib/i18n";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
@@ -205,6 +206,9 @@ function MenuRow({
  * the fallback. Display values prefer the saved profile, because that is what
  * the shop actually sees on an order.
  *
+ * The three policy documents are linked from a line of small text at the
+ * very foot of the signed-in page, not from the settings card.
+ *
  * It opens one sheet, {@link ProfileEditSheet}, and owns the save: the
  * request, the store update and the toast all happen here, and the orders are
  * reloaded afterwards because they carry the customer's phone.
@@ -328,8 +332,8 @@ export function AccountScreen() {
               <LanguageRow />
               <MenuRow
                 icon={<Feather name="file-text" size={18} color={INK} />}
-                title={t("account.terms")}
-                onPress={() => navigation.navigate("Legal")}
+                title={t("legal.terms")}
+                onPress={() => navigation.navigate("Legal", { doc: "terms" })}
                 last
               />
             </View>
@@ -495,11 +499,6 @@ export function AccountScreen() {
           icon={<Feather name="info" size={18} color={INK} />}
           title={t("account.shopInfo")}
           onPress={() => navigation.navigate("ShopInfo")}
-        />
-        <MenuRow
-          icon={<Feather name="file-text" size={18} color={INK} />}
-          title={t("account.terms")}
-          onPress={() => navigation.navigate("Legal")}
           last
         />
       </View>
@@ -525,6 +524,26 @@ export function AccountScreen() {
           {deleting ? "…" : t("account.deleteAccount")}
         </Text>
       </Pressable>
+
+      {/* The three policy documents, as quiet links at the very foot */}
+      <View className="flex-row flex-wrap items-center justify-center px-2">
+        {LEGAL_DOC_IDS.map((doc, index) => (
+          <View key={doc} className="flex-row items-center">
+            {index > 0 ? (
+              <Text className="text-xs text-muted-foreground"> · </Text>
+            ) : null}
+            <Pressable
+              accessibilityRole="link"
+              hitSlop={6}
+              onPress={() => navigation.navigate("Legal", { doc })}
+            >
+              <Text className="text-xs font-medium text-primary">
+                {t(`legal.${doc}`)}
+              </Text>
+            </Pressable>
+          </View>
+        ))}
+      </View>
 
       <ProfileEditSheet
         open={editOpen}

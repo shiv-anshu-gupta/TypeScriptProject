@@ -281,7 +281,7 @@ export const en = {
     continue: "Continue",
     consentPrefix: "By continuing, you agree to our",
     consentSuffix: ".",
-    privacyTerms: "Privacy Policy & Terms",
+    consentAnd: " and ",
     codeTitle: "Enter the code",
     codeSentTo: "We sent a 6-digit code to",
     changeEmail: "Change",
@@ -339,11 +339,9 @@ export const en = {
     helpSub: "Chat on WhatsApp",
     rate: "Rate the app",
     rateSub: "Tell us how it feels",
-    terms: "Terms & conditions",
     shopInfo: "Shop details & complaints",
     savedProductsSub: "Your wishlist",
     settings: "Settings",
-    privacyTerms: "Privacy & Terms",
     savedProducts: "Saved products",
     customer: "Customer",
     addresses: "Addresses",
@@ -375,6 +373,13 @@ export const en = {
     body: "A new version of sKirana is on the Play Store. Update to get the latest features.",
     forced: "Please update to continue using sKirana.",
     cta: "Update from Play Store",
+  },
+  // Link labels for the three policy documents. The documents themselves,
+  // titles included, live in lib/legal/content.ts.
+  legal: {
+    terms: "Terms & Conditions",
+    privacy: "Privacy Policy",
+    refund: "Refund Policy",
   },
 };
 
