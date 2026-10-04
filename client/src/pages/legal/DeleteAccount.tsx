@@ -80,8 +80,8 @@ function Section({
  * The prose describes a manual process: the customer emails from the address
  * they signed in with, the shop verifies and deletes. It also describes
  * partial deletion the customer can do themselves in the mobile app — removing
- * a saved address, or removing items from a list before packing starts — so
- * the wording must match what the mobile app still allows.
+ * items from a list before packing starts — so the wording must match what
+ * the mobile app still allows.
  *
  * Treat the 7-day and 30-day figures as commitments published to an app store,
  * and keep them identical to the privacy policy.
@@ -150,7 +150,6 @@ export default function DeleteAccountPage() {
         <p>
           You don't have to delete your whole account to remove data:
         </p>
-        <p>• In the app, delete any <b>saved address</b> (Account → Addresses → Delete).</p>
         <p>• <b>Remove items</b> from a list before the shop starts packing it.</p>
         <p>
           • To remove any other specific data, email us at{" "}

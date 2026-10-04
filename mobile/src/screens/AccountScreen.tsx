@@ -105,6 +105,38 @@ function LanguageRow() {
 }
 
 /**
+ * Terms, Privacy and Refund as one quiet row of links.
+ *
+ * @remarks
+ * Shown at the foot of the Account screen whether or not anyone is signed
+ * in, so the policies are always one tap away.
+ */
+function LegalLinks() {
+  const { t } = useTranslation();
+  const navigation = useNavigation<Nav>();
+  return (
+    <View className="flex-row flex-wrap items-center justify-center px-2">
+      {LEGAL_DOC_IDS.map((doc, index) => (
+        <View key={doc} className="flex-row items-center">
+          {index > 0 ? (
+            <Text className="text-xs text-muted-foreground"> · </Text>
+          ) : null}
+          <Pressable
+            accessibilityRole="link"
+            hitSlop={6}
+            onPress={() => navigation.navigate("Legal", { doc })}
+          >
+            <Text className="text-xs font-medium text-primary">
+              {t(`legal.${doc}`)}
+            </Text>
+          </Pressable>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+/**
  * One "label above value" line inside the details card.
  */
 function InfoRow({
@@ -330,13 +362,8 @@ export function AccountScreen() {
             </Text>
             <View className="overflow-hidden rounded-2xl border border-border bg-card">
               <LanguageRow />
-              <MenuRow
-                icon={<Feather name="file-text" size={18} color={INK} />}
-                title={t("legal.terms")}
-                onPress={() => navigation.navigate("Legal", { doc: "terms" })}
-                last
-              />
             </View>
+            <LegalLinks />
           </View>
         }
       />
@@ -526,24 +553,7 @@ export function AccountScreen() {
       </Pressable>
 
       {/* The three policy documents, as quiet links at the very foot */}
-      <View className="flex-row flex-wrap items-center justify-center px-2">
-        {LEGAL_DOC_IDS.map((doc, index) => (
-          <View key={doc} className="flex-row items-center">
-            {index > 0 ? (
-              <Text className="text-xs text-muted-foreground"> · </Text>
-            ) : null}
-            <Pressable
-              accessibilityRole="link"
-              hitSlop={6}
-              onPress={() => navigation.navigate("Legal", { doc })}
-            >
-              <Text className="text-xs font-medium text-primary">
-                {t(`legal.${doc}`)}
-              </Text>
-            </Pressable>
-          </View>
-        ))}
-      </View>
+      <LegalLinks />
 
       <ProfileEditSheet
         open={editOpen}
