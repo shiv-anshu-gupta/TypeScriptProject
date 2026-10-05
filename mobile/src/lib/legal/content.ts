@@ -28,8 +28,8 @@ import {
 
 import type { LegalDoc, LegalLibrary } from "./types";
 
-const UPDATED_EN = "Last updated: 4 October 2026";
-const UPDATED_HI = "अंतिम अपडेट: 4 अक्टूबर 2026";
+const UPDATED_EN = "Last updated: 5 October 2026";
+const UPDATED_HI = "अंतिम अपडेट: 5 अक्टूबर 2026";
 
 // ---------------------------------------------------------------------------
 // Terms & Conditions
@@ -275,7 +275,7 @@ const privacyEn: LegalDoc = {
       heading: "Photos of your list",
       body: [
         "If you choose to photograph your handwritten list, the app uses your camera, or a photo you pick from your gallery, only at that moment.",
-        "The photo is sent securely to our server and read by Google's Gemini AI service, which turns it into text. The items appear in your list for you to check and correct before you send it. We do not keep the photo: it is not saved on our server, in our database, or with your order.",
+        "The photo is sent securely to our server and read by an AI service provided by Google, which turns it into text. The items appear in your list for you to check and correct before you send it. We do not keep the photo: it is not saved on our server, in our database, or with your order.",
         "Google processes the photo under its own terms, and may keep it for a limited time and use it to improve its services. Please photograph only your grocery list, not anything personal.",
       ],
     },
@@ -291,8 +291,8 @@ const privacyEn: LegalDoc = {
       heading: "Who can see it",
       body: [
         "Only the shop, to fulfil your order. You can see only your own lists, not other customers'.",
-        "When you send a list or a message, the shop is alerted with your name, mobile number and order number, in the shop's own app and in its private Telegram chat.",
-        "We use trusted providers to run the app, who process data to provide their service: Clerk (sign-in), MongoDB Atlas (database), Vercel (hosting), Cloudinary (product pictures), Expo and Google Firebase (phone notifications), Telegram (shop alerts) and Google Gemini (reading photos of lists).",
+        "When you send a list or a message, the shop is alerted with your name, mobile number and order number, on the shop's own devices.",
+        "We use trusted service providers to run the app - for sign-in, secure storage and hosting, product pictures, phone notifications, shop alerts and reading photos of lists. They process data only to provide their service to us, under their own security and privacy commitments.",
       ],
     },
     {
@@ -370,7 +370,7 @@ const privacyHi: LegalDoc = {
       heading: "आपकी लिस्ट की फ़ोटो",
       body: [
         "अगर आप अपनी हाथ से लिखी लिस्ट की फ़ोटो लेते हैं, तो app आपका कैमरा, या gallery से चुनी फ़ोटो, सिर्फ़ उसी समय इस्तेमाल करता है।",
-        "फ़ोटो सुरक्षित तरीके से हमारे server पर जाती है, और Google की Gemini AI सेवा उसे पढ़कर text में बदलती है। सामान आपकी लिस्ट में आ जाता है, और भेजने से पहले आप उसे जाँचकर ठीक कर सकते हैं। हम फ़ोटो नहीं रखते: वह न हमारे server पर सेव होती है, न database में, न आपके order के साथ।",
+        "फ़ोटो सुरक्षित तरीके से हमारे server पर जाती है, और Google की एक AI सेवा उसे पढ़कर text में बदलती है। सामान आपकी लिस्ट में आ जाता है, और भेजने से पहले आप उसे जाँचकर ठीक कर सकते हैं। हम फ़ोटो नहीं रखते: वह न हमारे server पर सेव होती है, न database में, न आपके order के साथ।",
         "Google यह फ़ोटो अपनी शर्तों के अनुसार प्रोसेस करता है। वह इसे कुछ समय तक रख सकता है और अपनी सेवाएँ बेहतर बनाने में इस्तेमाल कर सकता है। इसलिए सिर्फ़ अपनी किराने की लिस्ट की फ़ोटो लें, कोई निजी चीज़ नहीं।",
       ],
     },
@@ -386,8 +386,8 @@ const privacyHi: LegalDoc = {
       heading: "जानकारी कौन देख सकता है",
       body: [
         "सिर्फ़ दुकान, आपका order पूरा करने के लिए। आप सिर्फ़ अपनी लिस्ट देख सकते हैं, दूसरे ग्राहकों की नहीं।",
-        "जब आप लिस्ट या message भेजते हैं, तो दुकान को आपके नाम, मोबाइल नंबर और order नंबर के साथ सूचना जाती है, दुकान के अपने app में और उसकी निजी Telegram chat में।",
-        "app चलाने के लिए हम भरोसेमंद सेवाओं का इस्तेमाल करते हैं, जो अपनी सेवा देने के लिए डेटा प्रोसेस करती हैं: Clerk (sign-in), MongoDB Atlas (database), Vercel (hosting), Cloudinary (सामान की तस्वीरें), Expo और Google Firebase (फ़ोन notifications), Telegram (दुकान को सूचना) और Google Gemini (लिस्ट की फ़ोटो पढ़ना)।",
+        "जब आप लिस्ट या message भेजते हैं, तो दुकान को आपके नाम, मोबाइल नंबर और order नंबर के साथ सूचना जाती है, दुकान के अपने फ़ोन और कंप्यूटर पर।",
+        "app चलाने के लिए हम भरोसेमंद सेवा देने वाली कंपनियों का इस्तेमाल करते हैं - sign-in, डेटा सुरक्षित रखने और hosting, सामान की तस्वीरें, फ़ोन notifications, दुकान को सूचना और लिस्ट की फ़ोटो पढ़ने के लिए। ये डेटा सिर्फ़ हमें अपनी सेवा देने के लिए प्रोसेस करती हैं, अपनी सुरक्षा और गोपनीयता की शर्तों के साथ।",
       ],
     },
     {
