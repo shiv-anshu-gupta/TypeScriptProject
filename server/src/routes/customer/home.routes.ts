@@ -143,7 +143,7 @@ export const customerHomeRouter = Router();
  *   capped at `HOME_BANNER_LIMIT`. Tap targets are then checked by
  *   `resolveBannerLinks`.
  * - `categories` — all of them, A to Z, with 200 px `thumb` images.
- * - `recentProducts` — the four newest `active` products, with 500 px `card`
+ * - `recentProducts` — the ten newest `active` products, with 500 px `card`
  *   images. The cover image is used, falling back to the first image, then to
  *   `""` for a product with none.
  * - `coupons` — promos whose window covers now and whose `count` is above
@@ -173,7 +173,7 @@ customerHomeRouter.get(
       Product.find({ status: "active" })
         .select("title brand unit unitValue images createdAt")
         .sort({ createdAt: -1 })
-        .limit(4)
+        .limit(10)
         .lean<ProductRow[]>(),
       Promo.find({
         startsAt: { $lte: now },

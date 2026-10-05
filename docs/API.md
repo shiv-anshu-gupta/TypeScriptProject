@@ -393,7 +393,7 @@ No parameters. Four queries in parallel:
   and inside any `startsAt`/`endsAt` window), sorted `sortOrder` then newest,
   limited to `HOME_BANNER_LIMIT` = **8**.
 - categories — all, A→Z.
-- recentProducts — `status: "active"`, newest **4**.
+- recentProducts — `status: "active"`, newest **10**.
 - coupons — promos live now with `count > 0`, **4**.
 
 Banner tap targets are resolved and downgraded to `{ "type": "none" }` when the

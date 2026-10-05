@@ -28,6 +28,7 @@ import { useCustomerHomeStore } from "@/features/customer/home/store";
 import { useCustomerGroceryListStore } from "@/features/customer/grocery-list/store";
 import { ProductCard } from "@/components/ProductCard";
 import { ListProgressCard } from "@/components/ListProgressCard";
+import { ReorderCard } from "@/components/ReorderCard";
 import { SearchEntry } from "@/components/SearchBar";
 import { BannerCarousel } from "@/components/BannerCarousel";
 import { ProfileAvatar } from "@/components/ProfileAvatar";
@@ -229,6 +230,9 @@ export function HomeScreen() {
       <View className="mt-4 gap-5">
         {/* The customer's live list journey - the next step, one tap away */}
         <ListProgressCard />
+
+        {/* The last collected basket, one tap back onto the paper */}
+        <ReorderCard />
 
         {/* Promo banners from the admin panel; renders nothing if there are none */}
         <BannerCarousel banners={data.banners} />
