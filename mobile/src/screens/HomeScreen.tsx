@@ -179,18 +179,18 @@ export function HomeScreen() {
     >
       <View className="flex-row items-center justify-between">
         <View className="flex-row items-center gap-3">
-          <View className="h-12 w-12 items-center justify-center rounded-2xl bg-primary">
+          <View className="h-10 w-10 items-center justify-center rounded-xl bg-primary">
             <MaterialCommunityIcons
               name="storefront"
-              size={24}
+              size={20}
               color="#ffffff"
             />
           </View>
           <View>
-            <Text className="text-2xl font-bold tracking-tight text-foreground">
+            <Text className="text-xl font-bold tracking-tight text-foreground">
               sKirana
             </Text>
-            <Text className="text-xs text-muted-foreground">
+            <Text className="text-[11px] text-muted-foreground">
               {t("home.tagline")}
             </Text>
           </View>
@@ -204,7 +204,7 @@ export function HomeScreen() {
           accessibilityLabel={t("tabs.account")}
           className="active:opacity-80"
         >
-          <ProfileAvatar name={displayName} size={44} />
+          <ProfileAvatar name={displayName} size={40} />
         </Pressable>
       </View>
 
@@ -237,7 +237,7 @@ export function HomeScreen() {
       {/* Categories */}
       {data.categories.length ? (
         <View className="mt-8 px-4">
-          <Text className="mb-3 text-xl font-bold text-foreground">
+          <Text className="mb-3 text-lg font-semibold text-foreground">
             {t("home.browse")}
           </Text>
           <View className="flex-row flex-wrap">
@@ -256,18 +256,18 @@ export function HomeScreen() {
                 {category.imageUrl ? (
                   <Image
                     source={{ uri: category.imageUrl }}
-                    style={{ width: 64, height: 64, borderRadius: 32 }}
+                    style={{ width: 56, height: 56, borderRadius: 28 }}
                     contentFit="cover"
                     transition={150}
                   />
                 ) : (
-                  <View className="h-16 w-16 items-center justify-center rounded-full bg-secondary">
-                    <Feather name="tag" size={22} color="#1f2a2e" />
+                  <View className="h-14 w-14 items-center justify-center rounded-full bg-secondary">
+                    <Feather name="tag" size={20} color="#1f2a2e" />
                   </View>
                 )}
                 <Text
                   numberOfLines={2}
-                  className="text-center text-[13px] font-medium leading-4 text-foreground"
+                  className="text-center text-xs font-medium text-foreground"
                 >
                   {category.name}
                 </Text>
@@ -280,7 +280,7 @@ export function HomeScreen() {
       {/* Products section title */}
       {data.recentProducts.length ? (
         <View className="mb-3 mt-8 flex-row items-center justify-between px-4">
-          <Text className="text-xl font-bold text-foreground">
+          <Text className="text-lg font-semibold text-foreground">
             {t("home.newArrivals")}
           </Text>
           <Pressable
@@ -291,7 +291,7 @@ export function HomeScreen() {
               })
             }
           >
-            <Text className="text-sm font-semibold text-primary">
+            <Text className="text-sm font-semibold text-foreground">
               {t("home.viewAll")}
             </Text>
           </Pressable>
