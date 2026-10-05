@@ -171,6 +171,7 @@ export const en = {
     paidShort: "Paid",
     estimateShort: "Estimate",
     monthsShort: "Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec",
+    price: "Price",
     totalEstimate: "Total (estimate)",
     estimateInfoTitle: "About this total",
     estimateInfo:

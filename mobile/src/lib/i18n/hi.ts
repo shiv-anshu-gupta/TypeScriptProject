@@ -170,6 +170,7 @@ export const hi: Translations = {
     paidShort: "भुगतान हुआ",
     estimateShort: "अनुमान",
     monthsShort: "जन,फ़र,मार्च,अप्रैल,मई,जून,जुलाई,अग,सित,अक्टू,नव,दिस",
+    price: "दाम",
     totalEstimate: "कुल (अनुमान)",
     estimateInfoTitle: "इस कुल के बारे में",
     estimateInfo:

@@ -299,6 +299,22 @@ function ListCard({ list }: { list: CustomerGroceryList }) {
 
       {/* Items */}
       <View className="mt-2 px-4">
+        {/* Column heads: item, quantity and - once priced - price, so the
+            three read as a small table rather than one run-on line. */}
+        <View className="flex-row items-center gap-3 border-b border-border py-2">
+          <Text className="flex-1 text-[11px] font-semibold uppercase text-muted-foreground">
+            {t("home.item")}
+          </Text>
+          <Text className="w-20 text-center text-[11px] font-semibold uppercase text-muted-foreground">
+            {t("home.qty")}
+          </Text>
+          {isPriced ? (
+            <Text className="w-16 text-right text-[11px] font-semibold uppercase text-muted-foreground">
+              {t("lists.price")}
+            </Text>
+          ) : null}
+          {showRemove ? <View className="w-4" /> : null}
+        </View>
         {visibleItems.map((item, index) => (
           <View
             key={`${list._id}-${index}`}
@@ -313,16 +329,22 @@ function ListCard({ list }: { list: CustomerGroceryList }) {
               numberOfLines={2}
             >
               {item.name}
-              {item.quantity ? (
-                <Text className="text-muted-foreground"> · {item.quantity}</Text>
-              ) : null}
+            </Text>
+            <Text
+              className="w-20 text-center text-sm text-muted-foreground"
+              numberOfLines={2}
+            >
+              {item.quantity || "—"}
             </Text>
             {item.available === false ? (
-              <Text className="text-xs font-medium text-destructive">
+              <Text
+                className="w-16 text-right text-[11px] font-medium text-destructive"
+                numberOfLines={2}
+              >
                 {t("lists.notAvailable")}
               </Text>
             ) : isPriced ? (
-              <Text className="text-sm font-medium text-foreground">
+              <Text className="w-16 text-right text-sm font-medium text-foreground">
                 {formatPrice(item.price)}
               </Text>
             ) : null}
