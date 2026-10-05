@@ -78,6 +78,8 @@ export const hi: Translations = {
     nameTooShort: "“{{name}}” बहुत छोटा है — पूरा नाम लिखें",
     signInToSend: "लिस्ट भेजने के लिए साइन इन करें",
     tagline: "आपकी अपनी दुकान, आपके फ़ोन पर",
+    signOff: "बरसों का भरोसा, अब आपकी जेब में।",
+    signOffFrom: "प्यार के साथ, {{shop}} परिवार की ओर से ❤",
     browse: "श्रेणी से चुनें",
     newArrivals: "नए आइटम",
     viewAll: "सभी देखें",

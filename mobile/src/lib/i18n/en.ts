@@ -80,6 +80,8 @@ export const en = {
     nameTooShort: "“{{name}}” is too short — write the full item name",
     signInToSend: "Sign in to send your list",
     tagline: "Your local shop, on your phone",
+    signOff: "Years of trust, now in your pocket.",
+    signOffFrom: "with love, from the {{shop}} family ❤",
     browse: "Browse by collection",
     newArrivals: "New arrivals",
     viewAll: "View all",

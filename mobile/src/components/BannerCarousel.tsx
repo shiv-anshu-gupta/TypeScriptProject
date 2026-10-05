@@ -6,7 +6,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
-  AccessibilityInfo,
   FlatList,
   Pressable,
   useWindowDimensions,
@@ -15,7 +14,7 @@ import {
   type NativeSyntheticEvent,
 } from "react-native";
 import { Image } from "expo-image";
-import { useIsFocused, useNavigation } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 import type { RootStackParamList } from "@/navigation/types";
@@ -28,22 +27,21 @@ const SIDE = 16; // matches the px-4 inset used down the Home screen
 const GAP = 12;
 const PEEK = 28; // how much of the next banner shows, so the row reads as swipeable
 const ASPECT = 0.46; // banner height / width - a wide promo strip
-const AUTOPLAY_MS = 4500;
 
 /**
  * The space between two banners.
  *
  * @remarks
  * Defined once: an inline component would be a new type on every render, so
- * the separators would remount on each autoplay tick.
+ * the separators would remount whenever the page dots change.
  */
 function Gap() {
   return <View style={{ width: GAP }} />;
 }
 
 /**
- * A swipeable row of promo pictures with page dots, which advances itself
- * every few seconds.
+ * A swipeable row of promo pictures with page dots. It moves only when the
+ * customer swipes it.
  *
  * @remarks
  * Promo banners from the admin panel (Home banners): the live ones, in the
@@ -56,8 +54,9 @@ function Gap() {
  * dead button. Tapping can open the list sheet or navigate into the Shop tab
  * or a product page.
  *
- * Autoplay stops while the Home tab is not focused, while a finger is on it,
- * and when the system asks for reduced motion. Banners whose image fails to
+ * There is no autoplay: a strip that slides on its own pulls the eye away
+ * from the list the customer came to write, and moves under a thumb that is
+ * about to tap. Banners whose image fails to
  * load are dropped rather than shown as a grey box, and the set of failures is
  * cleared whenever fresh banners arrive, so a weak connection does not hide a
  * banner permanently.
@@ -66,12 +65,9 @@ function Gap() {
  */
 export function BannerCarousel({ banners }: { banners: CustomerHomeBanner[] }) {
   const { width } = useWindowDimensions();
-  const isFocused = useIsFocused();
   const listRef = useRef<FlatList<CustomerHomeBanner>>(null);
   const indexRef = useRef(0);
-  const dragging = useRef(false);
   const [index, setIndex] = useState(0);
-  const [reduceMotion, setReduceMotion] = useState(false);
   const navigation = useNavigation<Nav>();
 
   // A banner only counts as tappable when THIS build knows what its link
@@ -129,32 +125,6 @@ export function BannerCarousel({ banners }: { banners: CustomerHomeBanner[] }) {
   const itemHeight = Math.round(itemWidth * ASPECT);
   const interval = itemWidth + GAP;
 
-  useEffect(() => {
-    void AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion);
-    const sub = AccessibilityInfo.addEventListener(
-      "reduceMotionChanged",
-      setReduceMotion,
-    );
-    return () => sub.remove();
-  }, []);
-
-  // Gentle autoplay. Off while the Home tab is not showing - the app should do
-  // no work for a screen nobody is looking at - and off for reduced motion.
-  useEffect(() => {
-    if (!many || !isFocused || reduceMotion) return;
-    const timer = setInterval(() => {
-      if (dragging.current) return;
-      const next = (indexRef.current + 1) % visible.length;
-      indexRef.current = next;
-      setIndex(next);
-      listRef.current?.scrollToOffset({
-        offset: next * interval,
-        animated: true,
-      });
-    }, AUTOPLAY_MS);
-    return () => clearInterval(timer);
-  }, [many, isFocused, reduceMotion, visible.length, interval]);
-
   // A banner dropping out can leave the page index past the end - start over.
   useEffect(() => {
     if (indexRef.current >= visible.length) {
@@ -170,7 +140,6 @@ export function BannerCarousel({ banners }: { banners: CustomerHomeBanner[] }) {
     const settled = Math.round(event.nativeEvent.contentOffset.x / interval);
     indexRef.current = settled;
     setIndex(settled);
-    dragging.current = false;
   };
 
   return (
@@ -186,11 +155,8 @@ export function BannerCarousel({ banners }: { banners: CustomerHomeBanner[] }) {
         disableIntervalMomentum
         contentContainerStyle={{ paddingHorizontal: SIDE }}
         ItemSeparatorComponent={Gap}
-        onScrollBeginDrag={() => {
-          dragging.current = true;
-        }}
         // A slow drag ends without momentum (no onMomentumScrollEnd on iOS),
-        // so the flag is cleared here too - otherwise autoplay stops for good.
+        // so the dots are updated here too.
         onScrollEndDrag={onSettle}
         onMomentumScrollEnd={onSettle}
         renderItem={({ item }) => (

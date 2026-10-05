@@ -4,7 +4,7 @@
  * @packageDocumentation
  */
 
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -13,6 +13,7 @@ import {
   View,
 } from "react-native";
 import { Image } from "expo-image";
+import { useFonts, Kalam_700Bold } from "@expo-google-fonts/kalam";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -29,6 +30,7 @@ import { SearchEntry } from "@/components/SearchBar";
 import { BannerCarousel } from "@/components/BannerCarousel";
 import { ProfileAvatar } from "@/components/ProfileAvatar";
 import { useCustomerDisplayName } from "@/features/customer/account/use-display-name";
+import { SELLER_NAME } from "@/lib/shop";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -56,10 +58,43 @@ type Nav = NativeStackNavigationProp<RootStackParamList>;
  * product to its details page. The journey card may open the list sheet, but
  * that is the card's own doing.
  *
- * The whole page above the grid is the `ListHeaderComponent` of one
- * `FlatList`, so the screen is a single virtualized list with no nested
- * scroll views.
+ * The brand row and the search box stay fixed at the top - search is what a
+ * customer reaches for from anywhere on the page - and gain a hairline once
+ * the page scrolls under them. Everything else is one `FlatList`: the journey
+ * card, banners and categories in its header, the newest products as its
+ * grid, and a signed-off line from the shop as its footer.
  */
+/**
+ * The line the page ends on: a word from the shop, in a handwritten face.
+ *
+ * @remarks
+ * Kalam ships with the update (an asset, not native code) and covers both
+ * Devanagari and Latin; until it has loaded the system font stands in.
+ */
+function HomeSignOff() {
+  const { t } = useTranslation();
+  const [fontsLoaded] = useFonts({ Kalam_700Bold });
+  const hand = fontsLoaded ? { fontFamily: "Kalam_700Bold" } : undefined;
+
+  return (
+    <View className="items-center gap-2 px-8 pb-6 pt-10">
+      <View className="h-px w-16 bg-primary/30" />
+      <Text
+        className="mt-4 text-center text-[26px] leading-[40px] text-primary"
+        style={hand}
+      >
+        {t("home.signOff")}
+      </Text>
+      <Text
+        className="text-center text-base leading-7 text-muted-foreground"
+        style={hand}
+      >
+        {t("home.signOffFrom", { shop: SELLER_NAME })}
+      </Text>
+    </View>
+  );
+}
+
 export function HomeScreen() {
   const { t } = useTranslation();
   const navigation = useNavigation<Nav>();
@@ -71,6 +106,8 @@ export function HomeScreen() {
   const loading = useCustomerHomeStore((state) => state.loading);
   const loadHome = useCustomerHomeStore((state) => state.loadHome);
   const displayName = useCustomerDisplayName();
+  // The fixed top bar gains a hairline once the page scrolls under it.
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
     void loadHome();
@@ -128,25 +165,30 @@ export function HomeScreen() {
     );
   }
 
-  // Everything above the product grid lives in the list header so the whole
-  // screen scrolls as ONE virtualized list (no nested scroll views).
-  const listHeader = (
-    <View>
-      {/* Brand header */}
-      <View className="flex-row items-center justify-between border-b border-border/60 px-4 pb-3">
-        <View className="flex-row items-center gap-2.5">
-          <View className="h-10 w-10 items-center justify-center rounded-xl bg-primary">
+  // Fixed at the top: who we are, and the search box.
+  const topBar = (
+    <View
+      className={
+        scrolled
+          ? "gap-3 border-b border-border bg-background px-4 pb-3"
+          : "gap-3 border-b border-transparent bg-background px-4 pb-3"
+      }
+      style={{ paddingTop: insets.top + 8 }}
+    >
+      <View className="flex-row items-center justify-between">
+        <View className="flex-row items-center gap-3">
+          <View className="h-12 w-12 items-center justify-center rounded-2xl bg-primary">
             <MaterialCommunityIcons
               name="storefront"
-              size={20}
+              size={24}
               color="#ffffff"
             />
           </View>
           <View>
-            <Text className="text-xl font-bold tracking-tight text-foreground">
+            <Text className="text-2xl font-bold tracking-tight text-foreground">
               sKirana
             </Text>
-            <Text className="text-[11px] text-muted-foreground">
+            <Text className="text-xs text-muted-foreground">
               {t("home.tagline")}
             </Text>
           </View>
@@ -160,27 +202,31 @@ export function HomeScreen() {
           accessibilityLabel={t("tabs.account")}
           className="active:opacity-80"
         >
-          <ProfileAvatar name={displayName} size={40} />
+          <ProfileAvatar name={displayName} size={44} />
         </Pressable>
       </View>
 
-      <View className="mt-4 gap-4">
+      {/* Product search. Searching itself happens on the Shop tab, which
+          shows results as you type; this opens it ready to type. */}
+      <SearchEntry
+        placeholder={t("home.searchHint")}
+        onPress={() =>
+          navigation.navigate("Tabs", {
+            screen: "Shop",
+            params: { openSearch: true },
+          })
+        }
+      />
+    </View>
+  );
+
+  // Everything above the product grid lives in the list header so the whole
+  // screen scrolls as ONE virtualized list (no nested scroll views).
+  const listHeader = (
+    <View>
+      <View className="mt-4 gap-5">
         {/* The customer's live list journey - the next step, one tap away */}
         <ListProgressCard />
-
-        {/* Product search. Searching itself happens on the Shop tab, which
-            shows results as you type; this opens it ready to type. */}
-        <View className="px-4">
-          <SearchEntry
-            placeholder={t("home.searchHint")}
-            onPress={() =>
-              navigation.navigate("Tabs", {
-                screen: "Shop",
-                params: { openSearch: true },
-              })
-            }
-          />
-        </View>
 
         {/* Promo banners from the admin panel; renders nothing if there are none */}
         <BannerCarousel banners={data.banners} />
@@ -189,7 +235,7 @@ export function HomeScreen() {
       {/* Categories */}
       {data.categories.length ? (
         <View className="mt-8 px-4">
-          <Text className="mb-3 text-lg font-semibold text-foreground">
+          <Text className="mb-3 text-xl font-bold text-foreground">
             {t("home.browse")}
           </Text>
           <View className="flex-row flex-wrap">
@@ -208,18 +254,18 @@ export function HomeScreen() {
                 {category.imageUrl ? (
                   <Image
                     source={{ uri: category.imageUrl }}
-                    style={{ width: 56, height: 56, borderRadius: 28 }}
+                    style={{ width: 64, height: 64, borderRadius: 32 }}
                     contentFit="cover"
                     transition={150}
                   />
                 ) : (
-                  <View className="h-14 w-14 items-center justify-center rounded-full bg-secondary">
-                    <Feather name="tag" size={20} color="#1f2a2e" />
+                  <View className="h-16 w-16 items-center justify-center rounded-full bg-secondary">
+                    <Feather name="tag" size={22} color="#1f2a2e" />
                   </View>
                 )}
                 <Text
                   numberOfLines={2}
-                  className="text-center text-xs font-medium text-foreground"
+                  className="text-center text-[13px] font-medium leading-4 text-foreground"
                 >
                   {category.name}
                 </Text>
@@ -232,7 +278,7 @@ export function HomeScreen() {
       {/* Products section title */}
       {data.recentProducts.length ? (
         <View className="mb-3 mt-8 flex-row items-center justify-between px-4">
-          <Text className="text-lg font-semibold text-foreground">
+          <Text className="text-xl font-bold text-foreground">
             {t("home.newArrivals")}
           </Text>
           <Pressable
@@ -243,7 +289,7 @@ export function HomeScreen() {
               })
             }
           >
-            <Text className="text-sm font-semibold text-foreground">
+            <Text className="text-sm font-semibold text-primary">
               {t("home.viewAll")}
             </Text>
           </Pressable>
@@ -253,21 +299,27 @@ export function HomeScreen() {
   );
 
   return (
-    <FlatList
-      className="flex-1 bg-background"
-      data={cards}
-      keyExtractor={(item) => item.id}
-      numColumns={2}
-      columnWrapperStyle={{
-        justifyContent: "space-between",
-        paddingHorizontal: 16,
-      }}
-      contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 32 }}
-      showsVerticalScrollIndicator={false}
-      keyboardShouldPersistTaps="handled"
-      keyboardDismissMode="on-drag"
-      ListHeaderComponent={listHeader}
-      renderItem={renderCard}
-    />
+    <View className="flex-1 bg-background">
+      {topBar}
+      <FlatList
+        className="flex-1 bg-background"
+        data={cards}
+        keyExtractor={(item) => item.id}
+        numColumns={2}
+        columnWrapperStyle={{
+          justifyContent: "space-between",
+          paddingHorizontal: 16,
+        }}
+        contentContainerStyle={{ paddingBottom: 32 }}
+        onScroll={(event) => setScrolled(event.nativeEvent.contentOffset.y > 4)}
+        scrollEventThrottle={32}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        ListHeaderComponent={listHeader}
+        ListFooterComponent={<HomeSignOff />}
+        renderItem={renderCard}
+      />
+    </View>
   );
 }

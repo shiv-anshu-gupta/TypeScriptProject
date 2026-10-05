@@ -93,12 +93,25 @@ export function SearchEntry({ placeholder, onPress }: SearchEntryProps) {
       onPress={onPress}
       accessibilityRole="search"
       accessibilityLabel={placeholder}
-      className="h-11 flex-row items-center gap-2 rounded-xl border border-border bg-card px-3 active:opacity-80"
+      className="h-14 flex-row items-center gap-3 rounded-2xl border-[1.5px] border-primary/40 bg-card pl-2 pr-4 active:opacity-90"
+      style={{
+        shadowColor: "#3c5a64",
+        shadowOpacity: 0.14,
+        shadowRadius: 12,
+        shadowOffset: { width: 0, height: 4 },
+        elevation: 4,
+      }}
     >
-      <Feather name="search" size={16} color="#6f6857" />
-      <Text numberOfLines={1} className="flex-1 text-base text-[#ada291]">
+      <View className="h-10 w-10 items-center justify-center rounded-xl bg-primary">
+        <Feather name="search" size={18} color="#ffffff" />
+      </View>
+      <Text
+        numberOfLines={1}
+        className="flex-1 text-base font-medium text-[#8a8273]"
+      >
         {placeholder}
       </Text>
+      <Feather name="arrow-right" size={18} color="#3c5a64" />
     </Pressable>
   );
 }

@@ -5,6 +5,7 @@
   "dependencies": {
     "@clerk/clerk-expo": "^2.19.31",
     "@clerk/clerk-react": "^5.61.8",
+    "@expo-google-fonts/kalam": "^0.4.1",
     "@expo/vector-icons": "^15.0.2",
     "@gorhom/portal": "^1.0.14",
     "@react-native-async-storage/async-storage": "2.2.0",
