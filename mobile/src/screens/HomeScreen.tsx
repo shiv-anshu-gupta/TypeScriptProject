@@ -13,7 +13,9 @@ import {
   View,
 } from "react-native";
 import { Image } from "expo-image";
-import { useFonts, Kalam_700Bold } from "@expo-google-fonts/kalam";
+import { useFonts } from "expo-font";
+// Only the one weight used, so the update does not carry the other two.
+import { Kalam_700Bold } from "@expo-google-fonts/kalam/700Bold";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
