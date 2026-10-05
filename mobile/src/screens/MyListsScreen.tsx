@@ -70,6 +70,11 @@ function formatShortDate(iso: string, months: string): string {
 // Status tabs so cancelled / completed lists don't clutter the active ones.
 const STATUS_TABS = ["active", "completed", "cancelled"] as const;
 type StatusTab = (typeof STATUS_TABS)[number];
+const STATUS_TAB_ICON: Record<StatusTab, keyof typeof Feather.glyphMap> = {
+  active: "clock",
+  completed: "check-circle",
+  cancelled: "x-circle",
+};
 const STATUS_GROUPS: Record<StatusTab, GroceryListStatus[]> = {
   // The same statuses the Home card counts as in progress, from one place, so
   // "+N more orders in progress" can never disagree with this tab.
@@ -565,9 +570,14 @@ export function MyListsScreen() {
             {t("lists.title")}
           </Text>
 
-          {/* Status tabs — keep cancelled / completed out of the active view */}
-          <View className="flex-row gap-2">
-            {STATUS_TABS.map((tab) => {
+          {/* Status tabs — one full-width bar of three equal cells, so the
+              eye finds them at once; keeps cancelled / completed out of the
+              active view. */}
+          <View
+            className="flex-row overflow-hidden rounded-2xl border border-border bg-card"
+            accessibilityRole="tablist"
+          >
+            {STATUS_TABS.map((tab, index) => {
               const active = statusTab === tab;
               const count = items.filter((l) =>
                 STATUS_GROUPS[tab].includes(l.status),
@@ -576,22 +586,62 @@ export function MyListsScreen() {
                 <Pressable
                   key={tab}
                   onPress={() => setStatusTab(tab)}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: active }}
                   className={
-                    active
-                      ? "rounded-full bg-primary px-3 py-1.5"
-                      : "rounded-full border border-border bg-card px-3 py-1.5"
+                    index > 0
+                      ? "flex-1 border-l border-border"
+                      : "flex-1"
                   }
                 >
-                  <Text
+                  <View
                     className={
                       active
-                        ? "text-xs font-semibold text-primary-foreground"
-                        : "text-xs font-medium text-muted-foreground"
+                        ? "flex-row items-center justify-center gap-1.5 bg-accent py-3"
+                        : "flex-row items-center justify-center gap-1.5 py-3"
                     }
                   >
-                    {t(`lists.tabs.${tab}`)}
-                    {count ? ` ${count}` : ""}
-                  </Text>
+                    <Feather
+                      name={STATUS_TAB_ICON[tab]}
+                      size={15}
+                      color={active ? "#3c5a64" : "#8a8273"}
+                    />
+                    <Text
+                      className={
+                        active
+                          ? "text-sm font-bold text-primary"
+                          : "text-sm font-medium text-muted-foreground"
+                      }
+                      numberOfLines={1}
+                    >
+                      {t(`lists.tabs.${tab}`)}
+                    </Text>
+                    {count ? (
+                      <View
+                        className={
+                          active
+                            ? "min-w-[20px] items-center rounded-full bg-primary px-1.5"
+                            : "min-w-[20px] items-center rounded-full bg-secondary px-1.5"
+                        }
+                      >
+                        <Text
+                          className={
+                            active
+                              ? "text-[11px] font-bold text-primary-foreground"
+                              : "text-[11px] font-semibold text-muted-foreground"
+                          }
+                        >
+                          {count}
+                        </Text>
+                      </View>
+                    ) : null}
+                  </View>
+                  {/* The selected cell carries a bar along its foot. */}
+                  <View
+                    className={
+                      active ? "h-0.5 bg-primary" : "h-0.5 bg-transparent"
+                    }
+                  />
                 </Pressable>
               );
             })}
