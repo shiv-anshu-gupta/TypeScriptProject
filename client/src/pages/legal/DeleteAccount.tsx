@@ -139,9 +139,8 @@ export default function DeleteAccountPage() {
 
       <Section title="What gets deleted">
         <p>Your account and your personal details:</p>
-        <p>• Your name, email, and phone number</p>
+        <p>• Your account profile and email</p>
         <p>• Any saved addresses</p>
-        <p>• Your name, email and phone number on every past order</p>
         <p>• All your chat messages with the shop</p>
         <p>• Your sign-in, so the account cannot be used again</p>
       </Section>
@@ -163,9 +162,10 @@ export default function DeleteAccountPage() {
       <Section title="What we keep">
         <p>
           The shop keeps a record of each past order - the items, prices,
-          total, date and whether it was paid - as part of its sales accounts.
-          Your name, email and phone are removed from it, so it no longer says
-          who you are. Nothing else personal is kept. Backup copies are fully
+          total, date, whether it was paid, and the name and mobile number on
+          it - as part of its sales accounts, as tax and accounting law
+          requires. Your email and order notes are removed. Nothing else
+          personal is kept. Backup copies are fully
           removed within <b>30 days</b>. We do not keep your data for marketing
           or sell it to anyone.
         </p>

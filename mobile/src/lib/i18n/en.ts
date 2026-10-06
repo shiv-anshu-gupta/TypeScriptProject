@@ -368,7 +368,7 @@ export const en = {
     deleteAccount: "Delete my account",
     deleteTitle: "Delete your account?",
     deleteBody:
-      "This permanently deletes your name, mobile number, email, saved addresses and chats. The shop keeps a record of your past orders with no name or number on it. It can't be undone, and an unpaid order that is still open will be cancelled.",
+      "Your account and chats will be deleted. This can't be undone.",
     deleteConfirm: "Delete",
     deleteCancel: "Keep my account",
     deleted: "Your account has been deleted.",

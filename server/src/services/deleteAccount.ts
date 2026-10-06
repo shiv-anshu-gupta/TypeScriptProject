@@ -12,12 +12,12 @@
  * either side, the cart, the wishlist, any catalogue order, and finally the
  * sign-in itself at Clerk.
  *
- * What the shop keeps: each grocery list as a sales record - its code,
- * items, prices, total, dates and payment state - with the name replaced by
- * {@link DELETED_CUSTOMER} and the email, phone and note cleared. Nothing
- * left on it says who the customer was, so it is no longer their personal
- * data, and the shop's history of what it sold stays whole. The published
- * delete-account page says exactly this.
+ * What the shop keeps: each grocery list as its sales record - code, items,
+ * prices, total, dates, payment state, and the customer's name and mobile
+ * number as they were on the order. The shop needs to know whose sale it
+ * was, and tax and accounting law requires sales records to be kept; the
+ * DPDP Act allows retention a law requires. The email and the order note are
+ * cleared. The published policy and delete-account page say exactly this.
  *
  * Two things stop a deletion, and only two:
  *
@@ -52,8 +52,6 @@ import { sendTelegram } from "../utils/telegram";
 /** Statuses after which an order is over and nothing is owed either way. */
 const FINISHED = ["completed", "cancelled"];
 
-/** What the shop sees in place of the name on a deleted customer's orders. */
-export const DELETED_CUSTOMER = "Deleted customer";
 
 /** The part of a user record this needs. */
 export type DeletableUser = {
@@ -100,8 +98,9 @@ export async function deleteCustomerAccount(user: DeletableUser): Promise<void> 
 
   await Message.deleteMany({ $or: [owner, { groceryList: { $in: listIds } }] });
 
-  // Open, unpaid orders are called off; then every order loses the details
-  // that identified the customer and stays as the shop's sales record.
+  // Open, unpaid orders are called off; every order stays as the shop's
+  // sales record, with the name and number on it and the email and note
+  // cleared.
   if (withdrawn.length) {
     await GroceryList.updateMany(
       { _id: { $in: withdrawn.map((list) => list._id) } },
@@ -109,7 +108,7 @@ export async function deleteCustomerAccount(user: DeletableUser): Promise<void> 
     );
   }
   await GroceryList.updateMany(owner, {
-    $set: { customerName: DELETED_CUSTOMER, customerEmail: "", customerPhone: "", note: "" },
+    $set: { customerEmail: "", note: "" },
   });
   await Cart.deleteMany(owner);
   await Wishlist.deleteMany(owner);

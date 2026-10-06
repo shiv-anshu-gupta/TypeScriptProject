@@ -77,7 +77,7 @@ vi.mock("@clerk/express", () => ({
   },
 }));
 
-import { DELETED_CUSTOMER, deleteCustomerAccount } from "./deleteAccount";
+import { deleteCustomerAccount } from "./deleteAccount";
 
 const ME = { _id: "u1", clerkUserId: "clerk_u1", role: "user" };
 const SOMEONE_ELSE = "u2";
@@ -126,7 +126,7 @@ describe("deleteCustomerAccount", () => {
     expect(clerkDeleted).toEqual(["clerk_u1"]);
   });
 
-  it("keeps my orders for the shop, with nothing left that says who I was", async () => {
+  it("keeps my orders for the shop, still showing my name and number", async () => {
     await deleteCustomerAccount(ME);
 
     const mine = db.lists.find((r) => r._id === "list0000done")!;
@@ -134,9 +134,9 @@ describe("deleteCustomerAccount", () => {
       status: "completed",
       paymentStatus: "paid",
       totalAmount: 467,
-      customerName: DELETED_CUSTOMER,
+      customerName: "Ramesh",
+      customerPhone: "9876543210",
       customerEmail: "",
-      customerPhone: "",
       note: "",
     });
     // someone else's list is untouched
@@ -172,7 +172,6 @@ describe("deleteCustomerAccount", () => {
 
     expect(db.lists.find((r) => r._id === "abcdpacking1")).toMatchObject({
       status: "cancelled",
-      customerName: DELETED_CUSTOMER,
     });
     expect(telegram).toHaveLength(1);
     expect(telegram[0]).toContain("#PACKING1");
