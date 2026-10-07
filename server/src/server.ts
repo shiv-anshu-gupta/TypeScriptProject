@@ -65,6 +65,7 @@ import { customerProfileRouter } from "./routes/customer/profile.routes";
 import { customerPushTokenRouter } from "./routes/customer/push-token.routes";
 import { adminGroceryListRouter } from "./routes/admin/grocery-list.routes";
 import { adminPushTokenRouter } from "./routes/admin/push-token.routes";
+import { adminBroadcastRouter } from "./routes/admin/broadcast.routes";
 
 /**
  * Connects to MongoDB, assembles the Express app and binds the listener.
@@ -219,6 +220,7 @@ async function mainEntryFunction() {
   app.use("/admin", adminStaffRouter);
   app.use("/admin", adminShopNetworkRouter);
   app.use("/admin", adminAuditRouter);
+  app.use("/admin", adminBroadcastRouter);
 
   app.use(notFound);
   app.use(errorHandler);

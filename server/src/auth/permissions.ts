@@ -58,6 +58,8 @@ export type Permission =
   | "settings:manage"
   | "orders:manage"
   | "push:manage"
+  // A notification to every customer's phone - the shop speaking in public.
+  | "broadcast:send"
   // Running the shop's people and its security.
   | "staff:manage"
   | "network:manage"
@@ -84,6 +86,7 @@ export const ALL_PERMISSIONS: readonly Permission[] = [
   "settings:manage",
   "orders:manage",
   "push:manage",
+  "broadcast:send",
   "staff:manage",
   "network:manage",
   "audit:read",

@@ -41,6 +41,8 @@ export type AuditAction =
   | "staff.removed"
   | "network.registered"
   | "network.removed"
+  | "broadcast.sent"
+  | "broadcast.test"
   | "access.deniedOffNetwork";
 
 /**

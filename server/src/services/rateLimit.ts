@@ -36,6 +36,9 @@ export type Limit = {
  *   rings the shop. 20 a day.
  * - `chat` - 30 messages an hour.
  * - `photoRead` - each read is a paid call to Google. 20 a day.
+ * - `broadcastTest` - an admin previewing a notification on their own phone.
+ *   20 a day, per admin; the real send to everyone has its own once-a-day
+ *   rule in routes/admin/broadcast.routes.ts.
  */
 export const LIMITS = {
   listSend: {
@@ -52,6 +55,11 @@ export const LIMITS = {
     max: 20,
     windowMs: DAY,
     message: "You have read a lot of photos today. Please type the items instead.",
+  },
+  broadcastTest: {
+    max: 20,
+    windowMs: DAY,
+    message: "That is 20 test notifications today. You can send more tomorrow.",
   },
 } satisfies Record<string, Limit>;
 

@@ -59,6 +59,7 @@ describe("the permission table", () => {
       "products:manage",
       "promos:manage",
       "settings:manage",
+      "broadcast:send",
       "staff:manage",
       "network:manage",
       "audit:read",
