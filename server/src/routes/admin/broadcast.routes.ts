@@ -4,7 +4,8 @@
  *
  * @remarks
  * Mounted at `/admin` in `server/src/server.ts`, giving `/admin/broadcasts`
- * (`GET`, `POST`) and `/admin/broadcasts/test` (`POST`).
+ * (`GET`, `POST`), `/admin/broadcasts/test` (`POST`) and
+ * `/admin/broadcasts/image` (`POST`, the optional banner picture).
  *
  * Every route here asks for `broadcast:send`, which only an admin holds.
  *
@@ -23,17 +24,31 @@
  * sent on the Android `"offers"` channel so a customer can mute offers without
  * muting their order updates.
  *
+ * A notification may carry a banner picture. It must first be uploaded through
+ * `/admin/broadcasts/image`, which answers with a 1024x512 delivery URL on the
+ * shop's own Cloudinary; the sends accept such a URL and nothing else, so no
+ * arbitrary link can ever be pushed to customers' phones. A send with a
+ * picture adds `imageStyle: "banner"` to the push data, which app version
+ * 1.0.5 and newer reads to draw it full width; older versions show the same
+ * picture as the small image beside the text.
+ *
  * @packageDocumentation
  */
-import { Router, type Request, type Response } from "express";
+import { Router, type NextFunction, type Request, type Response } from "express";
 import mongoose from "mongoose";
+import multer from "multer";
 import { getDbUserFromReq } from "../../middleware/auth";
 import { requirePermission } from "../../middleware/requirePermission";
 import { actorOf } from "../../middleware/actor";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { ok } from "../../utils/envelope";
 import { AppError } from "../../utils/AppError";
-import { sendPushNotifications, checkPushReceipts } from "../../utils/push";
+import { sendPushNotifications, checkPushReceipts, type PushOptions } from "../../utils/push";
+import {
+  ownCloudinaryImageUrl,
+  pushBannerImage,
+  uploadSingleBufferToCloudinary,
+} from "../../utils/cloudinary";
 import { consume } from "../../services/rateLimit";
 import { recordAudit } from "../../services/audit";
 import {
@@ -57,7 +72,17 @@ export const BROADCAST_LIMITS = { titleMax: 50, bodyMax: 180, perDay: 1 } as con
  * broadcast is exactly the thing that reaches people who have not opened the
  * app in a while.
  */
-const BROADCAST_PUSH_OPTIONS = {};
+const BROADCAST_PUSH_OPTIONS: PushOptions = {};
+
+/** Where banner pictures are stored in Cloudinary. */
+const BROADCAST_IMAGE_FOLDER = "ecommerce-monster-video/broadcasts";
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+
+export const IMAGE_TYPE_MESSAGE = "The picture must be a JPG, PNG or WebP image.";
+export const IMAGE_SIZE_MESSAGE = "The picture must be under 5 MB.";
+export const IMAGE_MISSING_MESSAGE = "Choose a picture to upload.";
+export const IMAGE_NOT_OURS_MESSAGE = "Upload the picture here first.";
 
 /** How many past sends the panel's history shows. */
 const HISTORY_SIZE = 20;
@@ -132,7 +157,24 @@ export type BroadcastPayload = {
   title: string;
   body: string;
   target: BroadcastTarget;
+  /** The banner picture, already checked to be on our Cloudinary. */
+  imageUrl?: string;
 };
+
+/**
+ * Checks the optional banner picture of a send request.
+ *
+ * @returns `undefined` when none was given (absent, `null` or empty), else the
+ * normalised URL.
+ * @throws AppError 400 {@link IMAGE_NOT_OURS_MESSAGE} for anything that is not
+ * an image on the shop's own Cloudinary account.
+ */
+export function parseImageUrl(value: unknown): string | undefined {
+  if (value === undefined || value === null || value === "") return undefined;
+  const url = ownCloudinaryImageUrl(value);
+  if (!url) throw new AppError(400, IMAGE_NOT_OURS_MESSAGE);
+  return url;
+}
 
 /**
  * Validates the shape of a send request, without touching the database.
@@ -161,6 +203,9 @@ export function parseBroadcastShape(raw: unknown): BroadcastPayload {
     throw new AppError(400, "Choose where the notification opens in the app.");
   }
 
+  const imageUrl = parseImageUrl(input.imageUrl);
+  const image = imageUrl ? { imageUrl } : {};
+
   if (type === "category" || type === "product") {
     const targetId = String(rawTarget.targetId ?? "").trim();
     if (!targetId || !mongoose.Types.ObjectId.isValid(targetId)) {
@@ -169,10 +214,10 @@ export function parseBroadcastShape(raw: unknown): BroadcastPayload {
         type === "category" ? "Choose a category to open." : "Choose a product to open.",
       );
     }
-    return { title, body, target: { type, targetId } };
+    return { title, body, target: { type, targetId }, ...image };
   }
 
-  return { title, body, target: { type } as BroadcastTarget };
+  return { title, body, target: { type } as BroadcastTarget, ...image };
 }
 
 /**
@@ -202,13 +247,51 @@ export async function parseBroadcastPayload(raw: unknown): Promise<BroadcastPayl
   return payload;
 }
 
-/** The push `data` the app reads to route a tap. */
-export function broadcastPushData(target: BroadcastTarget): Record<string, unknown> {
+/**
+ * The push `data` the app reads to route a tap - and, with a banner picture,
+ * `imageStyle: "banner"`, which tells app 1.0.5+ to draw it full width.
+ */
+export function broadcastPushData(
+  target: BroadcastTarget,
+  imageUrl?: string,
+): Record<string, unknown> {
   return {
     type: "broadcast",
     target: target.type,
     ...("targetId" in target ? { targetId: target.targetId } : {}),
+    ...(imageUrl ? { imageStyle: "banner" } : {}),
   };
+}
+
+/** The push options: the banner picture in place of the logo, when there is one. */
+export function broadcastPushOptions(imageUrl?: string): PushOptions {
+  return imageUrl ? { ...BROADCAST_PUSH_OPTIONS, image: imageUrl } : BROADCAST_PUSH_OPTIONS;
+}
+
+/** One picture, in memory, JPEG/PNG/WebP, at most 5 MB, in the field `image`. */
+const imageUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_IMAGE_BYTES, files: 1 },
+  fileFilter: (_req, file, done) => {
+    if (ALLOWED_IMAGE_TYPES.has(file.mimetype)) done(null, true);
+    else done(new AppError(400, IMAGE_TYPE_MESSAGE));
+  },
+});
+
+/** Parses the `image` field, turning multer's limits into a clear 400. */
+function acceptImage(req: Request, res: Response, next: NextFunction) {
+  imageUpload.single("image")(req, res, (err: unknown) => {
+    if (err instanceof multer.MulterError) {
+      const message =
+        err.code === "LIMIT_FILE_SIZE"
+          ? IMAGE_SIZE_MESSAGE
+          : err.code === "LIMIT_FILE_COUNT" || err.code === "LIMIT_UNEXPECTED_FILE"
+            ? "Upload one picture, in the field named image."
+            : "Couldn't read the uploaded picture.";
+      return next(new AppError(400, message));
+    }
+    next(err);
+  });
 }
 
 /** Whether a database error is a unique-index collision. */
@@ -227,6 +310,7 @@ type HistoryRow = {
   body: string;
   target: { type: BroadcastTargetType; targetId?: string };
   kind: BroadcastKind;
+  imageUrl?: string;
   recipients: number;
   sentByEmail: string;
   createdAt: Date;
@@ -244,6 +328,7 @@ function mapHistory(row: HistoryRow) {
     body: row.body,
     target,
     kind: row.kind,
+    imageUrl: row.imageUrl || null,
     recipients: row.recipients ?? 0,
     sentByEmail: row.sentByEmail ?? "",
     createdAt: new Date(row.createdAt).toISOString(),
@@ -292,11 +377,39 @@ adminBroadcastRouter.get(
 );
 
 /**
+ * `POST /admin/broadcasts/image` - uploads the banner picture for a
+ * notification.
+ *
+ * @remarks
+ * Multipart, one file in the field `image`: JPG, PNG or WebP, at most 5 MB.
+ * Stored in Cloudinary under `ecommerce-monster-video/broadcasts`. Answers
+ * `{ imageUrl }`: a delivery URL cropped to 1024x512 (2:1, `c_fill`) with
+ * automatic format and quality - the shape of Android's big-picture
+ * notification. Pass it back as `imageUrl` on a test or a send.
+ *
+ * Nothing is recorded; a picture chosen but never sent stays in the folder.
+ *
+ * @throws AppError 400 for a missing picture, a wrong type or over 5 MB.
+ */
+adminBroadcastRouter.post(
+  "/broadcasts/image",
+  requirePermission("broadcast:send"),
+  acceptImage,
+  asyncHandler(async (req: Request, res: Response) => {
+    const file = req.file;
+    if (!file?.buffer?.length) throw new AppError(400, IMAGE_MISSING_MESSAGE);
+
+    const uploaded = await uploadSingleBufferToCloudinary(file.buffer, BROADCAST_IMAGE_FOLDER);
+    res.json(ok({ imageUrl: pushBannerImage(uploaded.url) }));
+  }),
+);
+
+/**
  * `POST /admin/broadcasts/test` - sends the notification to the calling
  * admin's own phone only.
  *
  * @remarks
- * Body: `{ title, body, target }`. Answers `{ recipients }`, the number of the
+ * Body: `{ title, body, target, imageUrl? }`. Answers `{ recipients }`, the number of the
  * admin's devices it was handed to Expo for.
  *
  * @throws AppError 400 on any validation failure, or {@link NO_DEVICE_MESSAGE}
@@ -321,8 +434,8 @@ adminBroadcastRouter.post(
       tokens,
       payload.title,
       payload.body,
-      broadcastPushData(payload.target),
-      BROADCAST_PUSH_OPTIONS,
+      broadcastPushData(payload.target, payload.imageUrl),
+      broadcastPushOptions(payload.imageUrl),
     );
 
     await BroadcastModel.create({
@@ -342,8 +455,8 @@ adminBroadcastRouter.post(
  * `POST /admin/broadcasts` - sends the notification to every customer.
  *
  * @remarks
- * Body: `{ title, body, target }`. Answers `{ recipients }`, the number of
- * customer devices it was handed to Expo for.
+ * Body: `{ title, body, target, imageUrl? }`. Answers `{ recipients }`, the
+ * number of customer devices it was handed to Expo for.
  *
  * The day's slot is claimed first by writing the `Broadcast` record; only then
  * are customers notified. If reading the customer list fails, the claim is
@@ -398,8 +511,8 @@ adminBroadcastRouter.post(
       tokens,
       payload.title,
       payload.body,
-      broadcastPushData(payload.target),
-      BROADCAST_PUSH_OPTIONS,
+      broadcastPushData(payload.target, payload.imageUrl),
+      broadcastPushOptions(payload.imageUrl),
     );
 
     await BroadcastModel.updateOne({ _id: record._id }, { $set: { recipients } }).catch(

@@ -35,6 +35,8 @@ export type BroadcastHistoryItem = {
    */
   target: BroadcastTarget & { targetName?: string };
   kind: "test" | "all";
+  /** The banner picture it was sent with, or `null` for none. */
+  imageUrl?: string | null;
   recipients: number;
   sentByEmail: string;
   createdAt: string;
@@ -55,7 +57,25 @@ export type BroadcastBody = {
   title: string;
   body: string;
   target: BroadcastTarget;
+  /** A banner picture, as returned by {@link uploadBroadcastImage}. */
+  imageUrl?: string;
 };
+
+/**
+ * Uploads the banner picture for a notification.
+ *
+ * @remarks
+ * `POST /admin/broadcasts/image`, multipart, one file in the field `image`
+ * (JPG, PNG or WebP, at most 5 MB). The server answers with a 1024x512 (2:1)
+ * delivery URL on the shop's Cloudinary; the sends accept only such URLs.
+ *
+ * @throws Error carrying the server's message, e.g. a wrong type or size.
+ */
+export async function uploadBroadcastImage(file: File) {
+  const formData = new FormData();
+  formData.append("image", file);
+  return apiPost<{ imageUrl: string }, FormData>("/admin/broadcasts/image", formData);
+}
 
 /** Loads the audience size, today's allowance and the send history. */
 export async function getBroadcastOverview() {

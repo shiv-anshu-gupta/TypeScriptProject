@@ -11,10 +11,14 @@
  * Layout: composer on the left, a phone preview on the right (stacked below on
  * narrow screens), the send history underneath.
  *
+ * The optional banner picture is shrunk in the browser, uploaded at once to
+ * `/admin/broadcasts/image`, and only the URL the server answers with is sent
+ * with the notification - the server accepts no other picture URL.
+ *
  * @packageDocumentation
  */
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Bell, Lightbulb, RefreshCw, Send, Smartphone } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Bell, ImagePlus, Lightbulb, RefreshCw, Send, Smartphone, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { NotificationPreview } from "@/components/admin/broadcasts/notification-preview";
@@ -53,6 +57,7 @@ import {
   getBroadcastOverview,
   sendBroadcast,
   sendTestBroadcast,
+  uploadBroadcastImage,
   type BroadcastBody,
   type BroadcastHistoryItem,
   type BroadcastOverview,
@@ -67,9 +72,17 @@ import {
 } from "@/features/admin/broadcasts/templates";
 import { getAdminCategories } from "@/features/admin/products/api";
 import type { Category } from "@/features/admin/products/types";
+import { compressImage, formatBytes } from "@/lib/image";
 
 /** Used until the server reports its own limits. */
 const DEFAULT_LIMITS = { titleMax: 50, bodyMax: 180, perDay: 1 };
+
+/** The picture types the server accepts. */
+const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+/** The server's per-picture cap. */
+const MAX_BANNER_BYTES = 5 * 1024 * 1024;
+/** Android draws the banner at 2:1; 1024 wide is sharp and small. */
+const BANNER_WIDTH = 1024;
 
 /** Pulls a readable message out of whatever was thrown. */
 function message(error: unknown) {
@@ -118,6 +131,9 @@ function AdminNotifications() {
   const [targetType, setTargetType] = useState<BroadcastTargetType>("writeList");
   const [targetId, setTargetId] = useState<string | undefined>();
   const [targetName, setTargetName] = useState<string | undefined>();
+  const [imageUrl, setImageUrl] = useState<string | undefined>();
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   const [sendingTest, setSendingTest] = useState(false);
   const [sendingAll, setSendingAll] = useState(false);
@@ -221,7 +237,31 @@ function AdminNotifications() {
       target = { type: targetType };
     }
     setFormError("");
-    return { title: cleanTitle, body: cleanBody, target };
+    return { title: cleanTitle, body: cleanBody, target, ...(imageUrl ? { imageUrl } : {}) };
+  };
+
+  /** Shrinks the chosen picture, uploads it and keeps the URL the server gives back. */
+  const onPickImage = async (file: File | undefined) => {
+    if (imageInputRef.current) imageInputRef.current.value = "";
+    if (!file) return;
+    if (!IMAGE_TYPES.includes(file.type)) {
+      toast.error("Choose a JPG, PNG or WebP picture.");
+      return;
+    }
+    setUploadingImage(true);
+    try {
+      const small = await compressImage(file, BANNER_WIDTH);
+      if (small.size > MAX_BANNER_BYTES) {
+        toast.error(`That picture is ${formatBytes(small.size)}. It must be under 5 MB.`);
+        return;
+      }
+      const result = await uploadBroadcastImage(small);
+      setImageUrl(result.imageUrl);
+    } catch (error) {
+      toast.error(`Couldn't upload the picture: ${message(error)}`);
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   const onSendTest = async () => {
@@ -267,7 +307,7 @@ function AdminNotifications() {
     }
   };
 
-  const busy = sendingTest || sendingAll;
+  const busy = sendingTest || sendingAll || uploadingImage;
   const history = overview?.history ?? [];
 
   return (
@@ -404,6 +444,64 @@ function AdminNotifications() {
               </div>
             ) : null}
 
+            <div className="space-y-1.5">
+              <Label htmlFor="broadcast-image">Picture (banner)</Label>
+              <input
+                ref={imageInputRef}
+                id="broadcast-image"
+                type="file"
+                accept={IMAGE_TYPES.join(",")}
+                className="sr-only"
+                aria-describedby="broadcast-image-help"
+                disabled={uploadingImage || sendingTest || sendingAll}
+                onChange={(event) => void onPickImage(event.target.files?.[0])}
+              />
+              {imageUrl ? (
+                <div className="flex items-center gap-3">
+                  <img
+                    src={imageUrl}
+                    alt="Banner picture"
+                    className="aspect-[2/1] w-40 rounded-md border object-cover"
+                  />
+                  <div className="flex flex-col gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={busy}
+                      onClick={() => imageInputRef.current?.click()}
+                    >
+                      <ImagePlus className="mr-2 h-4 w-4" />
+                      {uploadingImage ? "Uploading…" : "Change"}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      disabled={busy}
+                      onClick={() => setImageUrl(undefined)}
+                    >
+                      <X className="mr-2 h-4 w-4" />
+                      Remove
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={busy}
+                  onClick={() => imageInputRef.current?.click()}
+                >
+                  <ImagePlus className="mr-2 h-4 w-4" />
+                  {uploadingImage ? "Uploading…" : "Add a picture"}
+                </Button>
+              )}
+              <p id="broadcast-image-help" className="text-xs text-muted-foreground">
+                Wide picture works best (2:1, like 1024×512). Keep text on the picture large or leave it out — it shows small on many phones.
+              </p>
+            </div>
+
             <div className="rounded-md border bg-muted/40 p-3 text-sm">
               {loading && !overview ? (
                 <Skeleton className="h-5 w-64" />
@@ -458,7 +556,12 @@ function AdminNotifications() {
               <CardTitle>Preview</CardTitle>
             </CardHeader>
             <CardContent>
-              <NotificationPreview title={title} body={body} opens={opensLabel} />
+              <NotificationPreview
+                title={title}
+                body={body}
+                opens={opensLabel}
+                imageUrl={imageUrl}
+              />
             </CardContent>
           </Card>
 
@@ -504,6 +607,7 @@ function AdminNotifications() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>When</TableHead>
+                    <TableHead>Picture</TableHead>
                     <TableHead>Title</TableHead>
                     <TableHead>Message</TableHead>
                     <TableHead>Opens</TableHead>
@@ -516,6 +620,18 @@ function AdminNotifications() {
                   {history.map((row) => (
                     <TableRow key={row._id}>
                       <TableCell className="whitespace-nowrap">{when(row.createdAt)}</TableCell>
+                      <TableCell>
+                        {row.imageUrl ? (
+                          <img
+                            src={row.imageUrl}
+                            alt=""
+                            loading="lazy"
+                            className="aspect-[2/1] w-16 rounded border object-cover"
+                          />
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
                       <TableCell className="max-w-[200px] truncate font-medium" title={row.title}>
                         {row.title}
                       </TableCell>

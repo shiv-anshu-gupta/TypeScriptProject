@@ -73,6 +73,7 @@ export type Broadcast = {
   body: string;
   target: { type: BroadcastTargetType; targetId?: string };
   kind: BroadcastKind;
+  imageUrl?: string; // banner picture (our Cloudinary, 2:1); absent = logo only
   recipients: number; // devices handed to Expo
   sentBy: Types.ObjectId; // the admin who sent it
   sentByEmail: string; // snapshot: who they were at the time
@@ -97,6 +98,7 @@ const BroadcastSchema = new Schema<Broadcast>(
       targetId: { type: String, default: undefined },
     },
     kind: { type: String, enum: ["test", "all"], required: true },
+    imageUrl: { type: String, default: undefined },
     recipients: { type: Number, default: 0, min: 0 },
     sentBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
     sentByEmail: { type: String, default: "", lowercase: true, trim: true },

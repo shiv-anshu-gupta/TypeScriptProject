@@ -6,6 +6,11 @@
  * size all change the real thing. Its job is to show roughly how much text
  * fits and that the title and message read well together.
  *
+ * With a banner picture it shows Android's expanded "big picture" layout:
+ * title, text, then the picture full width at 2:1. Only app version 1.0.5 and
+ * newer draws it that way; older versions show the picture small, where the
+ * logo would be - the caption under the phone says so.
+ *
  * @packageDocumentation
  */
 import { Bell } from "lucide-react";
@@ -16,15 +21,18 @@ import { Bell } from "lucide-react";
  * @param title - The notification title; a placeholder is shown when blank.
  * @param body - The message; a placeholder is shown when blank.
  * @param opens - Human label of what tapping it opens, shown under the card.
+ * @param imageUrl - The banner picture, if one is attached.
  */
 export function NotificationPreview({
   title,
   body,
   opens,
+  imageUrl,
 }: {
   title: string;
   body: string;
   opens: string;
+  imageUrl?: string;
 }) {
   const hasTitle = title.trim().length > 0;
   const hasBody = body.trim().length > 0;
@@ -67,19 +75,34 @@ export function NotificationPreview({
                 {hasBody ? body : "Your message shows here, in full, like an expanded notification."}
               </p>
             </div>
-            <img
-              src="/skirana-logo.png"
-              alt=""
-              className="h-10 w-10 shrink-0 rounded-lg object-cover"
-            />
+            {imageUrl ? null : (
+              <img
+                src="/skirana-logo.png"
+                alt=""
+                className="h-10 w-10 shrink-0 rounded-lg object-cover"
+              />
+            )}
           </div>
+
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt=""
+              className="mt-2.5 aspect-[2/1] w-full rounded-lg bg-neutral-100 object-cover"
+            />
+          ) : null}
         </div>
 
-        <div className="h-40" />
+        <div className={imageUrl ? "h-16" : "h-40"} />
       </div>
       <p className="text-center text-xs text-muted-foreground">
         Tapping it opens: <span className="font-medium text-foreground">{opens}</span>
       </p>
+      {imageUrl ? (
+        <p className="text-center text-xs text-muted-foreground">
+          On phones with app version 1.0.5 or newer this shows as a big picture; older versions show it small.
+        </p>
+      ) : null}
     </div>
   );
 }

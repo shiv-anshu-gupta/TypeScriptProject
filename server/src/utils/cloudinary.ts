@@ -190,6 +190,65 @@ export function cdnImage(url: string, variant: ImageVariant): string {
   return `${origin}${UPLOAD_MARKER}${FORMAT},q_auto,c_limit,w_${VARIANTS[variant]}/${rest}`;
 }
 
+// A notification's banner picture, as Android draws it.
+//
+// Android's expanded "big picture" notification is about 2:1, so the picture
+// is cropped to exactly that (c_fill) at 1024x512 - wide enough to be sharp on
+// a 1080p phone, small enough to stay well under the 1 MB Firebase allows.
+// The format is left to f_auto: the phone fetches the image without asking
+// for WebP, so Cloudinary answers with JPEG (or PNG), which every Android
+// notification can decode.
+const PUSH_BANNER_TRANSFORM = "f_auto,q_auto,c_fill,w_1024,h_512";
+
+/**
+ * The delivery URL for a notification's banner picture: 1024x512 (2:1),
+ * cropped to fill, automatic format and quality.
+ *
+ * @param url - a stored Cloudinary `secure_url`.
+ * @returns The transformed URL. A URL that is not a Cloudinary upload is
+ * returned unchanged.
+ */
+export function pushBannerImage(url: string): string {
+  if (!url || !url.includes(UPLOAD_MARKER)) return url;
+  const [origin, rest] = url.split(UPLOAD_MARKER);
+  return `${origin}${UPLOAD_MARKER}${PUSH_BANNER_TRANSFORM}/${rest}`;
+}
+
+/**
+ * Whether a URL is an image delivered from this shop's own Cloudinary account.
+ *
+ * @remarks
+ * Strict: `https:`, host exactly `res.cloudinary.com`, no credentials, port,
+ * query or fragment, and a path - after the URL parser has resolved any `..`
+ * - that starts with `/<CLOUDINARY_CLOUD_NAME>/image/upload/`. With no cloud
+ * name configured, nothing qualifies.
+ *
+ * @returns The normalised URL when it qualifies, else `null`.
+ */
+export function ownCloudinaryImageUrl(value: unknown): string | null {
+  const cloud = process.env.CLOUDINARY_CLOUD_NAME?.trim();
+  if (!cloud || typeof value !== "string" || value.length > 1000) return null;
+  let parsed: URL;
+  try {
+    parsed = new URL(value.trim());
+  } catch {
+    return null;
+  }
+  if (
+    parsed.protocol !== "https:" ||
+    parsed.hostname !== "res.cloudinary.com" ||
+    parsed.port ||
+    parsed.username ||
+    parsed.password ||
+    parsed.search ||
+    parsed.hash ||
+    !parsed.pathname.startsWith(`/${cloud}${UPLOAD_MARKER}`)
+  ) {
+    return null;
+  }
+  return parsed.href;
+}
+
 /**
  * Best-effort removal of images the admin deleted. We never let a failed
  * cleanup block the update itself — the DB is the source of truth.

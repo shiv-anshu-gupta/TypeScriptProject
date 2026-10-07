@@ -75,6 +75,23 @@ vi.mock("../../utils/push", () => ({
     return 0;
   },
 }));
+const CLOUD = "skirana-test";
+const uploads: Array<{ bytes: number; folder: string }> = [];
+vi.mock("../../utils/cloudinary", async () => {
+  const actual = await vi.importActual<typeof import("../../utils/cloudinary")>(
+    "../../utils/cloudinary",
+  );
+  return {
+    ...actual,
+    uploadSingleBufferToCloudinary: async (buffer: Buffer, folder: string) => {
+      uploads.push({ bytes: buffer.length, folder });
+      return {
+        url: `https://res.cloudinary.com/${CLOUD}/image/upload/v1/${folder}/pic.jpg`,
+        publicId: `${folder}/pic`,
+      };
+    },
+  };
+});
 vi.mock("../../models/Category", () => ({
   Category: { exists: async ({ _id }: { _id: string }) => (_id === CATEGORY_ID ? { _id } : null) },
 }));
@@ -149,6 +166,10 @@ vi.mock("../../models/Broadcast", async () => {
 
 import {
   adminBroadcastRouter,
+  IMAGE_MISSING_MESSAGE,
+  IMAGE_NOT_OURS_MESSAGE,
+  IMAGE_SIZE_MESSAGE,
+  IMAGE_TYPE_MESSAGE,
   DAILY_LIMIT_MESSAGE,
   istDayKey,
   nextIstMidnight,
@@ -171,6 +192,8 @@ const messageOf = (res: request.Response) => String(res.body?.errors?.[0]?.messa
 const NOON_IST = Date.UTC(2026, 9, 7, 6, 30);
 
 beforeEach(() => {
+  process.env.CLOUDINARY_CLOUD_NAME = CLOUD;
+  uploads.length = 0;
   broadcasts = [];
   sends.length = 0;
   audits.length = 0;
@@ -409,5 +432,138 @@ describe("GET /admin/broadcasts", () => {
     expect(typeof data.history[0]._id).toBe("string");
     expect(typeof data.history[0].createdAt).toBe("string");
     expect(data.history[1]).toMatchObject({ title: "First", kind: "test", target: { type: "home" } });
+  });
+});
+
+describe("the banner picture", () => {
+  const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3]);
+  const OURS = `https://res.cloudinary.com/${CLOUD}/image/upload/f_auto,q_auto,c_fill,w_1024,h_512/v1/ecommerce-monster-video/broadcasts/pic.jpg`;
+  const upload = () => request(app).post("/admin/broadcasts/image");
+
+  describe("POST /admin/broadcasts/image", () => {
+    it("stores a picture in the broadcasts folder and answers a 1024x512 delivery URL", async () => {
+      const res = await upload().attach("image", PNG, { filename: "offer.png", contentType: "image/png" });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data).toEqual({ imageUrl: OURS });
+      expect(uploads).toEqual([{ bytes: PNG.length, folder: "ecommerce-monster-video/broadcasts" }]);
+    });
+
+    it.each(["image/jpeg", "image/webp"])("accepts %s", async (contentType) => {
+      const res = await upload().attach("image", PNG, { filename: "offer", contentType });
+      expect(res.status).toBe(200);
+    });
+
+    it.each([
+      ["a GIF", "image/gif"],
+      ["an SVG", "image/svg+xml"],
+      ["a PDF", "application/pdf"],
+    ])("refuses %s", async (_name, contentType) => {
+      const res = await upload().attach("image", PNG, { filename: "x", contentType });
+      expect(res.status).toBe(400);
+      expect(messageOf(res)).toBe(IMAGE_TYPE_MESSAGE);
+      expect(uploads).toEqual([]);
+    });
+
+    it("refuses a picture over 5 MB", async () => {
+      const big = Buffer.alloc(5 * 1024 * 1024 + 1, 1);
+      const res = await upload().attach("image", big, { filename: "big.jpg", contentType: "image/jpeg" });
+      expect(res.status).toBe(400);
+      expect(messageOf(res)).toBe(IMAGE_SIZE_MESSAGE);
+      expect(uploads).toEqual([]);
+    });
+
+    it("refuses a request with no picture", async () => {
+      const res = await upload().field("note", "nothing");
+      expect(res.status).toBe(400);
+      expect(messageOf(res)).toBe(IMAGE_MISSING_MESSAGE);
+    });
+
+    it("refuses a picture in another field", async () => {
+      const res = await upload().attach("photo", PNG, { filename: "a.png", contentType: "image/png" });
+      expect(res.status).toBe(400);
+      expect(uploads).toEqual([]);
+    });
+  });
+
+  describe("imageUrl on a send", () => {
+    const foreign: Array<[string, unknown]> = [
+      ["another host", "https://evil.example.com/image/upload/a.jpg"],
+      ["another Cloudinary account", "https://res.cloudinary.com/someone-else/image/upload/v1/a.jpg"],
+      ["a look-alike host", `https://res.cloudinary.com.evil.com/${CLOUD}/image/upload/a.jpg`],
+      ["plain http", `http://res.cloudinary.com/${CLOUD}/image/upload/a.jpg`],
+      ["a path that climbs out of our account", `https://res.cloudinary.com/${CLOUD}/image/upload/../../../other/image/upload/a.jpg`],
+      ["credentials in the URL", `https://x@res.cloudinary.com/${CLOUD}/image/upload/a.jpg`],
+      ["a query string", `https://res.cloudinary.com/${CLOUD}/image/upload/a.jpg?x=1`],
+      ["a video", `https://res.cloudinary.com/${CLOUD}/video/upload/a.mp4`],
+      ["not a URL", "banner.jpg"],
+      ["not a string", { url: OURS }],
+    ];
+
+    it.each(foreign)("refuses %s, on both sends, and sends nothing", async (_name, imageUrl) => {
+      const test = await sendTest({ ...valid, imageUrl });
+      const all = await sendAll({ ...valid, imageUrl });
+
+      for (const res of [test, all]) {
+        expect(res.status).toBe(400);
+        expect(messageOf(res)).toBe(IMAGE_NOT_OURS_MESSAGE);
+      }
+      expect(sends).toEqual([]);
+      expect(broadcasts).toEqual([]);
+    });
+
+    it("refuses every picture when no cloud name is configured", async () => {
+      delete process.env.CLOUDINARY_CLOUD_NAME;
+      const res = await sendTest({ ...valid, imageUrl: OURS });
+      expect(res.status).toBe(400);
+      expect(messageOf(res)).toBe(IMAGE_NOT_OURS_MESSAGE);
+    });
+
+    it("sends our picture as the banner, with imageStyle in the data, on a test", async () => {
+      const res = await sendTest({
+        ...valid,
+        target: { type: "category", targetId: CATEGORY_ID },
+        imageUrl: OURS,
+      });
+
+      expect(res.status).toBe(200);
+      expect(sends[0].options).toEqual({ image: OURS });
+      expect(sends[0].data).toEqual({
+        type: "broadcast",
+        target: "category",
+        targetId: CATEGORY_ID,
+        imageStyle: "banner",
+      });
+      expect(broadcasts[0]).toMatchObject({ kind: "test", imageUrl: OURS });
+    });
+
+    it("sends our picture as the banner to everyone", async () => {
+      const res = await sendAll({ ...valid, imageUrl: OURS });
+
+      expect(res.status).toBe(200);
+      expect(sends[0].options).toEqual({ image: OURS });
+      expect(sends[0].data).toEqual({ type: "broadcast", target: "home", imageStyle: "banner" });
+      expect(broadcasts[0]).toMatchObject({ kind: "all", imageUrl: OURS });
+    });
+
+    it.each([undefined, null, ""])("without a picture (%s) sends exactly as before", async (imageUrl) => {
+      const res = await sendAll({ ...valid, imageUrl });
+
+      expect(res.status).toBe(200);
+      expect(sends[0].options).toEqual({});
+      expect(sends[0].data).toEqual({ type: "broadcast", target: "home" });
+      expect(broadcasts[0]).not.toHaveProperty("imageUrl");
+    });
+
+    it("shows the picture in the history, and null where none was sent", async () => {
+      await sendTest({ ...valid, title: "Plain" });
+      await sendAll({ ...valid, title: "Pictured", imageUrl: OURS });
+
+      const res = await request(app).get("/admin/broadcasts");
+      const history = res.body.data.history;
+
+      expect(history[0]).toMatchObject({ title: "Pictured", imageUrl: OURS });
+      expect(history[1]).toMatchObject({ title: "Plain", imageUrl: null });
+    });
   });
 });
