@@ -1,5 +1,5 @@
 /**
- * Broadcast notifications — one push message to every customer, once a day.
+ * Broadcast notifications — one push message to every account with a phone (customers, staff and admins), once a day.
  *
  * @remarks
  * Route `/admin/notifications`, admin only (`router.tsx`), and on the server
@@ -254,7 +254,7 @@ function AdminNotifications() {
     try {
       const result = await sendBroadcast(payload);
       toast.success(
-        `Sent to ${result.recipients} ${result.recipients === 1 ? "customer" : "customers"}`,
+        `Sent to ${result.recipients} ${result.recipients === 1 ? "phone" : "phones"}`,
       );
       setConfirmOpen(false);
       await refresh();
@@ -279,7 +279,7 @@ function AdminNotifications() {
             Notifications
           </h1>
           <p className="text-sm text-muted-foreground">
-            Send one notification to every customer who has notifications on.
+            Send one notification to everyone who has the app with notifications on - customers, and the shop's own phones too.
             Once a day at most.
           </p>
         </div>
@@ -410,7 +410,7 @@ function AdminNotifications() {
               ) : (
                 <p>
                   Will reach <strong>{audience}</strong>{" "}
-                  {audience === 1 ? "customer" : "customers"} with notifications on
+                  {audience === 1 ? "person" : "people"} with notifications on (customers and shop accounts)
                 </p>
               )}
             </div>
@@ -545,10 +545,10 @@ function AdminNotifications() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              Send to {audience} {audience === 1 ? "customer" : "customers"}?
+              Send to {audience} {audience === 1 ? "person" : "people"}?
             </DialogTitle>
             <DialogDescription>
-              You can send one notification to everyone per day.
+              This goes to real customers' phones. Sent a test to your phone first? You can send one notification to everyone per day.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

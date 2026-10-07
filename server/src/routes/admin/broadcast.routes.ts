@@ -33,7 +33,7 @@ import { actorOf } from "../../middleware/actor";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { ok } from "../../utils/envelope";
 import { AppError } from "../../utils/AppError";
-import { sendPushNotifications } from "../../utils/push";
+import { sendPushNotifications, checkPushReceipts } from "../../utils/push";
 import { consume } from "../../services/rateLimit";
 import { recordAudit } from "../../services/audit";
 import {
@@ -50,8 +50,14 @@ import { User } from "../../models/User";
 /** The ceilings the panel shows beside its inputs, and this file enforces. */
 export const BROADCAST_LIMITS = { titleMax: 50, bodyMax: 180, perDay: 1 } as const;
 
-/** The Android channel broadcasts are sent on; created by the app. */
-export const BROADCAST_CHANNEL = "offers";
+/**
+ * Broadcasts go out on the app's default channel, which every installed copy
+ * has. A channel the phone does not have yet (an "offers" channel created by
+ * a newer update) makes Android drop the notification silently, and a
+ * broadcast is exactly the thing that reaches people who have not opened the
+ * app in a while.
+ */
+const BROADCAST_PUSH_OPTIONS = {};
 
 /** How many past sends the panel's history shows. */
 const HISTORY_SIZE = 20;
@@ -66,8 +72,11 @@ const IST_OFFSET_MS = (5 * 60 + 30) * 60 * 1000;
  */
 const EXPO_TOKEN_PATTERN = /^Expo(nent)?PushToken\[/;
 
-/** Customers who could receive a broadcast: role `user`, with a phone. */
-const AUDIENCE_FILTER = { role: "user", pushTokens: EXPO_TOKEN_PATTERN };
+/**
+ * Everyone who could receive a broadcast: any account with a phone - customers,
+ * staff and admins alike, so the shop sees exactly what its customers see.
+ */
+const AUDIENCE_FILTER = { pushTokens: EXPO_TOKEN_PATTERN };
 
 export const DAILY_LIMIT_MESSAGE =
   "One notification to everyone per day. The next one can go tomorrow.";
@@ -261,6 +270,8 @@ adminBroadcastRouter.get(
   requirePermission("broadcast:send"),
   asyncHandler(async (_req: Request, res: Response) => {
     const now = Date.now();
+    // Clear out phones that are gone before counting who will be reached.
+    await checkPushReceipts();
     const [audience, sentToday, rows] = await Promise.all([
       User.countDocuments(AUDIENCE_FILTER),
       BroadcastModel.exists({ dayKey: istDayKey(now) }),
@@ -311,7 +322,7 @@ adminBroadcastRouter.post(
       payload.title,
       payload.body,
       broadcastPushData(payload.target),
-      { channelId: BROADCAST_CHANNEL },
+      BROADCAST_PUSH_OPTIONS,
     );
 
     await BroadcastModel.create({
@@ -388,7 +399,7 @@ adminBroadcastRouter.post(
       payload.title,
       payload.body,
       broadcastPushData(payload.target),
-      { channelId: BROADCAST_CHANNEL },
+      BROADCAST_PUSH_OPTIONS,
     );
 
     await BroadcastModel.updateOne({ _id: record._id }, { $set: { recipients } }).catch(

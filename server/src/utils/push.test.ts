@@ -12,15 +12,36 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 let storedTokens: string[] = [];
 
+let pulled: string[][] = [];
+let savedTickets: { ticketId: string; token: string }[] = [];
+let dueTickets: { _id: string; ticketId: string; token: string; createdAt: Date }[] = [];
+let deletedTickets: string[] = [];
+
 vi.mock("../models/User", () => ({
   User: {
     findById: () => ({
       select: () => ({ lean: async () => ({ pushTokens: storedTokens }) }),
     }),
+    updateMany: async (_filter: unknown, update: { $pull: { pushTokens: { $in: string[] } } }) => {
+      pulled.push(update.$pull.pushTokens.$in);
+    },
+  },
+}));
+
+vi.mock("../models/PushTicket", () => ({
+  PushTicketModel: {
+    insertMany: async (rows: { ticketId: string; token: string }[]) => {
+      savedTickets.push(...rows);
+    },
+    find: () => ({ sort: () => ({ limit: () => ({ lean: async () => dueTickets }) }) }),
+    deleteMany: async (filter: { _id: { $in: string[] } }) => {
+      deletedTickets = filter._id.$in;
+    },
   },
 }));
 
 import {
+  checkPushReceipts,
   EXPO_MAX_BATCH,
   notifyUser,
   PUSH_LOGO_URL,
@@ -46,6 +67,9 @@ const token = (n: number) => `ExponentPushToken[device-${n}]`;
 
 beforeEach(() => {
   requests = [];
+  savedTickets = [];
+  dueTickets = [];
+  deletedTickets = [];
   storedTokens = [];
   fetchMock.mockClear();
   vi.stubGlobal("fetch", fetchMock);
@@ -130,5 +154,54 @@ describe("notifyUser (order updates)", () => {
     expect(message).not.toHaveProperty("channelId");
     expect(message.richContent).toEqual({ image: PUSH_LOGO_URL });
     expect(message.data).toEqual({ type: "order" });
+  });
+});
+
+describe("dead tokens", () => {
+  it("forgets a token Expo already reports as DeviceNotRegistered", async () => {
+    pulled = [];
+    fetchMock.mockImplementationOnce(async (_url: string, init: { body: string }) => {
+      requests.push(JSON.parse(init.body) as SentMessage[]);
+      return new Response(
+        JSON.stringify({
+          data: [
+            { status: "ok", id: "t-1" },
+            { status: "error", details: { error: "DeviceNotRegistered" } },
+          ],
+        }),
+        { status: 200 },
+      );
+    });
+
+    await sendPushNotifications([token(1), token(2)], "Hi", "There");
+
+    expect(pulled).toEqual([[token(2)]]);
+    expect(savedTickets).toEqual([{ ticketId: "t-1", token: token(1) }]);
+  });
+
+  it("reads receipts and removes the phones that are gone", async () => {
+    pulled = [];
+    const old = new Date(Date.now() - 60 * 60 * 1000);
+    dueTickets = [
+      { _id: "a", ticketId: "t-1", token: token(1), createdAt: old },
+      { _id: "b", ticketId: "t-2", token: token(2), createdAt: old },
+    ];
+    fetchMock.mockImplementationOnce(async () =>
+      new Response(
+        JSON.stringify({
+          data: {
+            "t-1": { status: "ok" },
+            "t-2": { status: "error", details: { error: "DeviceNotRegistered" } },
+          },
+        }),
+        { status: 200 },
+      ),
+    );
+
+    const removed = await checkPushReceipts();
+
+    expect(removed).toBe(1);
+    expect(pulled).toEqual([[token(2)]]);
+    expect(deletedTickets).toEqual(["a", "b"]);
   });
 });

@@ -25,6 +25,7 @@ type FakeUser = { _id: string; role: string; email: string; pushTokens: string[]
 let broadcasts: Row[] = [];
 let users: FakeUser[] = [];
 let me: FakeUser;
+let receiptChecks = 0;
 let nextId = 1;
 const sends: Array<{
   tokens: string[];
@@ -69,6 +70,10 @@ vi.mock("../../utils/push", () => ({
     sends.push({ tokens, title, body, data, options });
     return new Set(tokens.filter((t) => t.startsWith("ExponentPushToken["))).size;
   },
+  checkPushReceipts: async () => {
+    receiptChecks += 1;
+    return 0;
+  },
 }));
 vi.mock("../../models/Category", () => ({
   Category: { exists: async ({ _id }: { _id: string }) => (_id === CATEGORY_ID ? { _id } : null) },
@@ -87,7 +92,7 @@ vi.mock("../../models/Product", () => ({
 vi.mock("../../models/User", () => {
   const audience = () =>
     users.filter(
-      (u) => u.role === "user" && u.pushTokens.some((t) => /^Expo(nent)?PushToken\[/.test(t)),
+      (u) => u.pushTokens.some((t) => /^Expo(nent)?PushToken\[/.test(t)),
     );
   return {
     User: {
@@ -278,14 +283,14 @@ describe("validation, on both sends", () => {
 });
 
 describe("POST /admin/broadcasts/test", () => {
-  it("goes only to the calling admin's own phone, on the offers channel", async () => {
+  it("goes only to the calling admin's own phone, on the default channel", async () => {
     const res = await sendTest();
 
     expect(res.status).toBe(200);
     expect(res.body.data).toEqual({ recipients: 1 });
     expect(sends).toHaveLength(1);
     expect(sends[0].tokens).toEqual(["ExponentPushToken[admin-phone]"]);
-    expect(sends[0].options).toEqual({ channelId: "offers" });
+    expect(sends[0].options).toEqual({});
     expect(sends[0].data).toEqual({ type: "broadcast", target: "home" });
     expect(broadcasts[0]).toMatchObject({ kind: "test", recipients: 1, sentByEmail: "owner@skirana.com" });
     expect(broadcasts[0].dayKey).toBeUndefined();
@@ -319,17 +324,24 @@ describe("POST /admin/broadcasts/test", () => {
 });
 
 describe("POST /admin/broadcasts", () => {
-  it("goes to every customer's phone - not staff, not admins - on the offers channel", async () => {
+  it("goes to every account's phone - customers, staff and admins - on the default channel", async () => {
     const res = await sendAll();
 
     expect(res.status).toBe(200);
-    expect(res.body.data).toEqual({ recipients: 3 });
+    expect(res.body.data).toEqual({ recipients: 5 });
     expect(sends).toHaveLength(1);
     expect(sends[0].tokens.sort()).toEqual(
-      ["ExponentPushToken[a1]", "ExponentPushToken[a2]", "ExponentPushToken[b1]", "junk"].sort(),
+      [
+        "ExponentPushToken[admin-phone]",
+        "ExponentPushToken[a1]",
+        "ExponentPushToken[a2]",
+        "ExponentPushToken[b1]",
+        "junk",
+        "ExponentPushToken[staff]",
+      ].sort(),
     );
-    expect(sends[0].options).toEqual({ channelId: "offers" });
-    expect(broadcasts[0]).toMatchObject({ kind: "all", recipients: 3, dayKey: "2026-10-07" });
+    expect(sends[0].options).toEqual({});
+    expect(broadcasts[0]).toMatchObject({ kind: "all", recipients: 5, dayKey: "2026-10-07" });
     expect(audits).toEqual([{ action: "broadcast.sent", detail: "Diwali offer" }]);
   });
 
@@ -369,7 +381,7 @@ describe("GET /admin/broadcasts", () => {
 
     expect(res.status).toBe(200);
     expect(res.body.data).toEqual({
-      audience: 2,
+      audience: 4,
       canSendToday: true,
       nextAllowedAt: null,
       limits: { titleMax: 50, bodyMax: 180, perDay: 1 },
@@ -390,7 +402,7 @@ describe("GET /admin/broadcasts", () => {
     expect(data.history[0]).toMatchObject({
       title: "Second",
       kind: "all",
-      recipients: 3,
+      recipients: 5,
       sentByEmail: "owner@skirana.com",
       target: { type: "category", targetId: CATEGORY_ID },
     });
