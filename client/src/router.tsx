@@ -43,6 +43,7 @@ import AdminCoupons from "./pages/admin/Promos";
 import AdminGroceryLists from "./pages/admin/GroceryLists";
 import AdminMessages from "./pages/admin/Messages";
 import AdminSettings from "./pages/admin/Settings";
+import AdminNotifications from "./pages/admin/Notifications";
 import LegalPage from "./pages/legal/LegalPage";
 import DeleteAccountPage from "./pages/legal/DeleteAccount";
 
@@ -171,6 +172,10 @@ export const router = createBrowserRouter([
               {
                 path: "settings",
                 element: <AdminSettings />,
+              },
+              {
+                path: "notifications",
+                element: <AdminNotifications />,
               },
             ],
           },

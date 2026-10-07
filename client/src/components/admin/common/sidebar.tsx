@@ -11,6 +11,7 @@
  */
 import {
   BadgePercent,
+  Bell,
   ClipboardList,
   LayoutDashboard,
   MessagesSquare,
@@ -74,6 +75,7 @@ export const adminNavItems: AdminNavItem[] = [
   { label: "Products", href: "/admin/products", icon: Package, roles: OWNER },
   { label: "Coupons", href: "/admin/coupons", icon: BadgePercent, roles: OWNER },
   { label: "Home banners", href: "/admin/settings", icon: GalleryHorizontal, roles: OWNER },
+  { label: "Notifications", href: "/admin/notifications", icon: Bell, roles: OWNER },
   { label: "Staff & security", href: "/admin/staff", icon: ShieldCheck, roles: OWNER },
 ];
 
