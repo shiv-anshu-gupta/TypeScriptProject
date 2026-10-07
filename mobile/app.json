@@ -2,7 +2,7 @@
   "expo": {
     "name": "sKirana",
     "slug": "mobile",
-    "version": "1.0.4",
+    "version": "1.0.5",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "skirana",
@@ -19,6 +19,7 @@
       [
         "expo-notifications",
         {
+          "icon": "./assets/notification-icon.png",
           "color": "#3c5a64",
           "defaultChannel": "default"
         }

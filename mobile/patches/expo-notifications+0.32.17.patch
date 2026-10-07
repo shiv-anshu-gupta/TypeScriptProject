@@ -1,0 +1,20 @@
+diff --git a/node_modules/expo-notifications/android/src/main/java/expo/modules/notifications/notifications/presentation/builders/ExpoNotificationBuilder.kt b/node_modules/expo-notifications/android/src/main/java/expo/modules/notifications/notifications/presentation/builders/ExpoNotificationBuilder.kt
+index 610d303..3fa2c72 100644
+--- a/node_modules/expo-notifications/android/src/main/java/expo/modules/notifications/notifications/presentation/builders/ExpoNotificationBuilder.kt
++++ b/node_modules/expo-notifications/android/src/main/java/expo/modules/notifications/notifications/presentation/builders/ExpoNotificationBuilder.kt
+@@ -150,6 +150,15 @@ open class ExpoNotificationBuilder(
+     if (notificationContent.containsImage()) {
+       val bitmap = notificationContent.getImage(context)
+       bitmap?.let { builder.setLargeIcon(it) }
++      // sKirana patch: data.imageStyle == "banner" expands into a full-width picture.
++      if (bitmap != null && content.body?.optString("imageStyle") == "banner") {
++        builder.setStyle(
++          NotificationCompat.BigPictureStyle()
++            .bigPicture(bitmap)
++            .bigLargeIcon(null as Bitmap?)
++            .setSummaryText(content.text)
++        )
++      }
+     } else {
+       builder.setLargeIcon(largeIcon)
+     }
