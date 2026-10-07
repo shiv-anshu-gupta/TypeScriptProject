@@ -9,7 +9,6 @@
       content="sKirana lets you send your grocery list to your local kirana shop in Hindi or English. The shop prices it and packs it, and you collect and pay at the counter."
     />
     <link rel="icon" type="image/png" href="/skirana-logo.png" />
-    <meta name="theme-color" content="#14262c" />
     <meta property="og:title" content="sKirana" />
     <meta
       property="og:description"
@@ -20,320 +19,203 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Baloo+2:wght@600;700;800&family=Mukta:wght@400;500;600;700&family=Kalam:wght@700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Mukta:wght@400;500;600;700&family=Kalam:wght@400;700&display=swap"
     />
     <style>
       /* Plain HTML on purpose: this page must load fast on any phone and be
          readable by crawlers (Google's app verification reads it) without
-         running the admin panel's JavaScript. Every colour is the app's.
-         The one script at the bottom only adds reveal-on-scroll; with it
-         off, everything is simply visible. */
+         running the admin panel's JavaScript. Palette matches the app. */
       :root {
-        --night: #14262c;
-        --night-2: #1c3339;
+        --teal-deep: #2b4750;
         --teal: #3c5a64;
-        --teal-2: #4d7480;
-        --sage: #dde8e7;
-        --sand: #f0f4ec;
-        --cream: #fdf8ea;
-        --line: #e6dcc9;
-        --ink: #1f2a2e;
-        --muted: #5f6b6e;
+        --teal-soft: #e4ecea;
         --marigold: #f4b042;
+        --marigold-soft: #fdf0d5;
         --terracotta: #e0633e;
-        --leaf: #4f7a4d;
-        --radius: 22px;
+        --cream: #fdf8ea;
+        --paper: #fffdf6;
+        --ground: #f6f1e8;
+        --ink: #1f2a2e;
+        --muted: #5d6a6e;
+        --line: #e6dccb;
       }
       * { box-sizing: border-box; margin: 0; padding: 0; }
       html { scroll-behavior: smooth; }
       body {
-        font-family: "Plus Jakarta Sans", "Mukta", "Nirmala UI", system-ui, sans-serif;
+        font-family: "Mukta", "Nirmala UI", system-ui, sans-serif;
         color: var(--ink);
-        background: var(--sand);
-        line-height: 1.6;
+        background: var(--ground);
+        line-height: 1.55;
         -webkit-font-smoothing: antialiased;
-        overflow-x: hidden;
       }
-      [lang="hi"], .hi { font-family: "Baloo 2", "Mukta", "Nirmala UI", sans-serif; }
-      a { color: inherit; text-decoration: none; }
-      img, svg { display: block; max-width: 100%; }
-      .wrap { max-width: 1160px; margin: 0 auto; padding-inline: 20px; }
-      .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+      a { color: inherit; }
+      img { max-width: 100%; display: block; }
+      .wrap { max-width: 1080px; margin: 0 auto; padding-inline: 20px; }
+      .hi { font-family: "Baloo 2", "Mukta", "Nirmala UI", sans-serif; }
 
-      /* ---------- Header ---------- */
-      .top {
-        position: sticky; top: 0; z-index: 50;
-        background: rgba(20, 38, 44, .72);
-        backdrop-filter: saturate(160%) blur(14px);
-        -webkit-backdrop-filter: saturate(160%) blur(14px);
-        border-bottom: 1px solid rgba(255, 255, 255, .08);
-      }
-      .top .wrap { display: flex; align-items: center; justify-content: space-between; height: 66px; }
-      .brand { display: flex; align-items: center; gap: 10px; color: #fff; font-weight: 800; font-size: 20px; letter-spacing: -.02em; }
-      .brand img { width: 36px; height: 36px; border-radius: 10px; }
-      .top nav { display: flex; align-items: center; gap: 26px; font-size: 14px; font-weight: 600; color: rgba(255,255,255,.78); }
-      .top nav a:hover { color: #fff; }
-      .top .get {
-        color: var(--night); background: var(--marigold); padding: 9px 16px; border-radius: 999px;
-        font-weight: 700; box-shadow: 0 6px 18px rgba(244, 176, 66, .35);
-      }
-      .top .get:hover { color: var(--night); filter: brightness(1.05); }
-      @media (max-width: 760px) { .top nav .hide-sm { display: none; } .top nav { gap: 14px; } }
+      /* Header */
+      header { padding-block: 18px; }
+      header .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+      .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+      .brand img { width: 40px; height: 40px; border-radius: 10px; }
+      .brand span { font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: 24px; color: var(--teal-deep); letter-spacing: -0.3px; }
+      nav { display: flex; gap: 22px; font-weight: 600; font-size: 15px; }
+      nav a { text-decoration: none; color: var(--muted); }
+      nav a:hover { color: var(--teal-deep); }
 
-      /* ---------- Hero ---------- */
-      .hero {
-        position: relative; color: #fff; overflow: hidden;
-        background:
-          radial-gradient(620px 420px at 82% 18%, rgba(77, 116, 128, .55), transparent 70%),
-          radial-gradient(520px 380px at 8% 88%, rgba(224, 99, 62, .28), transparent 70%),
-          radial-gradient(460px 300px at 60% 110%, rgba(244, 176, 66, .22), transparent 70%),
-          var(--night);
-        padding: 64px 0 96px;
+      /* Hero */
+      .hero { padding-block: 36px 64px; }
+      .hero .wrap { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 48px; align-items: center; }
+      .eyebrow {
+        display: inline-block; background: var(--marigold-soft); color: #8a5a10;
+        font-weight: 700; font-size: 14px; padding: 6px 14px; border-radius: 999px;
       }
-      .hero::before {
-        content: ""; position: absolute; inset: 0; opacity: .07; pointer-events: none;
-        background-image:
-          linear-gradient(rgba(255,255,255,1) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px);
-        background-size: 56px 56px;
-        mask-image: radial-gradient(ellipse at 50% 40%, #000 30%, transparent 75%);
-        -webkit-mask-image: radial-gradient(ellipse at 50% 40%, #000 30%, transparent 75%);
+      h1 {
+        margin-top: 18px; font-family: "Baloo 2", sans-serif; font-weight: 800;
+        font-size: clamp(34px, 5.4vw, 56px); line-height: 1.1; color: var(--teal-deep);
       }
-      .hero .wrap { position: relative; display: grid; grid-template-columns: 1.08fr .92fr; gap: 48px; align-items: center; }
-      .pill {
-        display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px 7px 8px;
-        border-radius: 999px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14);
-        font-size: 13px; font-weight: 600; color: rgba(255,255,255,.88);
-      }
-      .pill b { background: var(--marigold); color: var(--night); border-radius: 999px; padding: 2px 9px; font-size: 12px; }
-      .hero h1 {
-        margin-top: 22px; font-size: clamp(40px, 6.2vw, 72px); line-height: 1.04; font-weight: 800; letter-spacing: -.01em;
-      }
-      .hero h1 .grad {
-        background: linear-gradient(92deg, var(--marigold), #ffd58a 45%, var(--terracotta));
-        -webkit-background-clip: text; background-clip: text; color: transparent;
-      }
-      .hero .en { margin-top: 14px; font-size: clamp(18px, 2vw, 22px); font-weight: 700; color: rgba(255,255,255,.92); }
-      .hero .lead { margin-top: 14px; max-width: 520px; font-size: 16px; color: rgba(255,255,255,.7); }
-      .actions { margin-top: 30px; display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+      h1 em { font-style: normal; color: var(--terracotta); }
+      .hero .en { margin-top: 12px; font-size: 20px; font-weight: 600; color: var(--teal); }
+      .hero p.lead { margin-top: 14px; font-size: 17px; color: var(--muted); max-width: 520px; }
+      .actions { margin-top: 28px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
       .play {
-        display: inline-flex; align-items: center; gap: 12px; padding: 12px 22px 12px 16px;
-        border-radius: 16px; background: #fff; color: var(--ink); font-weight: 700;
-        box-shadow: 0 14px 34px rgba(0,0,0,.28); transition: transform .2s ease;
+        display: inline-flex; align-items: center; gap: 12px; text-decoration: none;
+        background: var(--ink); color: #fff; padding: 11px 22px 11px 16px; border-radius: 14px;
+        box-shadow: 0 6px 16px rgba(31, 42, 46, 0.22);
       }
-      .play:hover { transform: translateY(-2px); }
-      .play svg { width: 28px; height: 28px; }
-      .play small { display: block; font-size: 10px; letter-spacing: .08em; color: var(--muted); line-height: 1.1; }
-      .play strong { display: block; font-size: 18px; line-height: 1.15; }
-      .ghost { padding: 13px 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,.22); font-weight: 700; color: #fff; }
-      .ghost:hover { background: rgba(255,255,255,.06); }
-      .facts { margin-top: 34px; display: flex; flex-wrap: wrap; gap: 10px 22px; font-size: 14px; color: rgba(255,255,255,.75); }
-      .facts span { display: inline-flex; align-items: center; gap: 8px; }
-      .facts i { width: 18px; height: 18px; border-radius: 6px; background: rgba(79,122,77,.35); display: grid; place-items: center; font-style: normal; font-size: 11px; color: #bfe2bd; }
+      .play:hover { background: #000; }
+      .play svg { width: 26px; height: 26px; flex: none; }
+      .play small { display: block; font-size: 11px; opacity: 0.8; line-height: 1.1; }
+      .play strong { display: block; font-size: 18px; line-height: 1.15; font-weight: 700; }
+      .ghost {
+        text-decoration: none; font-weight: 700; color: var(--teal-deep);
+        padding: 12px 18px; border-radius: 14px; border: 2px solid var(--line);
+      }
+      .ghost:hover { border-color: var(--teal); }
 
-      /* the phone, in real 3D */
-      .stage { position: relative; height: 560px; perspective: 1400px; }
-      .phone {
-        position: absolute; left: 50%; top: 50%; width: 270px; height: 548px;
-        transform: translate(-50%, -50%) rotateY(-16deg) rotateX(6deg) rotateZ(2deg);
-        border-radius: 42px; padding: 11px; background: linear-gradient(145deg, #2a3d43, #0b1316);
-        box-shadow: 30px 50px 80px rgba(0,0,0,.5), inset 0 0 0 1.5px rgba(255,255,255,.12);
-        animation: float 7s ease-in-out infinite;
+      /* The list card - the product in one picture */
+      .card-stage { position: relative; display: flex; justify-content: center; }
+      .card-stage::before {
+        content: ""; position: absolute; inset: 8% 4% -4% 10%; border-radius: 32px;
+        background: var(--teal); transform: rotate(4deg);
       }
-      @keyframes float {
-        0%, 100% { transform: translate(-50%, -50%) rotateY(-16deg) rotateX(6deg) rotateZ(2deg); }
-        50% { transform: translate(-50%, -53%) rotateY(-12deg) rotateX(4deg) rotateZ(1deg); }
+      .list {
+        position: relative; width: 100%; max-width: 360px; background: var(--paper);
+        border-radius: 22px; padding: 26px 24px 22px; transform: rotate(-2deg);
+        box-shadow: 0 18px 40px rgba(31, 42, 46, 0.2);
+        background-image: repeating-linear-gradient(to bottom, transparent 0 43px, #eadfca 43px 44px);
+        background-position: 0 70px;
       }
-      .screen { height: 100%; border-radius: 32px; overflow: hidden; background: var(--sand); color: var(--ink); display: flex; flex-direction: column; }
-      .notch { width: 90px; height: 22px; border-radius: 999px; background: #0b1316; margin: 8px auto 0; }
-      .s-head { padding: 12px 16px 8px; display: flex; justify-content: space-between; align-items: center; }
-      .s-head b { font-size: 16px; font-weight: 800; }
-      .s-chip { font-size: 10px; font-weight: 700; color: #fff; background: var(--teal); border-radius: 999px; padding: 3px 8px; }
-      .steps-mini { margin: 4px 12px 0; display: grid; grid-template-columns: repeat(4,1fr); background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 8px 4px; }
-      .steps-mini div { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 9px; font-weight: 700; color: #8a8273; }
-      .steps-mini u { width: 18px; height: 18px; border-radius: 99px; border: 1.5px solid var(--line); display: grid; place-items: center; text-decoration: none; font-size: 9px; }
-      .steps-mini .d u { background: var(--teal); border-color: var(--teal); color: #fff; }
-      .steps-mini .c { color: var(--teal); } .steps-mini .c u { border-color: var(--teal); }
-      .paper { margin: 10px 12px 0; background: var(--cream); border-radius: 12px; overflow: hidden; border: 1px solid var(--line); }
-      .paper .r { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center; padding: 9px 12px; border-bottom: 1px solid #c9d9ea; font-size: 13px; }
-      .paper .r:nth-child(odd) { background: #fffdf7; }
-      .paper .r em { font-family: "Kalam", cursive; font-style: normal; font-weight: 700; color: #26303a; font-size: 15px; }
-      .paper .r span { color: #8a8273; font-size: 12px; }
-      .paper .r b { font-size: 13px; }
-      .s-total { margin: 10px 12px 0; display: flex; justify-content: space-between; font-weight: 800; padding: 10px 12px; border-radius: 12px; background: var(--sage); color: var(--teal); }
-      .s-btns { margin: 10px 12px 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-      .s-btns div { text-align: center; font-size: 11px; font-weight: 700; padding: 10px 0; border-radius: 10px; }
-      .s-btns .p { background: var(--teal); color: #fff; } .s-btns .o { border: 1px solid var(--line); background: #fff; }
+      .list .rings { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); display: flex; gap: 22px; }
+      .list .rings i { width: 12px; height: 28px; border-radius: 6px; background: #7f9ba3; }
+      .list h3 { font-family: "Baloo 2", sans-serif; font-size: 22px; color: var(--teal-deep); margin-bottom: 6px; }
+      .row { display: flex; justify-content: space-between; align-items: baseline; height: 44px; line-height: 44px; font-family: "Kalam", cursive; font-size: 20px; }
+      /* Kalam draws 1 like the Hindi danda and 5 like an S - numbers in Mukta */
+      .row .qty { font-family: "Mukta", sans-serif; font-weight: 600; font-size: 18px; }
+      .row b { font-family: "Mukta", sans-serif; font-weight: 700; font-size: 16px; color: var(--teal); }
+      .total { margin-top: 6px; display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 18px; padding-top: 10px; border-top: 2px dashed var(--line); }
+      .ready {
+        position: absolute; right: -14px; bottom: -18px; background: var(--terracotta); color: #fff;
+        font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: 18px; padding: 8px 18px;
+        border-radius: 999px; transform: rotate(-6deg); box-shadow: 0 8px 18px rgba(224, 99, 62, 0.35);
+      }
 
-      .float {
-        position: absolute; z-index: 2; display: flex; align-items: center; gap: 10px;
-        padding: 12px 16px; border-radius: 16px; background: rgba(255,255,255,.96); color: var(--ink);
-        box-shadow: 0 18px 40px rgba(0,0,0,.28); font-size: 13px; font-weight: 700;
-        animation: bob 6s ease-in-out infinite;
-      }
-      .float small { display: block; font-size: 11px; color: var(--muted); font-weight: 600; }
-      .float .ic { width: 34px; height: 34px; border-radius: 11px; display: grid; place-items: center; font-size: 17px; }
-      .f1 { top: 170px; left: -36px; } .f1 .ic { background: #fdf0d5; }
-      .f2 { bottom: 92px; right: -10px; animation-delay: -3s; } .f2 .ic { background: #e3efe2; }
-      @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+      /* Sections */
+      section { padding-block: 64px; }
+      .head { text-align: center; max-width: 620px; margin: 0 auto 36px; }
+      .head h2 { font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: clamp(28px, 4vw, 38px); color: var(--teal-deep); line-height: 1.15; }
+      .head p { margin-top: 8px; color: var(--muted); font-size: 17px; }
 
-      @media (max-width: 900px) {
-        .hero { padding: 40px 0 70px; }
-        .hero .wrap { grid-template-columns: 1fr; gap: 20px; }
-        .stage { height: 520px; }
-        .f1 { left: 4%; } .f2 { right: 4%; }
-      }
-      @media (max-width: 420px) { .float { font-size: 12px; padding: 10px 12px; } .phone { width: 248px; height: 504px; } }
-
-      /* ---------- Sections ---------- */
-      section { padding: 96px 0; }
-      .kicker { display: inline-block; font-size: 12px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--terracotta); }
-      .h2 { margin-top: 10px; font-size: clamp(30px, 4.2vw, 46px); line-height: 1.12; font-weight: 800; letter-spacing: -.01em; }
-      .sub { margin-top: 12px; color: var(--muted); font-size: 17px; max-width: 620px; }
-      .center { text-align: center; } .center .sub { margin-inline: auto; }
-
-      /* how it works */
-      .how { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-top: 50px; counter-reset: s; position: relative; }
-      .how::before {
-        content: ""; position: absolute; left: 12%; right: 12%; top: 40px; height: 2px;
-        background: repeating-linear-gradient(90deg, var(--line) 0 8px, transparent 8px 16px);
-      }
+      .steps { background: var(--cream); }
+      .step-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; counter-reset: step; }
       .step {
-        position: relative; background: #fff; border: 1px solid var(--line); border-radius: var(--radius);
-        padding: 26px 22px 24px; transition: transform .25s ease, box-shadow .25s ease;
+        background: #fff; border: 1px solid var(--line); border-radius: 20px; padding: 22px 20px;
+        counter-increment: step; position: relative;
       }
-      .step:hover { transform: translateY(-6px); box-shadow: 0 22px 44px rgba(60,90,100,.14); }
-      .step .n {
-        width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; position: relative;
-        background: var(--night); color: #fff; font-weight: 800; font-size: 18px; box-shadow: 0 10px 22px rgba(20,38,44,.28);
+      .step::before {
+        content: counter(step); display: grid; place-items: center; width: 40px; height: 40px;
+        border-radius: 50%; background: var(--teal); color: #fff; font-weight: 800; font-size: 18px;
+        margin-bottom: 14px;
       }
-      .step:nth-child(2) .n { background: var(--teal); }
-      .step:nth-child(3) .n { background: var(--terracotta); }
-      .step:nth-child(4) .n { background: var(--leaf); }
-      .step h3 { margin-top: 18px; font-size: 22px; font-weight: 700; }
-      .step p { margin-top: 6px; color: var(--muted); font-size: 15px; }
-      .step small { display: block; margin-top: 2px; font-weight: 700; color: var(--teal); font-size: 13px; }
-      @media (max-width: 900px) { .how { grid-template-columns: 1fr 1fr; } .how::before { display: none; } }
-      @media (max-width: 520px) { .how { grid-template-columns: 1fr; } }
+      .step:last-child::before { background: var(--marigold); color: var(--ink); }
+      .step h3 { font-family: "Baloo 2", sans-serif; font-size: 22px; color: var(--teal-deep); line-height: 1.2; }
+      .step .en { font-weight: 700; color: var(--teal); font-size: 15px; }
+      .step p { margin-top: 8px; color: var(--muted); font-size: 15px; }
 
-      /* bento of reasons */
-      .why { background: #fff; border-block: 1px solid var(--line); }
-      .bento { margin-top: 48px; display: grid; grid-template-columns: repeat(6, 1fr); gap: 18px; }
-      .tile {
-        position: relative; overflow: hidden; border-radius: var(--radius); padding: 28px; border: 1px solid var(--line);
-        background: var(--sand); min-height: 220px; display: flex; flex-direction: column; justify-content: flex-end;
+      .feat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
+      .feat { display: flex; gap: 16px; background: #fff; border: 1px solid var(--line); border-radius: 20px; padding: 22px; }
+      .feat .ico {
+        flex: none; width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center;
+        background: var(--teal-soft); color: var(--teal-deep);
       }
-      .tile h3 { font-size: 22px; font-weight: 700; line-height: 1.25; }
-      .tile p { margin-top: 6px; color: var(--muted); font-size: 15px; max-width: 420px; }
-      .tile .emoji { position: absolute; top: 22px; right: 24px; font-size: 40px; }
-      .t-a { grid-column: span 4; background: linear-gradient(135deg, var(--night), var(--teal)); color: #fff; border: 0; }
-      .t-a p { color: rgba(255,255,255,.75); }
-      .t-a .bubbles { position: absolute; top: 26px; left: 28px; display: flex; gap: 8px; flex-wrap: wrap; max-width: 75%; }
-      .t-a .bubbles span { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.18); border-radius: 999px; padding: 6px 12px; font-size: 14px; font-weight: 600; }
-      .t-b { grid-column: span 2; background: #fdf0d5; border-color: #f3dfb2; }
-      .t-c { grid-column: span 2; background: #e3efe2; border-color: #cfe1cd; }
-      .t-d { grid-column: span 2; }
-      .t-e { grid-column: span 2; background: #fde6dc; border-color: #f6cdbd; }
-      @media (max-width: 900px) { .bento { grid-template-columns: 1fr 1fr; } .t-a { grid-column: span 2; } .t-b, .t-c, .t-d, .t-e { grid-column: span 1; } }
-      @media (max-width: 560px) { .bento { grid-template-columns: 1fr; } .t-a, .t-b, .t-c, .t-d, .t-e { grid-column: span 1; } }
+      .feat .ico svg { width: 24px; height: 24px; }
+      .feat h3 { font-size: 18px; font-weight: 700; line-height: 1.3; }
+      .feat h3 span { display: block; font-family: "Baloo 2", sans-serif; color: var(--teal-deep); font-size: 20px; }
+      .feat p { margin-top: 4px; color: var(--muted); font-size: 15px; }
 
-      /* the shop */
-      .shop .wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
-      .shop-card {
-        border-radius: 28px; padding: 34px; background: var(--night); color: #fff; position: relative; overflow: hidden;
-        box-shadow: 0 30px 60px rgba(20,38,44,.25);
+      .band { padding-block: 0 72px; }
+      .band .box {
+        background: var(--teal-deep); color: #fff; border-radius: 28px; padding: 40px 32px;
+        display: flex; flex-wrap: wrap; gap: 24px; align-items: center; justify-content: space-between;
       }
-      .shop-card::after {
-        content: ""; position: absolute; width: 300px; height: 300px; right: -90px; top: -90px; border-radius: 50%;
-        background: radial-gradient(circle, rgba(244,176,66,.35), transparent 70%);
+      .band h2 { font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: clamp(26px, 3.6vw, 34px); line-height: 1.15; }
+      .band p { opacity: 0.85; margin-top: 4px; }
+      .band .play { background: var(--marigold); color: var(--ink); box-shadow: none; }
+      .band .play:hover { background: #f7c060; }
+
+      footer { border-top: 1px solid var(--line); padding-block: 28px 36px; color: var(--muted); font-size: 14px; }
+      footer .wrap { display: flex; flex-wrap: wrap; gap: 14px 28px; justify-content: space-between; align-items: center; }
+      footer .links { display: flex; flex-wrap: wrap; gap: 8px 20px; }
+      footer a { text-decoration: none; font-weight: 600; }
+      footer a:hover { color: var(--teal-deep); text-decoration: underline; }
+
+      @media (max-width: 860px) {
+        .hero .wrap { grid-template-columns: 1fr; gap: 56px; }
+        .step-grid { grid-template-columns: repeat(2, 1fr); }
       }
-      .shop-card .tag { font-size: 12px; font-weight: 800; letter-spacing: .12em; color: var(--marigold); }
-      .shop-card h3 { margin-top: 10px; font-size: 30px; font-weight: 800; line-height: 1.15; }
-      .shop-card .addr { margin-top: 8px; color: rgba(255,255,255,.72); }
-      .shop-card ul { list-style: none; margin-top: 24px; display: grid; gap: 12px; }
-      .shop-card li { display: flex; gap: 12px; align-items: center; font-weight: 600; }
-      .shop-card li i { font-style: normal; width: 34px; height: 34px; border-radius: 11px; background: rgba(255,255,255,.1); display: grid; place-items: center; }
-      .quote { font-family: "Kalam", cursive; font-weight: 700; font-size: clamp(26px, 3.4vw, 38px); line-height: 1.45; color: var(--teal); }
-      .quote-by { margin-top: 12px; color: var(--muted); font-weight: 600; }
-      @media (max-width: 900px) { .shop .wrap { grid-template-columns: 1fr; } }
-
-      /* faq */
-      .faq { max-width: 780px; margin: 44px auto 0; display: grid; gap: 12px; }
-      details { background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 4px 22px; transition: box-shadow .2s ease; }
-      details[open] { box-shadow: 0 14px 30px rgba(60,90,100,.1); }
-      summary { cursor: pointer; list-style: none; padding: 18px 0; font-weight: 700; font-size: 17px; display: flex; justify-content: space-between; gap: 16px; }
-      summary::-webkit-details-marker { display: none; }
-      summary::after { content: "+"; font-size: 24px; line-height: 1; color: var(--teal); transition: transform .2s ease; }
-      details[open] summary::after { transform: rotate(45deg); }
-      details p { padding: 0 0 18px; color: var(--muted); }
-
-      /* cta */
-      .cta { padding: 0 0 96px; }
-      .cta-box {
-        position: relative; overflow: hidden; border-radius: 32px; padding: 52px;
-        background:
-          radial-gradient(420px 260px at 90% 0%, rgba(244,176,66,.4), transparent 70%),
-          radial-gradient(420px 260px at 0% 100%, rgba(224,99,62,.35), transparent 70%),
-          var(--night);
-        color: #fff; display: grid; grid-template-columns: 1fr auto; gap: 36px; align-items: center;
-      }
-      .cta-box h2 { font-size: clamp(30px, 4vw, 46px); line-height: 1.12; font-weight: 800; }
-      .cta-box p { margin-top: 10px; color: rgba(255,255,255,.75); font-size: 17px; }
-      .cta-box .actions { margin-top: 24px; }
-      .qr { background: #fff; border-radius: 22px; padding: 14px; width: 172px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,.3); }
-      .qr img { width: 144px; height: 144px; image-rendering: pixelated; }
-      .qr span { display: block; margin-top: 8px; font-size: 12px; font-weight: 700; color: var(--ink); }
-      @media (max-width: 760px) { .cta-box { grid-template-columns: 1fr; padding: 34px 24px; } .qr { display: none; } }
-
-      /* footer */
-      footer { background: var(--night); color: rgba(255,255,255,.7); padding: 44px 0 36px; font-size: 14px; }
-      footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 18px 32px; align-items: center; }
-      footer .links { display: flex; flex-wrap: wrap; gap: 10px 22px; }
-      footer a { font-weight: 600; }
-      footer a:hover { color: #fff; text-decoration: underline; }
-      footer .sign { width: 100%; text-align: center; margin-top: 18px; padding-top: 22px; border-top: 1px solid rgba(255,255,255,.1); font-family: "Kalam", cursive; font-weight: 700; font-size: 20px; color: rgba(255,255,255,.85); }
-
-      /* reveal on scroll - only when the script has run */
-      .js .rv { opacity: 0; transform: translateY(24px); transition: opacity .7s ease, transform .7s ease; }
-      .js .rv.in { opacity: 1; transform: none; }
-      @media (prefers-reduced-motion: reduce) {
-        .phone, .float { animation: none; }
-        .js .rv { opacity: 1; transform: none; transition: none; }
-        html { scroll-behavior: auto; }
+      @media (max-width: 560px) {
+        nav a.hide-sm { display: none; }
+        .hero { padding-block: 20px 56px; }
+        .step-grid, .feat-grid { grid-template-columns: 1fr; }
+        section { padding-block: 48px; }
+        .band .box { padding: 32px 22px; }
+        .ready { right: 4px; }
       }
     </style>
   </head>
   <body>
-    <header class="top">
+    <header>
       <div class="wrap">
         <a class="brand" href="/" aria-label="sKirana home">
-          <img src="/skirana-logo.png" alt="" width="36" height="36" />
+          <img src="/skirana-logo.png" alt="" width="40" height="40" />
           <span>sKirana</span>
         </a>
         <nav aria-label="Main">
           <a class="hide-sm" href="#how">How it works</a>
-          <a class="hide-sm" href="#faq">FAQ</a>
-          <a class="get" href="https://play.google.com/store/apps/details?id=com.skirana.app" rel="noopener">Get the app</a>
+          <a href="/privacy">Privacy</a>
         </nav>
       </div>
     </header>
 
     <main>
-      <!-- ================= HERO ================= -->
       <div class="hero">
         <div class="wrap">
           <div>
-            <span class="pill"><b>नया</b> <span lang="hi">आपकी दुकान, अब आपके फ़ोन पर</span></span>
-            <h1 lang="hi">लिस्ट आप लिखिए,<br /><span class="grad">सामान दुकान तैयार रखेगी</span></h1>
+            <span class="eyebrow" lang="hi">हिंदी या English में</span>
+            <h1 class="hi" lang="hi">लिस्ट आप लिखिए,<br /><em>सामान दुकान तैयार रखेगी</em></h1>
             <p class="en">Write your grocery list. Your kirana shop gets it ready.</p>
             <p class="lead">
-              Send your list from home - in Hindi or English, typed or as a photo.
-              The shop prices every item, packs your order and tells you when it is
-              ready. Walk in, pay by UPI or cash, and take it home. No queue, no
-              guessing the bill.
+              sKirana lets you send your grocery list to your local kirana shop
+              from your phone. The shop tells you the total, packs your order,
+              and lets you know when it is ready. You collect it and pay at the
+              counter - no online payment needed.
             </p>
             <div class="actions">
-              <a class="play" href="https://play.google.com/store/apps/details?id=com.skirana.app" rel="noopener">
+              <a
+                class="play"
+                href="https://play.google.com/store/apps/details?id=com.skirana.app"
+                rel="noopener"
+              >
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                   <path fill="#34a853" d="M3.6 1.8c-.3.3-.5.8-.5 1.4v17.6c0 .6.2 1.1.5 1.4l9.8-10.2z" />
                   <path fill="#fbbc04" d="m16.7 15.3-3.3-3.3 3.3-3.4 3.8 2.2c1.1.6 1.1 1.7 0 2.3z" />
@@ -342,198 +224,123 @@
                 </svg>
                 <span><small>GET IT ON</small><strong>Google Play</strong></span>
               </a>
-              <a class="ghost" href="#how">See how it works</a>
-            </div>
-            <div class="facts">
-              <span><i>✓</i> Free to download</span>
-              <span><i>✓</i> हिंदी &amp; English</span>
-              <span><i>✓</i> No home delivery - collect at the shop</span>
+              <a class="ghost" href="#how">How it works</a>
             </div>
           </div>
 
-          <div class="stage" aria-hidden="true">
-            <div class="float f1">
-              <span class="ic">🧾</span>
-              <span><span lang="hi">दाम आ गए</span><small>Total ₹599 · 4 items</small></span>
-            </div>
-            <div class="phone">
-              <div class="screen">
-                <div class="notch"></div>
-                <div class="s-head"><b>#A7F3C21B</b><span class="s-chip" lang="hi">नया अपडेट</span></div>
-                <div class="steps-mini" lang="hi">
-                  <div class="d"><u>✓</u>सूची</div>
-                  <div class="c"><u>02</u>दाम</div>
-                  <div><u>03</u>पैकिंग</div>
-                  <div><u>04</u>लेने आएँ</div>
-                </div>
-                <div class="paper" lang="hi">
-                  <div class="r"><em>आटा</em><span>5 किलो</span><b>₹240</b></div>
-                  <div class="r"><em>चीनी</em><span>1 किलो</span><b>₹44</b></div>
-                  <div class="r"><em>सरसों तेल</em><span>1 ली.</span><b>₹165</b></div>
-                  <div class="r"><em>अरहर दाल</em><span>1 किलो</span><b>₹150</b></div>
-                </div>
-                <div class="s-total" lang="hi"><span>कुल (अनुमान)</span><span>₹599</span></div>
-                <div class="s-btns" lang="hi"><div class="p">UPI से भुगतान</div><div class="o">दुकान पर दूँगा</div></div>
-              </div>
-            </div>
-            <div class="float f2">
-              <span class="ic">🛍️</span>
-              <span><span lang="hi">सामान तैयार है</span><small>Come and collect</small></span>
+          <div class="card-stage" aria-hidden="true">
+            <div class="list">
+              <div class="rings"><i></i><i></i><i></i></div>
+              <h3 lang="hi">मेरी लिस्ट</h3>
+              <div class="row" lang="hi"><span>आटा <span class="qty">5</span> किलो</span><b>₹240</b></div>
+              <div class="row" lang="hi"><span>चीनी <span class="qty">1</span> किलो</span><b>₹44</b></div>
+              <div class="row" lang="hi"><span>सरसों तेल <span class="qty">1</span> ली.</span><b>₹165</b></div>
+              <div class="row" lang="hi"><span>अरहर दाल <span class="qty">1</span> किलो</span><b>₹150</b></div>
+              <div class="total"><span lang="hi">कुल</span><span>₹599</span></div>
+              <div class="ready" lang="hi">तैयार ✓</div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- ================= HOW ================= -->
-      <section id="how">
+      <section class="steps" id="how">
         <div class="wrap">
-          <div class="center rv">
-            <span class="kicker">How it works</span>
-            <h2 class="h2" lang="hi">चार आसान कदम</h2>
-            <p class="sub">From your kitchen shelf to the shop counter, without standing in line.</p>
+          <div class="head">
+            <h2 lang="hi">चार आसान कदम</h2>
+            <p>How sKirana works, from your list to your bag.</p>
           </div>
-          <div class="how">
-            <div class="step rv">
-              <div class="n">01</div>
+          <div class="step-grid">
+            <div class="step">
               <h3 lang="hi">लिस्ट लिखें</h3>
-              <small>Write your list</small>
-              <p>Type it, or photograph your handwritten list and the app writes it out for you.</p>
+              <div class="en">Write your list</div>
+              <p>Type items the way you say them - "आटा 5 किलो" or "sugar 1 kg".</p>
             </div>
-            <div class="step rv">
-              <div class="n">02</div>
+            <div class="step">
+              <h3 lang="hi">भेजें</h3>
+              <div class="en">Send it</div>
+              <p>One tap sends the list straight to the shop.</p>
+            </div>
+            <div class="step">
               <h3 lang="hi">दाम देखें</h3>
-              <small>See the prices</small>
-              <p>The shop prices every line by hand and sends the total to your phone.</p>
+              <div class="en">See the total</div>
+              <p>The shop prices every item, so you know the bill before you go.</p>
             </div>
-            <div class="step rv">
-              <div class="n">03</div>
-              <h3 lang="hi">दुकान पैक करे</h3>
-              <small>The shop packs it</small>
-              <p>Follow your order live - priced, packing, ready - with a notification at each step.</p>
-            </div>
-            <div class="step rv">
-              <div class="n">04</div>
-              <h3 lang="hi">आकर ले जाएँ</h3>
-              <small>Collect and go</small>
-              <p>Pay by UPI or at the counter, check your bag, and you are done.</p>
+            <div class="step">
+              <h3 lang="hi">दुकान से लें</h3>
+              <div class="en">Collect &amp; pay</div>
+              <p>Get a note when it is packed. Pick it up and pay at the counter.</p>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- ================= WHY ================= -->
-      <section class="why" id="why">
+      <section id="why">
         <div class="wrap">
-          <div class="rv">
-            <span class="kicker">Why sKirana</span>
-            <h2 class="h2" lang="hi">वही दुकान, वही भरोसा -<br />बस अब कतार नहीं</h2>
+          <div class="head">
+            <h2 lang="hi">sKirana क्यों?</h2>
+            <p>Made for the way families already shop at their kirana store.</p>
           </div>
-          <div class="bento">
-            <div class="tile t-a rv">
-              <div class="bubbles" lang="hi"><span>आटा 5 किलो</span><span>Maggie 1 peti</span><span>चीनी 2 kg</span><span>दाल 1 किलो</span></div>
-              <h3><span lang="hi">जैसे लिखते हैं, वैसे लिखिए</span></h3>
-              <p>Hindi, English, or both on the same line. Or just take a photo of the paper list - the app reads it for you to check.</p>
-            </div>
-            <div class="tile t-b rv">
-              <span class="emoji">💰</span>
-              <h3><span lang="hi">पहले दाम, फिर ख़रीद</span></h3>
-              <p>See the full bill before you leave home. Remove anything, or cancel before packing starts.</p>
-            </div>
-            <div class="tile t-c rv">
-              <span class="emoji">🔔</span>
-              <h3><span lang="hi">हर अपडेट फ़ोन पर</span></h3>
-              <p>Priced, packing, ready - you hear about it the moment it happens.</p>
-            </div>
-            <div class="tile t-d rv">
-              <span class="emoji">💬</span>
-              <h3><span lang="hi">दुकान से सीधी बात</span></h3>
-              <p>Message the shop about any order - a brand, a size, a change.</p>
-            </div>
-            <div class="tile t-e rv">
-              <span class="emoji">🔁</span>
-              <h3><span lang="hi">फिर से मँगाएँ</span></h3>
-              <p>Same basket as last week? Put it back on your list in one tap.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ================= THE SHOP ================= -->
-      <section class="shop">
-        <div class="wrap">
-          <div class="shop-card rv">
-            <span class="tag">YOUR SHOP</span>
-            <h3>Suneel Kirana Store</h3>
-            <p class="addr">Main Market, Birsinghpur</p>
-            <ul>
-              <li><i>🧑‍🍳</i> <span>Every list is read and priced by a person, not a machine</span></li>
-              <li><i>🏷️</i> <span>No charge above the printed MRP on packed goods</span></li>
-              <li><i>🧾</i> <span>GST bill at the counter</span></li>
-              <li><i>📞</i> <span>Customer care: <a href="tel:+917440248190">+91 74402 48190</a></span></li>
-            </ul>
-          </div>
-          <div class="rv">
-            <p class="quote" lang="hi">“बरसों का भरोसा,<br />अब आपकी जेब में।”</p>
-            <p class="quote-by">- with love, from the Suneel Kirana Store family</p>
-          </div>
-        </div>
-      </section>
-
-      <!-- ================= FAQ ================= -->
-      <section id="faq" style="padding-top: 0">
-        <div class="wrap">
-          <div class="center rv">
-            <span class="kicker">Questions</span>
-            <h2 class="h2">Good to know</h2>
-          </div>
-          <div class="faq">
-            <details class="rv">
-              <summary>Do you deliver to my home?</summary>
-              <p>No. You collect your order at the shop. The app saves you the waiting: your bag is packed and ready when you arrive.</p>
-            </details>
-            <details class="rv">
-              <summary>Is the price in the app final?</summary>
-              <p>It is an estimate the shop prepares for you. Your final bill is made at the counter. If you paid by UPI and the bill comes out lower, the difference is returned; if it would be higher, you are told before being asked for more.</p>
-            </details>
-            <details class="rv">
-              <summary>Can I cancel an order?</summary>
-              <p>Yes - from the app, until the shop starts packing. After that, message or call the shop. There is never a cancellation charge. See our <a href="/refund" style="text-decoration: underline">Refund Policy</a>.</p>
-            </details>
-            <details class="rv">
-              <summary>Does it cost anything?</summary>
-              <p>The app is free to download and free to use. You only pay for your groceries.</p>
-            </details>
-            <details class="rv">
-              <summary>What happens to the photo of my list?</summary>
-              <p>It is read once to turn it into text, then thrown away - it is not saved with your order. Details are in our <a href="/privacy" style="text-decoration: underline">Privacy Policy</a>.</p>
-            </details>
-          </div>
-        </div>
-      </section>
-
-      <!-- ================= CTA ================= -->
-      <div class="cta">
-        <div class="wrap">
-          <div class="cta-box rv">
-            <div>
-              <h2 lang="hi">आज ही अपनी पहली लिस्ट भेजें</h2>
-              <p>Free on Google Play. Scan the code with your phone camera, or tap the button.</p>
-              <div class="actions">
-                <a class="play" href="https://play.google.com/store/apps/details?id=com.skirana.app" rel="noopener">
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path fill="#34a853" d="M3.6 1.8c-.3.3-.5.8-.5 1.4v17.6c0 .6.2 1.1.5 1.4l9.8-10.2z" />
-                    <path fill="#fbbc04" d="m16.7 15.3-3.3-3.3 3.3-3.4 3.8 2.2c1.1.6 1.1 1.7 0 2.3z" />
-                    <path fill="#ea4335" d="M16.7 15.3 13.4 12l-9.8 10.2c.4.4 1 .4 1.7 0z" />
-                    <path fill="#4285f4" d="M16.7 8.6 5.3 1.9c-.7-.4-1.3-.4-1.7 0L13.4 12z" />
-                  </svg>
-                  <span><small>GET IT ON</small><strong>Google Play</strong></span>
-                </a>
+          <div class="feat-grid">
+            <div class="feat">
+              <div class="ico">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h9M8.5 3v2M6 5c0 4 3 7 6 8M11 5c-1 4-4 7-7 8" /><path d="m13 21 4-9 4 9M14.5 18h5" /></svg>
+              </div>
+              <div>
+                <h3><span lang="hi">हिंदी या English</span>Your language</h3>
+                <p>Use the whole app in Hindi or English, and write your list in either.</p>
               </div>
             </div>
-            <div class="qr">
-              <img src="/play-qr.svg" alt="QR code for sKirana on Google Play" width="144" height="144" />
-              <span>Scan to install</span>
+            <div class="feat">
+              <div class="ico">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12M6 8h12M6 3c5 0 7 2 7 5s-2 5-7 5l8 8" /></svg>
+              </div>
+              <div>
+                <h3><span lang="hi">पहले दाम, फिर खरीद</span>Price first</h3>
+                <p>See what your order will cost before you leave home. No surprises at the counter.</p>
+              </div>
             </div>
+            <div class="feat">
+              <div class="ico">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" /></svg>
+              </div>
+              <div>
+                <h3><span lang="hi">हर अपडेट फ़ोन पर</span>Order updates</h3>
+                <p>A notification when your list is priced, packed and ready to collect.</p>
+              </div>
+            </div>
+            <div class="feat">
+              <div class="ico">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9h18l-1.5 11h-15z" /><path d="M8 9V6a4 4 0 0 1 8 0v3" /></svg>
+              </div>
+              <div>
+                <h3><span lang="hi">पेमेंट दुकान पर</span>Pay at the shop</h3>
+                <p>No card details in the app. Pay in cash or by UPI when you collect.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="band">
+        <div class="wrap">
+          <div class="box">
+            <div>
+              <h2 lang="hi">आज ही अपनी पहली लिस्ट भेजें</h2>
+              <p>Free to download. Free to use.</p>
+            </div>
+            <a
+              class="play"
+              href="https://play.google.com/store/apps/details?id=com.skirana.app"
+              rel="noopener"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="#1f7a3a" d="M3.6 1.8c-.3.3-.5.8-.5 1.4v17.6c0 .6.2 1.1.5 1.4l9.8-10.2z" />
+                <path fill="#8a5a10" d="m16.7 15.3-3.3-3.3 3.3-3.4 3.8 2.2c1.1.6 1.1 1.7 0 2.3z" />
+                <path fill="#b3261e" d="M16.7 15.3 13.4 12l-9.8 10.2c.4.4 1 .4 1.7 0z" />
+                <path fill="#1a56c4" d="M16.7 8.6 5.3 1.9c-.7-.4-1.3-.4-1.7 0L13.4 12z" />
+              </svg>
+              <span><small>GET IT ON</small><strong>Google Play</strong></span>
+            </a>
           </div>
         </div>
       </div>
@@ -550,26 +357,7 @@
           <a href="mailto:shivanshu2019gupta@gmail.com">Contact</a>
           <a href="/admin">Shop login</a>
         </div>
-        <p class="sign" lang="hi">आपकी अपनी दुकान, आपके फ़ोन पर ❤</p>
       </div>
     </footer>
-
-    <script>
-      // Reveal sections as they scroll in. Without this script (or with
-      // reduced motion) everything is simply visible from the start.
-      (function () {
-        if (!("IntersectionObserver" in window)) return;
-        document.documentElement.classList.add("js");
-        var io = new IntersectionObserver(
-          function (entries) {
-            entries.forEach(function (e) {
-              if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); }
-            });
-          },
-          { rootMargin: "0px 0px -8% 0px" }
-        );
-        document.querySelectorAll(".rv").forEach(function (el) { io.observe(el); });
-      })();
-    </script>
   </body>
 </html>
