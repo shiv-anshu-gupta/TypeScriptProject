@@ -8,10 +8,42 @@ import { useEffect } from "react";
 import * as Notifications from "expo-notifications";
 import { useAuth } from "@clerk/clerk-expo";
 
-import { registerForPushNotificationsAsync } from "@/lib/push";
+import {
+  ensureNotificationChannelsAsync,
+  registerForPushNotificationsAsync,
+} from "@/lib/push";
 import { savePushToken } from "./api";
 import { registeredPushToken, rememberPushToken } from "./registry";
 import { useCustomerGroceryListStore } from "../grocery-list/store";
+import {
+  isOrderNotification,
+  routeFromNotification,
+} from "./route-from-notification";
+import { openNotificationRoute } from "./open-notification-route";
+
+// The identifier of the last tap acted on. The cold-start tap can reach us
+// twice — read on mount and delivered to the response listener — and must
+// navigate only once.
+let lastHandledTapId: string | null = null;
+
+/**
+ * Navigates for one tapped notification, at most once per notification.
+ * Unknown or malformed data does nothing.
+ */
+function routeTappedNotification(
+  response: Notifications.NotificationResponse,
+): void {
+  // Only a plain tap navigates; an action button would mean something else.
+  if (response.actionIdentifier !== Notifications.DEFAULT_ACTION_IDENTIFIER) {
+    return;
+  }
+  const id = response.notification.request.identifier;
+  if (id && id === lastHandledTapId) return;
+  lastHandledTapId = id;
+
+  const route = routeFromNotification(response.notification.request.content.data);
+  if (route) openNotificationRoute(route);
+}
 
 /**
  * Registers this device for push once the customer signs in, and refreshes
@@ -28,9 +60,14 @@ import { useCustomerGroceryListStore } from "../grocery-list/store";
  * emulator, a refused permission or Expo Go are all logged and ignored, with
  * no toast, because a message on every launch would be noise.
  *
- * Both notification listeners do the same thing: a notification means the
- * shop changed something, so pull the fresh statuses. That covers the alert
- * arriving while the app is open and the customer tapping one from the tray.
+ * An order notification (one carrying a `listId`) means the shop changed
+ * something, so the fresh statuses are pulled whether it arrived while the
+ * app was open or was tapped from the tray. A broadcast (an offer or news)
+ * reloads nothing.
+ *
+ * Tapping a notification also takes the customer where it points — see
+ * {@link routeFromNotification}. That includes the tap that cold-started the
+ * app, read once on mount and queued until the navigator is ready.
  *
  * Renders nothing and returns nothing.
  *
@@ -70,17 +107,43 @@ export function usePushNotifications() {
     void run();
   }, [isSignedIn]);
 
-  // A notification means the shop changed something, so pull the fresh
-  // statuses — this keeps the tab badge and timeline in sync whether the
-  // notification arrived in the foreground or was tapped from the tray.
+  // The tap that launched the app. Read once, on mount; the navigation it asks
+  // for waits in navigationRef until the container's onReady. Lists are not
+  // reloaded here — Bootstrap loads them anyway once the customer is signed in.
   useEffect(() => {
-    const receivedSub = Notifications.addNotificationReceivedListener(() => {
-      if (isSignedIn) void loadLists();
-    });
+    // Channels need no sign-in or permission; making them at every launch
+    // means a broadcast always finds its "offers" channel.
+    void ensureNotificationChannelsAsync();
+
+    try {
+      const launchResponse = Notifications.getLastNotificationResponse();
+      if (launchResponse) {
+        routeTappedNotification(launchResponse);
+        // So a later remount (or JS reload) does not replay the same tap.
+        Notifications.clearLastNotificationResponse();
+      }
+    } catch (error) {
+      console.warn("Reading the launch notification failed:", error);
+    }
+  }, []);
+
+  // An order notification means the shop changed something, so pull the
+  // fresh statuses — this keeps the tab badge and timeline in sync whether it
+  // arrived in the foreground or was tapped from the tray. A broadcast does
+  // not touch the customer's lists, so it reloads nothing.
+  useEffect(() => {
+    const receivedSub = Notifications.addNotificationReceivedListener(
+      (notification) => {
+        const data: unknown = notification.request.content.data;
+        if (isSignedIn && isOrderNotification(data)) void loadLists();
+      },
+    );
 
     const responseSub = Notifications.addNotificationResponseReceivedListener(
-      () => {
-        if (isSignedIn) void loadLists();
+      (response) => {
+        const data: unknown = response.notification.request.content.data;
+        if (isSignedIn && isOrderNotification(data)) void loadLists();
+        routeTappedNotification(response);
       },
     );
 

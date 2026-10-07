@@ -29,6 +29,10 @@ import { useCustomerAccountStore } from "@/features/customer/account/store";
 import { useDraftListStore } from "@/features/customer/draft-list/store";
 import { usePushNotifications } from "@/features/customer/push/use-push-notifications";
 import { RootNavigator } from "@/navigation/RootNavigator";
+import {
+  flushPendingNavigation,
+  navigationRef,
+} from "@/navigation/navigationRef";
 import { AppErrorBoundary } from "@/components/AppErrorBoundary";
 import { Toaster } from "@/components/Toaster";
 import { GroceryListSheet } from "@/components/GroceryListSheet";
@@ -175,7 +179,13 @@ function AppContent() {
         tokenCache={tokenCache}
       >
         <SafeAreaProvider>
-          <NavigationContainer>
+          {/* The ref lets a notification tap navigate from outside any
+              screen; onReady runs a tap that arrived before the navigator
+              existed (the one that cold-started the app). */}
+          <NavigationContainer
+            ref={navigationRef}
+            onReady={flushPendingNavigation}
+          >
             {/* Every sheet is drawn through this host, which is what lets one
                 sheet open on top of another. It sits INSIDE the navigation
                 container on purpose: a sheet's contents are ordinary screens'
