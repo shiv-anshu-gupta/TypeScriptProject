@@ -24,6 +24,7 @@
           "defaultChannel": "default"
         }
       ],
+      "./plugins/withNotificationBannerLayouts",
       [
         "expo-image-picker",
         {

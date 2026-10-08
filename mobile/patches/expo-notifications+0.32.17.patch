@@ -1,20 +1,89 @@
 diff --git a/node_modules/expo-notifications/android/src/main/java/expo/modules/notifications/notifications/presentation/builders/ExpoNotificationBuilder.kt b/node_modules/expo-notifications/android/src/main/java/expo/modules/notifications/notifications/presentation/builders/ExpoNotificationBuilder.kt
-index 610d303..3fa2c72 100644
+index 610d303..9122c20 100644
 --- a/node_modules/expo-notifications/android/src/main/java/expo/modules/notifications/notifications/presentation/builders/ExpoNotificationBuilder.kt
 +++ b/node_modules/expo-notifications/android/src/main/java/expo/modules/notifications/notifications/presentation/builders/ExpoNotificationBuilder.kt
-@@ -150,6 +150,15 @@ open class ExpoNotificationBuilder(
+@@ -10,6 +10,7 @@ import android.os.Bundle
+ import android.os.Parcel
+ import android.provider.Settings
+ import android.util.Log
++import android.widget.RemoteViews
+ import androidx.core.app.NotificationCompat
+ import androidx.core.app.RemoteInput
+ import expo.modules.notifications.notifications.SoundResolver
+@@ -149,13 +150,75 @@ open class ExpoNotificationBuilder(
+ 
      if (notificationContent.containsImage()) {
        val bitmap = notificationContent.getImage(context)
-       bitmap?.let { builder.setLargeIcon(it) }
-+      // sKirana patch: data.imageStyle == "banner" expands into a full-width picture.
-+      if (bitmap != null && content.body?.optString("imageStyle") == "banner") {
-+        builder.setStyle(
-+          NotificationCompat.BigPictureStyle()
-+            .bigPicture(bitmap)
-+            .bigLargeIcon(null as Bitmap?)
-+            .setSummaryText(content.text)
-+        )
+-      bitmap?.let { builder.setLargeIcon(it) }
++      // sKirana patch: data.imageStyle picks how the pushed image is drawn.
++      //   absent    -> default: image as the large icon, text style.
++      //   "picture" -> text + picture: thumbnail collapsed, BigPictureStyle expanded.
++      //   "banner"  -> image strip only (custom RemoteViews), falls back to "picture".
++      // A missing bitmap always leaves the default text notification.
++      val imageStyle = content.body?.optString("imageStyle")
++      if (bitmap != null) {
++        val bannerShown = imageStyle == "banner" && applySkiranaBanner(builder, bitmap)
++        if (!bannerShown) {
++          builder.setLargeIcon(bitmap)
++          if (imageStyle == "picture" || imageStyle == "banner") {
++            builder.setStyle(
++              NotificationCompat.BigPictureStyle()
++                .bigPicture(bitmap)
++                .bigLargeIcon(null as Bitmap?)
++                .setSummaryText(content.text)
++            )
++          }
++        }
 +      }
      } else {
        builder.setLargeIcon(largeIcon)
      }
+     return builder.build()
+   }
+ 
++  /**
++   * sKirana patch: draws the notification as an image strip only (no title/text in the
++   * shade), using layouts the app's config plugin writes into res/layout. The library
++   * can't see the app's R class, so ids are looked up by name. Returns false (and
++   * leaves the builder untouched) if anything is missing, so the caller can fall back.
++   */
++  private fun applySkiranaBanner(builder: NotificationCompat.Builder, bitmap: Bitmap): Boolean {
++    return try {
++      val res = context.resources
++      val pkg = context.packageName
++      val collapsedLayout = res.getIdentifier("skirana_notification_banner", "layout", pkg)
++      val expandedLayout = res.getIdentifier("skirana_notification_banner_big", "layout", pkg)
++      val imageId = res.getIdentifier("skirana_banner_image", "id", pkg)
++      if (collapsedLayout == 0 || expandedLayout == 0 || imageId == 0) {
++        Log.w("expo-notifications", "sKirana banner layouts not found; showing picture style.")
++        return false
++      }
++      val image = skiranaScaledBitmap(bitmap)
++      val collapsed = RemoteViews(pkg, collapsedLayout).apply { setImageViewBitmap(imageId, image) }
++      val expanded = RemoteViews(pkg, expandedLayout).apply { setImageViewBitmap(imageId, image) }
++      builder.setLargeIcon(null as Bitmap?)
++      builder.setStyle(NotificationCompat.DecoratedCustomViewStyle())
++      builder.setCustomContentView(collapsed)
++      builder.setCustomBigContentView(expanded)
++      true
++    } catch (e: Exception) {
++      Log.e("expo-notifications", "Could not build sKirana banner notification.", e)
++      false
++    }
++  }
++
++  /** Fits the bitmap inside 1080x1080 so the RemoteViews parcel stays small. */
++  private fun skiranaScaledBitmap(bitmap: Bitmap): Bitmap {
++    val maxSide = 1080
++    val width = bitmap.width
++    val height = bitmap.height
++    if (width <= maxSide && height <= maxSide) return bitmap
++    val scale = min(maxSide.toDouble() / width, maxSide.toDouble() / height)
++    val newWidth = max(1, (width * scale).toInt())
++    val newHeight = max(1, (height * scale).toInt())
++    return Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true)
++  }
++
+   private fun applySoundsAndVibrations(content: INotificationContent, builder: NotificationCompat.Builder) {
+     val shouldPlaySound = shouldPlaySound()
+     val shouldVibrate = shouldVibrate()
