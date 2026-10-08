@@ -12,16 +12,18 @@ const fs = require('fs');
 const path = require('path');
 const { withDangerousMod } = require('expo/config-plugins');
 
-// Collapsed: one full-width strip in place of title/text.
+// Collapsed: one full-width strip in place of title/text. It fills whatever
+// height the system gives a collapsed custom view (about 48dp on Android 12+,
+// more on some Samsung builds) rather than a fixed 64dp that would be clipped.
 const COLLAPSED = `<?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="match_parent">
 
     <ImageView
         android:id="@+id/skirana_banner_image"
         android:layout_width="match_parent"
-        android:layout_height="64dp"
+        android:layout_height="match_parent"
         android:scaleType="centerCrop"
         android:importantForAccessibility="no" />
 </FrameLayout>
