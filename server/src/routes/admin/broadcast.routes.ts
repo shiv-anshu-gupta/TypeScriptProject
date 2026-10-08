@@ -24,13 +24,21 @@
  * sent on the Android `"offers"` channel so a customer can mute offers without
  * muting their order updates.
  *
- * A notification may carry a banner picture. It must first be uploaded through
- * `/admin/broadcasts/image`, which answers with a 1024x512 delivery URL on the
- * shop's own Cloudinary; the sends accept such a URL and nothing else, so no
- * arbitrary link can ever be pushed to customers' phones. A send with a
- * picture adds `imageStyle: "banner"` to the push data, which app version
- * 1.0.5 and newer reads to draw it full width; older versions show the same
- * picture as the small image beside the text.
+ * Every send names a `style` (default `"text"`):
+ *
+ * - `"text"` - title and message with the logo. Any `imageUrl` is ignored.
+ * - `"picture"` - title and message plus a 2:1 picture; push data carries
+ *   `imageStyle: "picture"`.
+ * - `"banner"` - a 4:1 picture that is the whole notification; push data
+ *   carries `imageStyle: "banner"`.
+ *
+ * Title and message stay required for all three: lock screens, screen readers
+ * and app versions before 1.0.5 show them. A picture must first be uploaded
+ * through `/admin/broadcasts/image` (with the matching `shape`), which answers
+ * with a delivery URL on the shop's own Cloudinary; the sends accept such a
+ * URL and nothing else, so no arbitrary link can ever be pushed to customers'
+ * phones. App 1.0.5+ reads `imageStyle` to draw the picture its way; older
+ * versions show it as the small image beside the text.
  *
  * @packageDocumentation
  */
@@ -46,15 +54,19 @@ import { AppError } from "../../utils/AppError";
 import { sendPushNotifications, checkPushReceipts, type PushOptions } from "../../utils/push";
 import {
   ownCloudinaryImageUrl,
-  pushBannerImage,
+  PUSH_IMAGE_SHAPES,
+  pushNotificationImage,
+  type PushImageShape,
   uploadSingleBufferToCloudinary,
 } from "../../utils/cloudinary";
 import { consume } from "../../services/rateLimit";
 import { recordAudit } from "../../services/audit";
 import {
+  BROADCAST_STYLES,
   BROADCAST_TARGET_TYPES,
   BroadcastModel,
   type BroadcastKind,
+  type BroadcastStyle,
   type BroadcastTarget,
   type BroadcastTargetType,
 } from "../../models/Broadcast";
@@ -83,6 +95,9 @@ export const IMAGE_TYPE_MESSAGE = "The picture must be a JPG, PNG or WebP image.
 export const IMAGE_SIZE_MESSAGE = "The picture must be under 5 MB.";
 export const IMAGE_MISSING_MESSAGE = "Choose a picture to upload.";
 export const IMAGE_NOT_OURS_MESSAGE = "Upload the picture here first.";
+export const IMAGE_REQUIRED_MESSAGE = "Add a picture first.";
+export const STYLE_MESSAGE = "Choose how the notification looks: text, picture or banner.";
+export const SHAPE_MESSAGE = "Choose the picture's shape: picture or banner.";
 
 /** How many past sends the panel's history shows. */
 const HISTORY_SIZE = 20;
@@ -157,9 +172,25 @@ export type BroadcastPayload = {
   title: string;
   body: string;
   target: BroadcastTarget;
-  /** The banner picture, already checked to be on our Cloudinary. */
+  /** How the notification looks; `"text"` when the request named none. */
+  style: BroadcastStyle;
+  /** The picture, already checked to be on our Cloudinary; only for picture/banner. */
   imageUrl?: string;
 };
+
+/**
+ * Reads the requested style.
+ *
+ * @returns `"text"` when none was given (absent, `null` or empty).
+ * @throws AppError 400 {@link STYLE_MESSAGE} for anything else unknown.
+ */
+export function parseStyle(value: unknown): BroadcastStyle {
+  if (value === undefined || value === null || value === "") return "text";
+  if (typeof value === "string" && (BROADCAST_STYLES as readonly string[]).includes(value)) {
+    return value as BroadcastStyle;
+  }
+  throw new AppError(400, STYLE_MESSAGE);
+}
 
 /**
  * Checks the optional banner picture of a send request.
@@ -203,9 +234,7 @@ export function parseBroadcastShape(raw: unknown): BroadcastPayload {
     throw new AppError(400, "Choose where the notification opens in the app.");
   }
 
-  const imageUrl = parseImageUrl(input.imageUrl);
-  const image = imageUrl ? { imageUrl } : {};
-
+  let target: BroadcastTarget;
   if (type === "category" || type === "product") {
     const targetId = String(rawTarget.targetId ?? "").trim();
     if (!targetId || !mongoose.Types.ObjectId.isValid(targetId)) {
@@ -214,10 +243,19 @@ export function parseBroadcastShape(raw: unknown): BroadcastPayload {
         type === "category" ? "Choose a category to open." : "Choose a product to open.",
       );
     }
-    return { title, body, target: { type, targetId }, ...image };
+    target = { type, targetId };
+  } else {
+    target = { type } as BroadcastTarget;
   }
 
-  return { title, body, target: { type } as BroadcastTarget, ...image };
+  const style = parseStyle(input.style);
+  // A text notification ignores any picture - not even checking it - so a
+  // picture left over from switching styles in the panel can never block it.
+  if (style === "text") return { title, body, target, style };
+
+  const imageUrl = parseImageUrl(input.imageUrl);
+  if (!imageUrl) throw new AppError(400, IMAGE_REQUIRED_MESSAGE);
+  return { title, body, target, style, imageUrl };
 }
 
 /**
@@ -248,24 +286,38 @@ export async function parseBroadcastPayload(raw: unknown): Promise<BroadcastPayl
 }
 
 /**
- * The push `data` the app reads to route a tap - and, with a banner picture,
- * `imageStyle: "banner"`, which tells app 1.0.5+ to draw it full width.
+ * The push `data` the app reads to route a tap - and, for a picture or a
+ * banner, `imageStyle`, which tells app 1.0.5+ how to draw the picture.
  */
-export function broadcastPushData(
-  target: BroadcastTarget,
-  imageUrl?: string,
-): Record<string, unknown> {
+export function broadcastPushData(payload: BroadcastPayload): Record<string, unknown> {
+  const { target, style, imageUrl } = payload;
   return {
     type: "broadcast",
     target: target.type,
     ...("targetId" in target ? { targetId: target.targetId } : {}),
-    ...(imageUrl ? { imageStyle: "banner" } : {}),
+    ...(style !== "text" && imageUrl ? { imageStyle: style } : {}),
   };
 }
 
-/** The push options: the banner picture in place of the logo, when there is one. */
-export function broadcastPushOptions(imageUrl?: string): PushOptions {
-  return imageUrl ? { ...BROADCAST_PUSH_OPTIONS, image: imageUrl } : BROADCAST_PUSH_OPTIONS;
+/** The push options: the picture in place of the logo, for a picture or a banner. */
+export function broadcastPushOptions(payload: BroadcastPayload): PushOptions {
+  return payload.style !== "text" && payload.imageUrl
+    ? { ...BROADCAST_PUSH_OPTIONS, image: payload.imageUrl }
+    : BROADCAST_PUSH_OPTIONS;
+}
+
+/**
+ * Reads the upload's `shape`, from the query or the form.
+ *
+ * @returns `"picture"` when none was given.
+ * @throws AppError 400 {@link SHAPE_MESSAGE} for anything else unknown.
+ */
+export function parseShape(value: unknown): PushImageShape {
+  if (value === undefined || value === null || value === "") return "picture";
+  if (typeof value === "string" && (PUSH_IMAGE_SHAPES as readonly string[]).includes(value)) {
+    return value as PushImageShape;
+  }
+  throw new AppError(400, SHAPE_MESSAGE);
 }
 
 /** One picture, in memory, JPEG/PNG/WebP, at most 5 MB, in the field `image`. */
@@ -310,6 +362,7 @@ type HistoryRow = {
   body: string;
   target: { type: BroadcastTargetType; targetId?: string };
   kind: BroadcastKind;
+  style?: BroadcastStyle;
   imageUrl?: string;
   recipients: number;
   sentByEmail: string;
@@ -328,6 +381,8 @@ function mapHistory(row: HistoryRow) {
     body: row.body,
     target,
     kind: row.kind,
+    // Records from before styles existed: a picture was always sent as a banner.
+    style: row.style ?? (row.imageUrl ? "banner" : "text"),
     imageUrl: row.imageUrl || null,
     recipients: row.recipients ?? 0,
     sentByEmail: row.sentByEmail ?? "",
@@ -377,30 +432,33 @@ adminBroadcastRouter.get(
 );
 
 /**
- * `POST /admin/broadcasts/image` - uploads the banner picture for a
- * notification.
+ * `POST /admin/broadcasts/image` - uploads the picture for a notification.
  *
  * @remarks
  * Multipart, one file in the field `image`: JPG, PNG or WebP, at most 5 MB.
- * Stored in Cloudinary under `ecommerce-monster-video/broadcasts`. Answers
- * `{ imageUrl }`: a delivery URL cropped to 1024x512 (2:1, `c_fill`) with
- * automatic format and quality - the shape of Android's big-picture
- * notification. Pass it back as `imageUrl` on a test or a send.
+ * The shape comes from `?shape=` or a form field `shape` (the query wins):
+ * `"picture"` (the default) or `"banner"`. Stored in Cloudinary under
+ * `ecommerce-monster-video/broadcasts`. Answers `{ imageUrl }`: a delivery URL
+ * cropped to fill (`c_fill,g_auto`) with automatic format and quality, at
+ * 1024x512 (2:1) for a picture or 1024x256 (4:1) for a banner. Pass it back
+ * as `imageUrl` on a test or a send, with the same `style`.
  *
  * Nothing is recorded; a picture chosen but never sent stays in the folder.
  *
- * @throws AppError 400 for a missing picture, a wrong type or over 5 MB.
+ * @throws AppError 400 for a missing picture, a wrong type, over 5 MB, or an
+ * unknown shape.
  */
 adminBroadcastRouter.post(
   "/broadcasts/image",
   requirePermission("broadcast:send"),
   acceptImage,
   asyncHandler(async (req: Request, res: Response) => {
+    const shape = parseShape(req.query.shape ?? (req.body as { shape?: unknown } | undefined)?.shape);
     const file = req.file;
     if (!file?.buffer?.length) throw new AppError(400, IMAGE_MISSING_MESSAGE);
 
     const uploaded = await uploadSingleBufferToCloudinary(file.buffer, BROADCAST_IMAGE_FOLDER);
-    res.json(ok({ imageUrl: pushBannerImage(uploaded.url) }));
+    res.json(ok({ imageUrl: pushNotificationImage(uploaded.url, shape) }));
   }),
 );
 
@@ -409,8 +467,10 @@ adminBroadcastRouter.post(
  * admin's own phone only.
  *
  * @remarks
- * Body: `{ title, body, target, imageUrl? }`. Answers `{ recipients }`, the number of the
- * admin's devices it was handed to Expo for.
+ * Body: `{ title, body, target, style?, imageUrl? }` - `imageUrl` required
+ * for style `picture` or `banner`, ignored for `text`. Answers
+ * `{ recipients }`, the number of the admin's devices it was handed to Expo
+ * for.
  *
  * @throws AppError 400 on any validation failure, or {@link NO_DEVICE_MESSAGE}
  * when the admin has no phone registered.
@@ -434,8 +494,8 @@ adminBroadcastRouter.post(
       tokens,
       payload.title,
       payload.body,
-      broadcastPushData(payload.target, payload.imageUrl),
-      broadcastPushOptions(payload.imageUrl),
+      broadcastPushData(payload),
+      broadcastPushOptions(payload),
     );
 
     await BroadcastModel.create({
@@ -455,8 +515,8 @@ adminBroadcastRouter.post(
  * `POST /admin/broadcasts` - sends the notification to every customer.
  *
  * @remarks
- * Body: `{ title, body, target, imageUrl? }`. Answers `{ recipients }`, the
- * number of customer devices it was handed to Expo for.
+ * Body: `{ title, body, target, style?, imageUrl? }`, as for a test. Answers
+ * `{ recipients }`, the number of customer devices it was handed to Expo for.
  *
  * The day's slot is claimed first by writing the `Broadcast` record; only then
  * are customers notified. If reading the customer list fails, the claim is
@@ -511,8 +571,8 @@ adminBroadcastRouter.post(
       tokens,
       payload.title,
       payload.body,
-      broadcastPushData(payload.target, payload.imageUrl),
-      broadcastPushOptions(payload.imageUrl),
+      broadcastPushData(payload),
+      broadcastPushOptions(payload),
     );
 
     await BroadcastModel.updateOne({ _id: record._id }, { $set: { recipients } }).catch(

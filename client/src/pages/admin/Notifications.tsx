@@ -11,9 +11,12 @@
  * Layout: composer on the left, a phone preview on the right (stacked below on
  * narrow screens), the send history underneath.
  *
- * The optional banner picture is shrunk in the browser, uploaded at once to
- * `/admin/broadcasts/image`, and only the URL the server answers with is sent
- * with the notification - the server accepts no other picture URL.
+ * A segmented control at the top picks the style: text only, text + picture
+ * (2:1) or banner only (4:1). For the two picture styles the picture is shrunk
+ * in the browser, uploaded at once to `/admin/broadcasts/image` with the
+ * matching `shape`, and only the URL the server answers with is sent with the
+ * notification - the server accepts no other picture URL. Switching to the
+ * other picture style drops a picture of the wrong shape, with a note.
  *
  * @packageDocumentation
  */
@@ -60,7 +63,9 @@ import {
   uploadBroadcastImage,
   type BroadcastBody,
   type BroadcastHistoryItem,
+  type BroadcastImageShape,
   type BroadcastOverview,
+  type BroadcastStyle,
   type BroadcastTarget,
   type BroadcastTargetType,
 } from "@/features/admin/broadcasts/api";
@@ -81,8 +86,48 @@ const DEFAULT_LIMITS = { titleMax: 50, bodyMax: 180, perDay: 1 };
 const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 /** The server's per-picture cap. */
 const MAX_BANNER_BYTES = 5 * 1024 * 1024;
-/** Android draws the banner at 2:1; 1024 wide is sharp and small. */
-const BANNER_WIDTH = 1024;
+/** Both shapes are delivered 1024 wide - sharp and small. */
+const UPLOAD_WIDTH = 1024;
+
+/** The three styles, in the order the segmented control shows them. */
+const STYLE_OPTIONS: Array<{ value: BroadcastStyle; label: string; help: string }> = [
+  {
+    value: "text",
+    label: "Text only",
+    help: "Title and message, with the sKirana logo.",
+  },
+  {
+    value: "picture",
+    label: "Text + picture",
+    help: "Title and message; the picture shows small, and big when the customer pulls the notification down.",
+  },
+  {
+    value: "banner",
+    label: "Banner only (like a poster)",
+    help: "Just the picture, full width — write your message on the banner itself. Title and message are still needed for the lock screen and older phones.",
+  },
+];
+
+/** Short names for the history table. */
+const STYLE_SHORT_LABEL: Record<BroadcastStyle, string> = {
+  text: "Text",
+  picture: "Text + picture",
+  banner: "Banner",
+};
+
+/** What each picture shape needs, for the field's hint and the switch note. */
+const SHAPE_HINT: Record<BroadcastImageShape, { ratio: string; aspect: string; help: string }> = {
+  picture: {
+    ratio: "2:1",
+    aspect: "aspect-[2/1]",
+    help: "Wide picture, 2:1 (e.g. 1024×512). Keep text on it large or leave it out — it shows small until the notification is pulled down.",
+  },
+  banner: {
+    ratio: "4:1",
+    aspect: "aspect-[4/1]",
+    help: "Long strip, 4:1 (e.g. 1024×256). Write your message big on the banner — it is all most customers will see.",
+  },
+};
 
 /** Pulls a readable message out of whatever was thrown. */
 function message(error: unknown) {
@@ -131,9 +176,18 @@ function AdminNotifications() {
   const [targetType, setTargetType] = useState<BroadcastTargetType>("writeList");
   const [targetId, setTargetId] = useState<string | undefined>();
   const [targetName, setTargetName] = useState<string | undefined>();
-  const [imageUrl, setImageUrl] = useState<string | undefined>();
+  const [style, setStyle] = useState<BroadcastStyle>("text");
+  /** The current style, for an upload that finishes after a switch. */
+  const styleRef = useRef<BroadcastStyle>("text");
+  /** The uploaded picture and the shape it was cropped to. */
+  const [image, setImage] = useState<{ url: string; shape: BroadcastImageShape } | undefined>();
+  const [imageNote, setImageNote] = useState("");
   const [uploadingImage, setUploadingImage] = useState(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
+
+  // The picture that goes with the chosen style - none for text, and only one
+  // of the matching shape otherwise.
+  const imageUrl = style !== "text" && image?.shape === style ? image.url : undefined;
 
   const [sendingTest, setSendingTest] = useState(false);
   const [sendingAll, setSendingAll] = useState(false);
@@ -208,6 +262,27 @@ function AdminNotifications() {
     setFormError("");
   };
 
+  /**
+   * Picks a style. A picture of the other shape is dropped, with a note; a
+   * picture is kept (but not sent) while on text only, so switching back
+   * brings it back.
+   */
+  const changeStyle = (next: BroadcastStyle) => {
+    styleRef.current = next;
+    setStyle(next);
+    setFormError("");
+    if (next !== "text" && image && image.shape !== next) {
+      setImage(undefined);
+      setImageNote(
+        `The ${SHAPE_HINT[image.shape].ratio} picture was removed — ${
+          next === "banner" ? "a banner" : "this style"
+        } needs a ${SHAPE_HINT[next].ratio} picture. Add one below.`,
+      );
+    } else {
+      setImageNote("");
+    }
+  };
+
   const applyIdea = (idea: BroadcastIdea) => {
     setTitle(idea.title.slice(0, limits.titleMax));
     setBody(idea.body.slice(0, limits.bodyMax));
@@ -236,27 +311,44 @@ function AdminNotifications() {
     } else {
       target = { type: targetType };
     }
+    if (style !== "text" && !imageUrl) {
+      setFormError("Add a picture first.");
+      return null;
+    }
     setFormError("");
-    return { title: cleanTitle, body: cleanBody, target, ...(imageUrl ? { imageUrl } : {}) };
+    return {
+      title: cleanTitle,
+      body: cleanBody,
+      target,
+      style,
+      ...(style !== "text" && imageUrl ? { imageUrl } : {}),
+    };
   };
 
   /** Shrinks the chosen picture, uploads it and keeps the URL the server gives back. */
   const onPickImage = async (file: File | undefined) => {
     if (imageInputRef.current) imageInputRef.current.value = "";
     if (!file) return;
+    if (style === "text") return;
+    const shape: BroadcastImageShape = style;
     if (!IMAGE_TYPES.includes(file.type)) {
       toast.error("Choose a JPG, PNG or WebP picture.");
       return;
     }
     setUploadingImage(true);
     try {
-      const small = await compressImage(file, BANNER_WIDTH);
+      const small = await compressImage(file, UPLOAD_WIDTH);
       if (small.size > MAX_BANNER_BYTES) {
         toast.error(`That picture is ${formatBytes(small.size)}. It must be under 5 MB.`);
         return;
       }
-      const result = await uploadBroadcastImage(small);
-      setImageUrl(result.imageUrl);
+      const result = await uploadBroadcastImage(small, shape);
+      // The style may have changed while it uploaded; a picture of the other
+      // shape is kept only if it is still the one wanted.
+      if (styleRef.current === shape || styleRef.current === "text") {
+        setImage({ url: result.imageUrl, shape });
+        setImageNote("");
+      }
     } catch (error) {
       toast.error(`Couldn't upload the picture: ${message(error)}`);
     } finally {
@@ -346,6 +438,36 @@ function AdminNotifications() {
             <CardTitle>Compose</CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
+            <fieldset className="space-y-1.5" disabled={uploadingImage || sendingTest || sendingAll}>
+              <legend className="mb-1.5 text-sm font-medium leading-none">Style</legend>
+              <div className="grid grid-cols-1 gap-1 rounded-lg bg-muted p-1 sm:grid-cols-3">
+                {STYLE_OPTIONS.map((option) => (
+                  <label
+                    key={option.value}
+                    className={`cursor-pointer rounded-md px-3 py-2 text-center text-sm transition-colors has-[:focus-visible]:ring-3 has-[:focus-visible]:ring-ring/50 ${
+                      style === option.value
+                        ? "bg-background font-medium text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="broadcast-style"
+                      value={option.value}
+                      checked={style === option.value}
+                      onChange={() => changeStyle(option.value)}
+                      aria-describedby="broadcast-style-help"
+                      className="sr-only"
+                    />
+                    {option.label}
+                  </label>
+                ))}
+              </div>
+              <p id="broadcast-style-help" className="text-xs text-muted-foreground">
+                {STYLE_OPTIONS.find((option) => option.value === style)?.help}
+              </p>
+            </fieldset>
+
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <Label htmlFor="broadcast-title">Title</Label>
@@ -444,63 +566,72 @@ function AdminNotifications() {
               </div>
             ) : null}
 
-            <div className="space-y-1.5">
-              <Label htmlFor="broadcast-image">Picture (banner)</Label>
-              <input
-                ref={imageInputRef}
-                id="broadcast-image"
-                type="file"
-                accept={IMAGE_TYPES.join(",")}
-                className="sr-only"
-                aria-describedby="broadcast-image-help"
-                disabled={uploadingImage || sendingTest || sendingAll}
-                onChange={(event) => void onPickImage(event.target.files?.[0])}
-              />
-              {imageUrl ? (
-                <div className="flex items-center gap-3">
-                  <img
-                    src={imageUrl}
-                    alt="Banner picture"
-                    className="aspect-[2/1] w-40 rounded-md border object-cover"
-                  />
-                  <div className="flex flex-col gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={busy}
-                      onClick={() => imageInputRef.current?.click()}
-                    >
-                      <ImagePlus className="mr-2 h-4 w-4" />
-                      {uploadingImage ? "Uploading…" : "Change"}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      disabled={busy}
-                      onClick={() => setImageUrl(undefined)}
-                    >
-                      <X className="mr-2 h-4 w-4" />
-                      Remove
-                    </Button>
+            {style !== "text" ? (
+              <div className="space-y-1.5">
+                <Label htmlFor="broadcast-image">
+                  {style === "banner" ? "Banner picture (4:1)" : "Picture (2:1)"}
+                </Label>
+                <input
+                  ref={imageInputRef}
+                  id="broadcast-image"
+                  type="file"
+                  accept={IMAGE_TYPES.join(",")}
+                  className="sr-only"
+                  aria-describedby="broadcast-image-help"
+                  disabled={uploadingImage || sendingTest || sendingAll}
+                  onChange={(event) => void onPickImage(event.target.files?.[0])}
+                />
+                {imageUrl ? (
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={imageUrl}
+                      alt={style === "banner" ? "Banner picture" : "Notification picture"}
+                      className={`${SHAPE_HINT[style].aspect} w-40 rounded-md border object-cover`}
+                    />
+                    <div className="flex flex-col gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={busy}
+                        onClick={() => imageInputRef.current?.click()}
+                      >
+                        <ImagePlus className="mr-2 h-4 w-4" />
+                        {uploadingImage ? "Uploading…" : "Change"}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        disabled={busy}
+                        onClick={() => setImage(undefined)}
+                      >
+                        <X className="mr-2 h-4 w-4" />
+                        Remove
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={busy}
-                  onClick={() => imageInputRef.current?.click()}
-                >
-                  <ImagePlus className="mr-2 h-4 w-4" />
-                  {uploadingImage ? "Uploading…" : "Add a picture"}
-                </Button>
-              )}
-              <p id="broadcast-image-help" className="text-xs text-muted-foreground">
-                Wide picture works best (2:1, like 1024×512). Keep text on the picture large or leave it out — it shows small on many phones.
-              </p>
-            </div>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={busy}
+                    onClick={() => imageInputRef.current?.click()}
+                  >
+                    <ImagePlus className="mr-2 h-4 w-4" />
+                    {uploadingImage ? "Uploading…" : style === "banner" ? "Add a banner" : "Add a picture"}
+                  </Button>
+                )}
+                {imageNote ? (
+                  <p className="text-xs text-amber-700 dark:text-amber-400" role="status">
+                    {imageNote}
+                  </p>
+                ) : null}
+                <p id="broadcast-image-help" className="text-xs text-muted-foreground">
+                  {SHAPE_HINT[style].help}
+                </p>
+              </div>
+            ) : null}
 
             <div className="rounded-md border bg-muted/40 p-3 text-sm">
               {loading && !overview ? (
@@ -557,6 +688,7 @@ function AdminNotifications() {
             </CardHeader>
             <CardContent>
               <NotificationPreview
+                style={style}
                 title={title}
                 body={body}
                 opens={opensLabel}
@@ -607,6 +739,7 @@ function AdminNotifications() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>When</TableHead>
+                    <TableHead>Style</TableHead>
                     <TableHead>Picture</TableHead>
                     <TableHead>Title</TableHead>
                     <TableHead>Message</TableHead>
@@ -617,39 +750,45 @@ function AdminNotifications() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {history.map((row) => (
-                    <TableRow key={row._id}>
-                      <TableCell className="whitespace-nowrap">{when(row.createdAt)}</TableCell>
-                      <TableCell>
-                        {row.imageUrl ? (
-                          <img
-                            src={row.imageUrl}
-                            alt=""
-                            loading="lazy"
-                            className="aspect-[2/1] w-16 rounded border object-cover"
-                          />
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="max-w-[200px] truncate font-medium" title={row.title}>
-                        {row.title}
-                      </TableCell>
-                      <TableCell className="max-w-[260px] truncate text-muted-foreground" title={row.body}>
-                        {row.body}
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap">{historyTargetLabel(row.target)}</TableCell>
-                      <TableCell>
-                        <Badge variant={row.kind === "all" ? "default" : "secondary"}>
-                          {row.kind === "all" ? "Everyone" : "Test"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">{row.recipients}</TableCell>
-                      <TableCell className="whitespace-nowrap text-muted-foreground">
-                        {row.sentByEmail}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {history.map((row) => {
+                    const rowStyle: BroadcastStyle = row.style ?? (row.imageUrl ? "banner" : "text");
+                    return (
+                      <TableRow key={row._id}>
+                        <TableCell className="whitespace-nowrap">{when(row.createdAt)}</TableCell>
+                        <TableCell className="whitespace-nowrap">
+                          <Badge variant="outline">{STYLE_SHORT_LABEL[rowStyle]}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          {row.imageUrl && rowStyle !== "text" ? (
+                            <img
+                              src={row.imageUrl}
+                              alt=""
+                              loading="lazy"
+                              className={`${SHAPE_HINT[rowStyle].aspect} w-16 rounded border object-cover`}
+                            />
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="max-w-[200px] truncate font-medium" title={row.title}>
+                          {row.title}
+                        </TableCell>
+                        <TableCell className="max-w-[260px] truncate text-muted-foreground" title={row.body}>
+                          {row.body}
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap">{historyTargetLabel(row.target)}</TableCell>
+                        <TableCell>
+                          <Badge variant={row.kind === "all" ? "default" : "secondary"}>
+                            {row.kind === "all" ? "Everyone" : "Test"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums">{row.recipients}</TableCell>
+                        <TableCell className="whitespace-nowrap text-muted-foreground">
+                          {row.sentByEmail}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>

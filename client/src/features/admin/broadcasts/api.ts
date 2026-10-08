@@ -24,6 +24,21 @@ export type BroadcastTarget =
 /** Every target type, in the order the "When tapped, open" select lists them. */
 export type BroadcastTargetType = BroadcastTarget["type"];
 
+/**
+ * How the notification looks on the phone.
+ *
+ * - `text` - title and message, with the sKirana logo.
+ * - `picture` - title and message plus a 2:1 picture (small, big when pulled down).
+ * - `banner` - a 4:1 picture that is the whole notification.
+ *
+ * Title and message are required for all three: lock screens, screen readers
+ * and app versions before 1.0.5 use them.
+ */
+export type BroadcastStyle = "text" | "picture" | "banner";
+
+/** The shape a picture is uploaded for: 2:1 for `picture`, 4:1 for `banner`. */
+export type BroadcastImageShape = Exclude<BroadcastStyle, "text">;
+
 /** One sent broadcast, test or real. */
 export type BroadcastHistoryItem = {
   _id: string;
@@ -35,7 +50,9 @@ export type BroadcastHistoryItem = {
    */
   target: BroadcastTarget & { targetName?: string };
   kind: "test" | "all";
-  /** The banner picture it was sent with, or `null` for none. */
+  /** How it looked; optional only for safety against an older server. */
+  style?: BroadcastStyle;
+  /** The picture it was sent with, or `null` for none. */
   imageUrl?: string | null;
   recipients: number;
   sentByEmail: string;
@@ -57,24 +74,34 @@ export type BroadcastBody = {
   title: string;
   body: string;
   target: BroadcastTarget;
-  /** A banner picture, as returned by {@link uploadBroadcastImage}. */
+  /** Defaults to `text` on the server when left out. */
+  style: BroadcastStyle;
+  /**
+   * The picture, as returned by {@link uploadBroadcastImage} with the matching
+   * shape. Required for `picture` and `banner`; ignored for `text`.
+   */
   imageUrl?: string;
 };
 
 /**
- * Uploads the banner picture for a notification.
+ * Uploads the picture for a notification.
  *
  * @remarks
- * `POST /admin/broadcasts/image`, multipart, one file in the field `image`
- * (JPG, PNG or WebP, at most 5 MB). The server answers with a 1024x512 (2:1)
- * delivery URL on the shop's Cloudinary; the sends accept only such URLs.
+ * `POST /admin/broadcasts/image?shape=…`, multipart, one file in the field
+ * `image` (JPG, PNG or WebP, at most 5 MB). The server answers with a delivery
+ * URL on the shop's Cloudinary, cropped to 1024x512 (2:1) for `picture` or
+ * 1024x256 (4:1) for `banner`; the sends accept only such URLs.
  *
  * @throws Error carrying the server's message, e.g. a wrong type or size.
  */
-export async function uploadBroadcastImage(file: File) {
+export async function uploadBroadcastImage(file: File, shape: BroadcastImageShape) {
   const formData = new FormData();
+  formData.append("shape", shape);
   formData.append("image", file);
-  return apiPost<{ imageUrl: string }, FormData>("/admin/broadcasts/image", formData);
+  return apiPost<{ imageUrl: string }, FormData>(
+    `/admin/broadcasts/image?shape=${shape}`,
+    formData,
+  );
 }
 
 /** Loads the audience size, today's allowance and the send history. */

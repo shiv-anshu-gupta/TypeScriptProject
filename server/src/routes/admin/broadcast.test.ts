@@ -168,7 +168,10 @@ import {
   adminBroadcastRouter,
   IMAGE_MISSING_MESSAGE,
   IMAGE_NOT_OURS_MESSAGE,
+  IMAGE_REQUIRED_MESSAGE,
   IMAGE_SIZE_MESSAGE,
+  SHAPE_MESSAGE,
+  STYLE_MESSAGE,
   IMAGE_TYPE_MESSAGE,
   DAILY_LIMIT_MESSAGE,
   istDayKey,
@@ -425,6 +428,7 @@ describe("GET /admin/broadcasts", () => {
     expect(data.history[0]).toMatchObject({
       title: "Second",
       kind: "all",
+      style: "text",
       recipients: 5,
       sentByEmail: "owner@skirana.com",
       target: { type: "category", targetId: CATEGORY_ID },
@@ -435,18 +439,57 @@ describe("GET /admin/broadcasts", () => {
   });
 });
 
-describe("the banner picture", () => {
+describe("pictures and banners", () => {
   const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3]);
-  const OURS = `https://res.cloudinary.com/${CLOUD}/image/upload/f_auto,q_auto,c_fill,w_1024,h_512/v1/ecommerce-monster-video/broadcasts/pic.jpg`;
-  const upload = () => request(app).post("/admin/broadcasts/image");
+  const STORED = `v1/ecommerce-monster-video/broadcasts/pic.jpg`;
+  const BASE = `https://res.cloudinary.com/${CLOUD}/image/upload`;
+  const PICTURE = `${BASE}/f_auto,q_auto,c_fill,g_auto,w_1024,h_512/${STORED}`;
+  const BANNER = `${BASE}/f_auto,q_auto,c_fill,g_auto,w_1024,h_256/${STORED}`;
+  const upload = (query = "") => request(app).post(`/admin/broadcasts/image${query}`);
 
   describe("POST /admin/broadcasts/image", () => {
-    it("stores a picture in the broadcasts folder and answers a 1024x512 delivery URL", async () => {
+    it("stores a picture in the broadcasts folder and answers a 1024x512 picture URL by default", async () => {
       const res = await upload().attach("image", PNG, { filename: "offer.png", contentType: "image/png" });
 
       expect(res.status).toBe(200);
-      expect(res.body.data).toEqual({ imageUrl: OURS });
+      expect(res.body.data).toEqual({ imageUrl: PICTURE });
       expect(uploads).toEqual([{ bytes: PNG.length, folder: "ecommerce-monster-video/broadcasts" }]);
+    });
+
+    it("answers a 1024x512 (2:1) URL for shape=picture in the query", async () => {
+      const res = await upload("?shape=picture").attach("image", PNG, {
+        filename: "offer.png",
+        contentType: "image/png",
+      });
+      expect(res.status).toBe(200);
+      expect(res.body.data).toEqual({ imageUrl: PICTURE });
+    });
+
+    it("answers a 1024x256 (4:1) URL for shape=banner in the query", async () => {
+      const res = await upload("?shape=banner").attach("image", PNG, {
+        filename: "offer.png",
+        contentType: "image/png",
+      });
+      expect(res.status).toBe(200);
+      expect(res.body.data).toEqual({ imageUrl: BANNER });
+    });
+
+    it("reads the shape from a form field too", async () => {
+      const res = await upload()
+        .field("shape", "banner")
+        .attach("image", PNG, { filename: "offer.png", contentType: "image/png" });
+      expect(res.status).toBe(200);
+      expect(res.body.data).toEqual({ imageUrl: BANNER });
+    });
+
+    it("refuses an unknown shape, and stores nothing", async () => {
+      const res = await upload("?shape=square").attach("image", PNG, {
+        filename: "offer.png",
+        contentType: "image/png",
+      });
+      expect(res.status).toBe(400);
+      expect(messageOf(res)).toBe(SHAPE_MESSAGE);
+      expect(uploads).toEqual([]);
     });
 
     it.each(["image/jpeg", "image/webp"])("accepts %s", async (contentType) => {
@@ -486,7 +529,110 @@ describe("the banner picture", () => {
     });
   });
 
-  describe("imageUrl on a send", () => {
+  describe("style on a send", () => {
+    it.each(["poster", "TEXT", 1, { style: "banner" }])(
+      "refuses an unknown style (%s), on both sends, and sends nothing",
+      async (style) => {
+        const test = await sendTest({ ...valid, style, imageUrl: PICTURE });
+        const all = await sendAll({ ...valid, style, imageUrl: PICTURE });
+
+        for (const res of [test, all]) {
+          expect(res.status).toBe(400);
+          expect(messageOf(res)).toBe(STYLE_MESSAGE);
+        }
+        expect(sends).toEqual([]);
+        expect(broadcasts).toEqual([]);
+      },
+    );
+
+    it.each(["picture", "banner"])(
+      "refuses %s without a picture, on both sends, and sends nothing",
+      async (style) => {
+        for (const imageUrl of [undefined, null, ""]) {
+          const test = await sendTest({ ...valid, style, imageUrl });
+          const all = await sendAll({ ...valid, style, imageUrl });
+          for (const res of [test, all]) {
+            expect(res.status).toBe(400);
+            expect(messageOf(res)).toBe(IMAGE_REQUIRED_MESSAGE);
+          }
+        }
+        expect(sends).toEqual([]);
+        expect(broadcasts).toEqual([]);
+      },
+    );
+
+    it.each(["picture", "banner"])("still needs a title and a message for %s", async (style) => {
+      const noTitle = await sendTest({ ...valid, title: "", style, imageUrl: PICTURE });
+      const noBody = await sendTest({ ...valid, body: "", style, imageUrl: PICTURE });
+      expect(noTitle.status).toBe(400);
+      expect(messageOf(noTitle)).toMatch(/title/i);
+      expect(noBody.status).toBe(400);
+      expect(messageOf(noBody)).toMatch(/message/i);
+      expect(sends).toEqual([]);
+    });
+
+    it.each([undefined, null, "", "text"])(
+      "style %s sends text only, exactly as before pictures existed",
+      async (style) => {
+        const res = await sendAll({ ...valid, style });
+
+        expect(res.status).toBe(200);
+        expect(sends[0].options).toEqual({});
+        expect(sends[0].data).toEqual({ type: "broadcast", target: "home" });
+        expect(broadcasts[0]).toMatchObject({ style: "text" });
+        expect(broadcasts[0]).not.toHaveProperty("imageUrl");
+      },
+    );
+
+    it("text ignores any picture - even one that is not ours", async () => {
+      const ours = await sendTest({ ...valid, style: "text", imageUrl: PICTURE });
+      const foreign = await sendTest({ ...valid, imageUrl: "https://evil.example.com/a.jpg" });
+
+      for (const res of [ours, foreign]) expect(res.status).toBe(200);
+      for (const send of sends) {
+        expect(send.options).toEqual({});
+        expect(send.data).toEqual({ type: "broadcast", target: "home" });
+      }
+      for (const row of broadcasts) {
+        expect(row).toMatchObject({ style: "text" });
+        expect(row).not.toHaveProperty("imageUrl");
+      }
+    });
+
+    it("picture sends the picture with imageStyle picture, on a test", async () => {
+      const res = await sendTest({
+        ...valid,
+        target: { type: "category", targetId: CATEGORY_ID },
+        style: "picture",
+        imageUrl: PICTURE,
+      });
+
+      expect(res.status).toBe(200);
+      expect(sends[0].title).toBe(valid.title);
+      expect(sends[0].body).toBe(valid.body);
+      expect(sends[0].options).toEqual({ image: PICTURE });
+      expect(sends[0].data).toEqual({
+        type: "broadcast",
+        target: "category",
+        targetId: CATEGORY_ID,
+        imageStyle: "picture",
+      });
+      expect(broadcasts[0]).toMatchObject({ kind: "test", style: "picture", imageUrl: PICTURE });
+    });
+
+    it("banner sends the picture with imageStyle banner, to everyone", async () => {
+      const res = await sendAll({ ...valid, style: "banner", imageUrl: BANNER });
+
+      expect(res.status).toBe(200);
+      expect(sends[0].title).toBe(valid.title);
+      expect(sends[0].body).toBe(valid.body);
+      expect(sends[0].options).toEqual({ image: BANNER });
+      expect(sends[0].data).toEqual({ type: "broadcast", target: "home", imageStyle: "banner" });
+      expect(broadcasts[0]).toMatchObject({ kind: "all", style: "banner", imageUrl: BANNER });
+    });
+  });
+
+  describe("imageUrl on a picture or banner send", () => {
     const foreign: Array<[string, unknown]> = [
       ["another host", "https://evil.example.com/image/upload/a.jpg"],
       ["another Cloudinary account", "https://res.cloudinary.com/someone-else/image/upload/v1/a.jpg"],
@@ -497,73 +643,57 @@ describe("the banner picture", () => {
       ["a query string", `https://res.cloudinary.com/${CLOUD}/image/upload/a.jpg?x=1`],
       ["a video", `https://res.cloudinary.com/${CLOUD}/video/upload/a.mp4`],
       ["not a URL", "banner.jpg"],
-      ["not a string", { url: OURS }],
+      ["not a string", { url: PICTURE }],
     ];
 
-    it.each(foreign)("refuses %s, on both sends, and sends nothing", async (_name, imageUrl) => {
-      const test = await sendTest({ ...valid, imageUrl });
-      const all = await sendAll({ ...valid, imageUrl });
+    describe.each(["picture", "banner"])("style %s", (style) => {
+      it.each(foreign)("refuses %s, on both sends, and sends nothing", async (_name, imageUrl) => {
+        const test = await sendTest({ ...valid, style, imageUrl });
+        const all = await sendAll({ ...valid, style, imageUrl });
 
-      for (const res of [test, all]) {
+        for (const res of [test, all]) {
+          expect(res.status).toBe(400);
+          expect(messageOf(res)).toBe(IMAGE_NOT_OURS_MESSAGE);
+        }
+        expect(sends).toEqual([]);
+        expect(broadcasts).toEqual([]);
+      });
+
+      it("refuses every picture when no cloud name is configured", async () => {
+        delete process.env.CLOUDINARY_CLOUD_NAME;
+        const res = await sendTest({ ...valid, style, imageUrl: PICTURE });
         expect(res.status).toBe(400);
         expect(messageOf(res)).toBe(IMAGE_NOT_OURS_MESSAGE);
-      }
-      expect(sends).toEqual([]);
-      expect(broadcasts).toEqual([]);
-    });
-
-    it("refuses every picture when no cloud name is configured", async () => {
-      delete process.env.CLOUDINARY_CLOUD_NAME;
-      const res = await sendTest({ ...valid, imageUrl: OURS });
-      expect(res.status).toBe(400);
-      expect(messageOf(res)).toBe(IMAGE_NOT_OURS_MESSAGE);
-    });
-
-    it("sends our picture as the banner, with imageStyle in the data, on a test", async () => {
-      const res = await sendTest({
-        ...valid,
-        target: { type: "category", targetId: CATEGORY_ID },
-        imageUrl: OURS,
       });
-
-      expect(res.status).toBe(200);
-      expect(sends[0].options).toEqual({ image: OURS });
-      expect(sends[0].data).toEqual({
-        type: "broadcast",
-        target: "category",
-        targetId: CATEGORY_ID,
-        imageStyle: "banner",
-      });
-      expect(broadcasts[0]).toMatchObject({ kind: "test", imageUrl: OURS });
     });
+  });
 
-    it("sends our picture as the banner to everyone", async () => {
-      const res = await sendAll({ ...valid, imageUrl: OURS });
-
-      expect(res.status).toBe(200);
-      expect(sends[0].options).toEqual({ image: OURS });
-      expect(sends[0].data).toEqual({ type: "broadcast", target: "home", imageStyle: "banner" });
-      expect(broadcasts[0]).toMatchObject({ kind: "all", imageUrl: OURS });
-    });
-
-    it.each([undefined, null, ""])("without a picture (%s) sends exactly as before", async (imageUrl) => {
-      const res = await sendAll({ ...valid, imageUrl });
-
-      expect(res.status).toBe(200);
-      expect(sends[0].options).toEqual({});
-      expect(sends[0].data).toEqual({ type: "broadcast", target: "home" });
-      expect(broadcasts[0]).not.toHaveProperty("imageUrl");
-    });
-
-    it("shows the picture in the history, and null where none was sent", async () => {
+  describe("history", () => {
+    it("shows each send's style and picture, and null where none was sent", async () => {
       await sendTest({ ...valid, title: "Plain" });
-      await sendAll({ ...valid, title: "Pictured", imageUrl: OURS });
+      await sendTest({ ...valid, title: "Pictured", style: "picture", imageUrl: PICTURE });
+      await sendAll({ ...valid, title: "Bannered", style: "banner", imageUrl: BANNER });
 
       const res = await request(app).get("/admin/broadcasts");
       const history = res.body.data.history;
 
-      expect(history[0]).toMatchObject({ title: "Pictured", imageUrl: OURS });
-      expect(history[1]).toMatchObject({ title: "Plain", imageUrl: null });
+      expect(history[0]).toMatchObject({ title: "Bannered", style: "banner", imageUrl: BANNER });
+      expect(history[1]).toMatchObject({ title: "Pictured", style: "picture", imageUrl: PICTURE });
+      expect(history[2]).toMatchObject({ title: "Plain", style: "text", imageUrl: null });
+    });
+
+    it("names a style for records saved before styles existed", async () => {
+      const old = { ...valid, target: { type: "home" }, kind: "test", recipients: 1, sentByEmail: "" };
+      broadcasts.push(
+        { ...old, title: "Old plain", _id: "old1", createdAt: new Date(NOON_IST - 2000) },
+        { ...old, title: "Old pictured", imageUrl: PICTURE, _id: "old2", createdAt: new Date(NOON_IST - 1000) },
+      );
+
+      const res = await request(app).get("/admin/broadcasts");
+      const history = res.body.data.history;
+
+      expect(history[0]).toMatchObject({ title: "Old pictured", style: "banner", imageUrl: PICTURE });
+      expect(history[1]).toMatchObject({ title: "Old plain", style: "text", imageUrl: null });
     });
   });
 });

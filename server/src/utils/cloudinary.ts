@@ -190,28 +190,45 @@ export function cdnImage(url: string, variant: ImageVariant): string {
   return `${origin}${UPLOAD_MARKER}${FORMAT},q_auto,c_limit,w_${VARIANTS[variant]}/${rest}`;
 }
 
-// A notification's banner picture, as Android draws it.
+// A notification's picture, as Android draws it.
 //
-// Android's expanded "big picture" notification is about 2:1, so the picture
-// is cropped to exactly that (c_fill) at 1024x512 - wide enough to be sharp on
-// a 1080p phone, small enough to stay well under the 1 MB Firebase allows.
-// The format is left to f_auto: the phone fetches the image without asking
-// for WebP, so Cloudinary answers with JPEG (or PNG), which every Android
-// notification can decode.
-const PUSH_BANNER_TRANSFORM = "f_auto,q_auto,c_fill,w_1024,h_512";
+// Two shapes, both cropped to fill (c_fill) with g_auto, so Cloudinary keeps
+// the interesting part of the photo rather than simply its middle:
+//
+// - "picture" - 1024x512 (2:1). Android's expanded "big picture"
+//   notification is about 2:1; collapsed, it shows as a thumbnail.
+// - "banner" - 1024x256 (4:1). A full-width strip that is the whole
+//   notification on app 1.0.5+; the message is written on the picture.
+//
+// 1024 wide is sharp on a 1080p phone and stays well under the 1 MB Firebase
+// allows. The format is left to f_auto: the phone fetches the image without
+// asking for WebP, so Cloudinary answers with JPEG (or PNG), which every
+// Android notification can decode.
+
+/** The two shapes a notification picture is cropped to. */
+export const PUSH_IMAGE_SHAPES = ["picture", "banner"] as const;
+
+/** One of {@link PUSH_IMAGE_SHAPES}. */
+export type PushImageShape = (typeof PUSH_IMAGE_SHAPES)[number];
+
+const PUSH_IMAGE_TRANSFORMS: Record<PushImageShape, string> = {
+  picture: "f_auto,q_auto,c_fill,g_auto,w_1024,h_512",
+  banner: "f_auto,q_auto,c_fill,g_auto,w_1024,h_256",
+};
 
 /**
- * The delivery URL for a notification's banner picture: 1024x512 (2:1),
- * cropped to fill, automatic format and quality.
+ * The delivery URL for a notification's picture, cropped to fill at the given
+ * shape, with automatic format, quality and gravity.
  *
  * @param url - a stored Cloudinary `secure_url`.
+ * @param shape - `"picture"` for 1024x512 (2:1), `"banner"` for 1024x256 (4:1).
  * @returns The transformed URL. A URL that is not a Cloudinary upload is
  * returned unchanged.
  */
-export function pushBannerImage(url: string): string {
+export function pushNotificationImage(url: string, shape: PushImageShape): string {
   if (!url || !url.includes(UPLOAD_MARKER)) return url;
   const [origin, rest] = url.split(UPLOAD_MARKER);
-  return `${origin}${UPLOAD_MARKER}${PUSH_BANNER_TRANSFORM}/${rest}`;
+  return `${origin}${UPLOAD_MARKER}${PUSH_IMAGE_TRANSFORMS[shape]}/${rest}`;
 }
 
 /**

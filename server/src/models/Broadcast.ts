@@ -57,6 +57,22 @@ export type BroadcastTarget =
 export type BroadcastKind = "test" | "all";
 
 /**
+ * How the notification looks on the phone.
+ *
+ * @remarks
+ * Title and message are always sent too: lock screens, screen readers and
+ * app versions before 1.0.5 use them.
+ */
+export const BROADCAST_STYLES = [
+  "text", // title and message, with the sKirana logo
+  "picture", // title and message, plus a 2:1 picture (thumbnail, big when pulled down)
+  "banner", // a 4:1 full-width picture is the whole notification (app 1.0.5+)
+] as const;
+
+/** One of {@link BROADCAST_STYLES}. */
+export type BroadcastStyle = (typeof BROADCAST_STYLES)[number];
+
+/**
  * One sent notification. Field notes are beside the fields.
  *
  * @remarks
@@ -73,7 +89,8 @@ export type Broadcast = {
   body: string;
   target: { type: BroadcastTargetType; targetId?: string };
   kind: BroadcastKind;
-  imageUrl?: string; // banner picture (our Cloudinary, 2:1); absent = logo only
+  style?: BroadcastStyle; // absent on records from before styles: imageUrl ? banner : text
+  imageUrl?: string; // picture (our Cloudinary); set only for picture/banner
   recipients: number; // devices handed to Expo
   sentBy: Types.ObjectId; // the admin who sent it
   sentByEmail: string; // snapshot: who they were at the time
@@ -98,6 +115,7 @@ const BroadcastSchema = new Schema<Broadcast>(
       targetId: { type: String, default: undefined },
     },
     kind: { type: String, enum: ["test", "all"], required: true },
+    style: { type: String, enum: BROADCAST_STYLES, default: undefined },
     imageUrl: { type: String, default: undefined },
     recipients: { type: Number, default: 0, min: 0 },
     sentBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
